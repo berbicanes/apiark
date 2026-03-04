@@ -15,28 +15,29 @@ pub enum AuthConfig {
         key: String,
         value: String,
         /// "header" or "query"
-        #[serde(default = "default_header")]
+        #[serde(default = "default_header", rename = "addTo")]
         add_to: ApiKeyLocation,
     },
     Oauth2 {
+        #[serde(rename = "grantType")]
         grant_type: OAuth2GrantType,
-        #[serde(default)]
+        #[serde(default, rename = "authUrl")]
         auth_url: String,
-        #[serde(default)]
+        #[serde(default, rename = "tokenUrl")]
         token_url: String,
-        #[serde(default)]
+        #[serde(default, rename = "clientId")]
         client_id: String,
-        #[serde(default)]
+        #[serde(default, rename = "clientSecret")]
         client_secret: String,
         #[serde(default)]
         scope: String,
-        #[serde(default = "default_callback_url")]
+        #[serde(default = "default_callback_url", rename = "callbackUrl")]
         callback_url: String,
         #[serde(default)]
         username: String,
         #[serde(default)]
         password: String,
-        #[serde(default = "default_true")]
+        #[serde(default = "default_true", rename = "usePkce")]
         use_pkce: bool,
     },
 }
