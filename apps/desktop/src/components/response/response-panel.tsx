@@ -8,8 +8,9 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { readFullResponse } from "@/lib/tauri-api";
 import type { ConsoleEntry } from "@apiark/types";
+import { TimingPanel } from "./timing-panel";
 
-type ResponseTab = "body" | "headers" | "cookies" | "tests" | "console" | "code";
+type ResponseTab = "body" | "headers" | "cookies" | "tests" | "timing" | "console" | "code";
 
 function statusColor(status: number): string {
   if (status < 200) return "text-blue-400";
@@ -225,6 +226,8 @@ export function ResponsePanel() {
             )}
           </>
         )}
+
+        {activeTab === "timing" && <TimingPanel response={response} />}
       </div>
     </div>
   );
@@ -329,6 +332,7 @@ function ResponseTabs({
     { id: "headers", label: "Headers" },
     { id: "cookies", label: "Cookies" },
     { id: "tests", label: "Tests" },
+    { id: "timing", label: "Timing" },
     { id: "console", label: "Console" },
     { id: "code", label: "Code" },
   ];

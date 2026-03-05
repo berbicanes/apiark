@@ -348,11 +348,11 @@ No tool currently delivers ALL of these simultaneously:
 - [x] Local mock servers (axum-based, Faker.js, latency/error simulation)
 - [x] Local scheduled testing (cron, notifications, webhooks, charts)
 - [x] API documentation generation (HTML + Markdown export)
-- [ ] OpenAPI spec editor with Spectral linting
+- [x] OpenAPI spec editor with Spectral linting
 - [ ] Plugin system (JS + WASM)
 - [ ] MQTT, Socket.IO support
 - [x] Response diff
-- [ ] Performance profiling
+- [x] Performance profiling
 
 **Proxy Capture Mode (§38):**
 - [ ] Local intercepting HTTP/HTTPS proxy (hyper + rcgen + rustls)
