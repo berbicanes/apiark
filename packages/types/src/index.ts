@@ -283,7 +283,8 @@ export interface ParsedCurlRequest {
 // ── Settings ──
 
 export interface AppSettings {
-  theme: "dark" | "light" | "system";
+  theme: "dark" | "light" | "black" | "system";
+  accentColor: "indigo" | "blue" | "emerald" | "amber" | "rose" | "violet" | "cyan" | "orange";
   proxyUrl: string | null;
   proxyUsername: string | null;
   proxyPassword: string | null;

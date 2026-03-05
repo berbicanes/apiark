@@ -25,10 +25,16 @@
 
 /* High contrast mode */
 @media (prefers-contrast: more) {
-  :root {
+  [data-theme="light"] {
     --color-border: #71717a;
     --color-text-muted: #3f3f46;
     --color-text-dimmed: #52525b;
+  }
+  [data-theme="dark"],
+  [data-theme="black"] {
+    --color-border: #a1a1aa;
+    --color-text-muted: #d4d4d8;
+    --color-text-dimmed: #a1a1aa;
   }
 }
 
@@ -54,8 +60,64 @@
   font-size: 0.875rem;
 }
 
-/* Light theme — the only theme */
+/* ═══════════════════════════════════════════
+   ACCENT COLORS — override via [data-accent]
+   Default: indigo
+   ═══════════════════════════════════════════ */
+
 :root {
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --color-accent-glow: rgba(99, 102, 241, 0.1);
+}
+
+[data-accent="blue"] {
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+  --color-accent-glow: rgba(59, 130, 246, 0.1);
+}
+
+[data-accent="emerald"] {
+  --color-accent: #10b981;
+  --color-accent-hover: #059669;
+  --color-accent-glow: rgba(16, 185, 129, 0.1);
+}
+
+[data-accent="amber"] {
+  --color-accent: #f59e0b;
+  --color-accent-hover: #d97706;
+  --color-accent-glow: rgba(245, 158, 11, 0.1);
+}
+
+[data-accent="rose"] {
+  --color-accent: #f43f5e;
+  --color-accent-hover: #e11d48;
+  --color-accent-glow: rgba(244, 63, 94, 0.1);
+}
+
+[data-accent="violet"] {
+  --color-accent: #8b5cf6;
+  --color-accent-hover: #7c3aed;
+  --color-accent-glow: rgba(139, 92, 246, 0.1);
+}
+
+[data-accent="cyan"] {
+  --color-accent: #06b6d4;
+  --color-accent-hover: #0891b2;
+  --color-accent-glow: rgba(6, 182, 212, 0.1);
+}
+
+[data-accent="orange"] {
+  --color-accent: #f97316;
+  --color-accent-hover: #ea580c;
+  --color-accent-glow: rgba(249, 115, 22, 0.1);
+}
+
+/* ═══════════════════════════════════════════
+   LIGHT THEME
+   ═══════════════════════════════════════════ */
+
+[data-theme="light"] {
   --color-bg: #f8f9fc;
   --color-surface: #f0f1f5;
   --color-elevated: #e4e6ed;
@@ -64,15 +126,106 @@
   --color-text-secondary: #374151;
   --color-text-muted: #6b7280;
   --color-text-dimmed: #9ca3af;
-  --color-accent: #6366f1;
-  --color-accent-hover: #4f46e5;
-  --color-accent-glow: rgba(99, 102, 241, 0.1);
   --color-activity-bar: #e8eaf0;
   --color-card: #ffffff;
   --color-card-hover: #f5f6fa;
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
+  color-scheme: light;
+}
+
+/* ═══════════════════════════════════════════
+   DARK THEME
+   ═══════════════════════════════════════════ */
+
+[data-theme="dark"] {
+  --color-bg: #0a0a0b;
+  --color-surface: #141416;
+  --color-elevated: #1c1c1f;
+  --color-border: #2a2a2e;
+  --color-text-primary: #e4e4e7;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-text-dimmed: #52525b;
+  --color-activity-bar: #0f0f11;
+  --color-card: #18181b;
+  --color-card-hover: #1f1f23;
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-error: #ef4444;
+  color-scheme: dark;
+}
+
+/* Dark theme accent adjustments — lighter hover for visibility */
+[data-theme="dark"],
+[data-theme="black"] {
+  --color-accent-hover: #818cf8;
+  --color-accent-glow: rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="dark"][data-accent="blue"],
+[data-theme="black"][data-accent="blue"] {
+  --color-accent-hover: #60a5fa;
+  --color-accent-glow: rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"][data-accent="emerald"],
+[data-theme="black"][data-accent="emerald"] {
+  --color-accent-hover: #34d399;
+  --color-accent-glow: rgba(16, 185, 129, 0.15);
+}
+
+[data-theme="dark"][data-accent="amber"],
+[data-theme="black"][data-accent="amber"] {
+  --color-accent-hover: #fbbf24;
+  --color-accent-glow: rgba(245, 158, 11, 0.15);
+}
+
+[data-theme="dark"][data-accent="rose"],
+[data-theme="black"][data-accent="rose"] {
+  --color-accent-hover: #fb7185;
+  --color-accent-glow: rgba(244, 63, 94, 0.15);
+}
+
+[data-theme="dark"][data-accent="violet"],
+[data-theme="black"][data-accent="violet"] {
+  --color-accent-hover: #a78bfa;
+  --color-accent-glow: rgba(139, 92, 246, 0.15);
+}
+
+[data-theme="dark"][data-accent="cyan"],
+[data-theme="black"][data-accent="cyan"] {
+  --color-accent-hover: #22d3ee;
+  --color-accent-glow: rgba(6, 182, 212, 0.15);
+}
+
+[data-theme="dark"][data-accent="orange"],
+[data-theme="black"][data-accent="orange"] {
+  --color-accent-hover: #fb923c;
+  --color-accent-glow: rgba(249, 115, 22, 0.15);
+}
+
+/* ═══════════════════════════════════════════
+   BLACK / OLED THEME
+   ═══════════════════════════════════════════ */
+
+[data-theme="black"] {
+  --color-bg: #000000;
+  --color-surface: #0a0a0a;
+  --color-elevated: #141414;
+  --color-border: #1f1f1f;
+  --color-text-primary: #e4e4e7;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-text-dimmed: #52525b;
+  --color-activity-bar: #000000;
+  --color-card: #0a0a0a;
+  --color-card-hover: #141414;
+  --color-success: #22c55e;
+  --color-warning: #eab308;
+  --color-error: #ef4444;
+  color-scheme: dark;
 }
 
 /* Glass effect utility */

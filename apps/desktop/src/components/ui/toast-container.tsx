@@ -9,17 +9,10 @@ const iconMap = {
 };
 
 const colorMap = {
-  error: "bg-red-50 border-red-200 text-red-800",
-  warning: "bg-amber-50 border-amber-200 text-amber-800",
-  info: "bg-blue-50 border-blue-200 text-blue-800",
-  success: "bg-emerald-50 border-emerald-200 text-emerald-800",
-};
-
-const iconColorMap = {
-  error: "text-red-500",
-  warning: "text-amber-500",
-  info: "text-blue-500",
-  success: "text-emerald-500",
+  error: "bg-[var(--color-error)]/10 border-[var(--color-error)]/20 text-[var(--color-error)]",
+  warning: "bg-[var(--color-warning)]/10 border-[var(--color-warning)]/20 text-[var(--color-warning)]",
+  info: "bg-[var(--color-accent)]/10 border-[var(--color-accent)]/20 text-[var(--color-accent)]",
+  success: "bg-[var(--color-success)]/10 border-[var(--color-success)]/20 text-[var(--color-success)]",
 };
 
 export function ToastContainer() {
@@ -38,7 +31,7 @@ export function ToastContainer() {
             className={`flex items-start gap-2 rounded-lg border px-4 py-3 shadow-lg ${colorMap[toast.type]} max-w-[400px] animate-[slideIn_0.2s_ease-out]`}
             role="alert"
           >
-            <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${iconColorMap[toast.type]}`} />
+            <Icon className="mt-0.5 h-4 w-4 shrink-0" />
             <p className="flex-1 text-sm">{toast.message}</p>
             <button
               onClick={() => removeToast(toast.id)}

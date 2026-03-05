@@ -1,6 +1,7 @@
 import { useRef, useCallback } from "react";
 import Editor, { type OnMount, loader } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
+import { useResolvedTheme } from "@/hooks/use-theme";
 
 // Configure Monaco to use local bundled files (not CDN) for Tauri offline support
 loader.config({
@@ -9,8 +10,8 @@ loader.config({
   },
 });
 
-// ApiArk light theme definition
-const APIARK_THEME: Monaco.editor.IStandaloneThemeData = {
+// ApiArk light theme
+const APIARK_LIGHT: Monaco.editor.IStandaloneThemeData = {
   base: "vs",
   inherit: true,
   rules: [
@@ -38,7 +39,69 @@ const APIARK_THEME: Monaco.editor.IStandaloneThemeData = {
   },
 };
 
+// ApiArk dark theme
+const APIARK_DARK: Monaco.editor.IStandaloneThemeData = {
+  base: "vs-dark",
+  inherit: true,
+  rules: [
+    { token: "comment", foreground: "6b7280", fontStyle: "italic" },
+    { token: "keyword", foreground: "a78bfa" },
+    { token: "string", foreground: "34d399" },
+    { token: "number", foreground: "fbbf24" },
+    { token: "type", foreground: "818cf8" },
+    { token: "variable", foreground: "60a5fa" },
+  ],
+  colors: {
+    "editor.background": "#141416",
+    "editor.foreground": "#e4e4e7",
+    "editor.lineHighlightBackground": "#1c1c1f",
+    "editor.selectionBackground": "#6366f140",
+    "editorCursor.foreground": "#6366f1",
+    "editorLineNumber.foreground": "#52525b",
+    "editorLineNumber.activeForeground": "#a1a1aa",
+    "editor.inactiveSelectionBackground": "#6366f120",
+    "editorIndentGuide.background": "#2a2a2e",
+    "editorWidget.background": "#141416",
+    "editorWidget.border": "#2a2a2e",
+    "input.background": "#1c1c1f",
+    "input.border": "#2a2a2e",
+  },
+};
+
+// ApiArk black/OLED theme
+const APIARK_BLACK: Monaco.editor.IStandaloneThemeData = {
+  base: "vs-dark",
+  inherit: true,
+  rules: APIARK_DARK.rules,
+  colors: {
+    ...APIARK_DARK.colors,
+    "editor.background": "#0a0a0a",
+    "editor.lineHighlightBackground": "#141414",
+    "editorIndentGuide.background": "#1f1f1f",
+    "editorWidget.background": "#0a0a0a",
+    "editorWidget.border": "#1f1f1f",
+    "input.background": "#141414",
+    "input.border": "#1f1f1f",
+  },
+};
+
 let themesRegistered = false;
+
+function registerThemes(monaco: typeof Monaco) {
+  if (themesRegistered) return;
+  monaco.editor.defineTheme("apiark-light", APIARK_LIGHT);
+  monaco.editor.defineTheme("apiark-dark", APIARK_DARK);
+  monaco.editor.defineTheme("apiark-black", APIARK_BLACK);
+  themesRegistered = true;
+}
+
+function getMonacoTheme(resolved: "light" | "dark" | "black"): string {
+  switch (resolved) {
+    case "light": return "apiark-light";
+    case "black": return "apiark-black";
+    default: return "apiark-dark";
+  }
+}
 
 interface CodeEditorProps {
   value: string;
@@ -62,17 +125,21 @@ export function CodeEditor({
   placeholder,
 }: CodeEditorProps) {
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<typeof Monaco | null>(null);
+  const resolvedTheme = useResolvedTheme();
+  const monacoTheme = getMonacoTheme(resolvedTheme);
 
   const handleMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
+    monacoRef.current = monaco;
+    registerThemes(monaco);
+    monaco.editor.setTheme(monacoTheme);
+  }, [monacoTheme]);
 
-    if (!themesRegistered) {
-      monaco.editor.defineTheme("apiark", APIARK_THEME);
-      themesRegistered = true;
-    }
-
-    monaco.editor.setTheme("apiark");
-  }, []);
+  // Switch theme when app theme changes
+  if (monacoRef.current && themesRegistered) {
+    monacoRef.current.editor.setTheme(monacoTheme);
+  }
 
   const showPlaceholder = placeholder && !value;
 
@@ -89,7 +156,7 @@ export function CodeEditor({
         value={value}
         onChange={(v) => onChange(v ?? "")}
         onMount={handleMount}
-        theme="apiark"
+        theme={monacoTheme}
         options={{
           minimap: { enabled: minimap },
           lineNumbers: lineNumbers ? "on" : "off",

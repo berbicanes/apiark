@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 pub struct AppSettings {
     #[serde(default = "default_theme")]
     pub theme: String,
+    #[serde(default = "default_accent_color")]
+    pub accent_color: String,
     #[serde(default)]
     pub proxy_url: Option<String>,
     #[serde(default)]
@@ -55,6 +57,10 @@ fn default_theme() -> String {
     "dark".to_string()
 }
 
+fn default_accent_color() -> String {
+    "indigo".to_string()
+}
+
 fn default_true() -> bool {
     true
 }
@@ -75,6 +81,7 @@ impl Default for AppSettings {
     fn default() -> Self {
         Self {
             theme: default_theme(),
+            accent_color: default_accent_color(),
             proxy_url: None,
             proxy_username: None,
             proxy_password: None,

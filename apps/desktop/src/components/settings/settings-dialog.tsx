@@ -34,11 +34,68 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
           </div>
 
           <div className="space-y-6 p-6">
-            {/* General Section */}
+            {/* Appearance Section */}
             <section>
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-                General
+                Appearance
               </h3>
+
+              {/* Theme */}
+              <div className="mb-4">
+                <label className="mb-2 block text-sm text-[var(--color-text-secondary)]">
+                  Theme
+                </label>
+                <div className="flex gap-2">
+                  {(["system", "light", "dark", "black"] as const).map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => update({ theme: t })}
+                      className={`rounded px-4 py-2 text-sm capitalize transition-colors ${
+                        settings.theme === t
+                          ? "bg-[var(--color-accent)] text-white"
+                          : "bg-[var(--color-elevated)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      }`}
+                    >
+                      {t === "black" ? "Black (OLED)" : t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Accent Color */}
+              <div className="mb-4">
+                <label className="mb-2 block text-sm text-[var(--color-text-secondary)]">
+                  Accent Color
+                </label>
+                <div className="flex gap-2">
+                  {([
+                    { name: "indigo", color: "#6366f1" },
+                    { name: "blue", color: "#3b82f6" },
+                    { name: "emerald", color: "#10b981" },
+                    { name: "amber", color: "#f59e0b" },
+                    { name: "rose", color: "#f43f5e" },
+                    { name: "violet", color: "#8b5cf6" },
+                    { name: "cyan", color: "#06b6d4" },
+                    { name: "orange", color: "#f97316" },
+                  ] as const).map((a) => (
+                    <button
+                      key={a.name}
+                      onClick={() => update({ accentColor: a.name })}
+                      title={a.name.charAt(0).toUpperCase() + a.name.slice(1)}
+                      className={`h-7 w-7 rounded-full transition-all ${
+                        settings.accentColor === a.name
+                          ? "scale-110 ring-2 ring-offset-2 ring-offset-[var(--color-surface)]"
+                          : "hover:scale-110 opacity-70 hover:opacity-100"
+                      }`}
+                      style={{
+                        backgroundColor: a.color,
+                        // Use inline style for ring color since it's dynamic
+                        ...(settings.accentColor === a.name ? { ["--tw-ring-color" as string]: a.color } : {}),
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
 
               {/* Sidebar width */}
               <div>

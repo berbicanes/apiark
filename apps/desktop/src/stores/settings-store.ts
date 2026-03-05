@@ -11,6 +11,7 @@ interface SettingsState {
 
 const defaultSettings: AppSettings = {
   theme: "dark",
+  accentColor: "indigo",
   proxyUrl: null,
   proxyUsername: null,
   proxyPassword: null,
