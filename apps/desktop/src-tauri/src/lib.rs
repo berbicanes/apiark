@@ -21,7 +21,7 @@ use commands::collection::{
     create_folder, create_request, delete_item, open_collection, read_request_file, rename_item,
     create_sample_collection, save_folder_order, save_request_file,
 };
-use commands::environment::{get_resolved_variables, load_environments, save_environment};
+use commands::environment::{get_resolved_variables, load_environments, load_root_dotenv, save_environment};
 use commands::greet;
 use commands::history::{clear_history, delete_history_entry, get_history, search_history, AppState};
 use commands::http::{read_full_response, send_request, send_request_with_scripts};
@@ -168,6 +168,7 @@ pub fn run() {
             load_environments,
             save_environment,
             get_resolved_variables,
+            load_root_dotenv,
             // History commands
             get_history,
             search_history,

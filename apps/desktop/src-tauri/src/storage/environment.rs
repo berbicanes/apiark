@@ -31,19 +31,14 @@ pub fn load_environments(collection_path: &Path) -> Result<Vec<EnvironmentFile>,
     Ok(envs)
 }
 
-/// Load secrets from the .apiark/.env file.
-pub fn load_dotenv_secrets(collection_path: &Path) -> HashMap<String, String> {
-    let env_path = collection_path.join(".apiark").join(".env");
-    if !env_path.exists() {
-        return HashMap::new();
-    }
-
-    let content = match fs::read_to_string(&env_path) {
+/// Parse a .env file into a HashMap.
+fn parse_dotenv(path: &Path) -> HashMap<String, String> {
+    let content = match fs::read_to_string(path) {
         Ok(c) => c,
         Err(_) => return HashMap::new(),
     };
 
-    let mut secrets = HashMap::new();
+    let mut vars = HashMap::new();
     for line in content.lines() {
         let line = line.trim();
         // Skip comments and blank lines
@@ -61,14 +56,35 @@ pub fn load_dotenv_secrets(collection_path: &Path) -> HashMap<String, String> {
             } else {
                 value
             };
-            secrets.insert(key, value);
+            vars.insert(key, value);
         }
     }
 
-    secrets
+    vars
 }
 
-/// Resolve all variables for a given environment, merging env variables + .env secrets.
+/// Load variables from the collection root .env file.
+pub fn load_root_dotenv(collection_path: &Path) -> HashMap<String, String> {
+    let env_path = collection_path.join(".env");
+    if !env_path.exists() {
+        return HashMap::new();
+    }
+    parse_dotenv(&env_path)
+}
+
+/// Load secrets from the .apiark/.env file.
+pub fn load_dotenv_secrets(collection_path: &Path) -> HashMap<String, String> {
+    let env_path = collection_path.join(".apiark").join(".env");
+    if !env_path.exists() {
+        return HashMap::new();
+    }
+    parse_dotenv(&env_path)
+}
+
+/// Resolve all variables for a given environment, merging:
+/// 1. Root .env variables (lowest priority)
+/// 2. Environment YAML variables
+/// 3. .apiark/.env secrets (declared in environment's secrets list) (highest priority)
 pub fn get_resolved_variables(
     collection_path: &Path,
     environment_name: &str,
@@ -79,7 +95,13 @@ pub fn get_resolved_variables(
         .find(|e| e.name == environment_name)
         .ok_or_else(|| format!("Environment '{}' not found", environment_name))?;
 
-    let mut variables = env.variables.clone();
+    // Start with root .env (lowest priority)
+    let mut variables = load_root_dotenv(collection_path);
+
+    // Override with environment YAML variables
+    variables.extend(env.variables.clone());
+
+    // Override with .apiark/.env secrets (highest priority)
     let secrets = load_dotenv_secrets(collection_path);
     for secret_key in &env.secrets {
         if let Some(value) = secrets.get(secret_key) {

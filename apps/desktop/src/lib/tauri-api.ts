@@ -198,6 +198,14 @@ export async function getResolvedVariables(
   });
 }
 
+export async function loadRootDotenv(
+  collectionPath: string,
+): Promise<Record<string, string>> {
+  return await invoke<Record<string, string>>("load_root_dotenv", {
+    collectionPath,
+  });
+}
+
 // ── History ──
 
 export async function getHistory(): Promise<HistoryEntry[]> {

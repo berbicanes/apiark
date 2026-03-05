@@ -4,6 +4,13 @@ use std::path::Path;
 use crate::models::environment::EnvironmentFile;
 use crate::storage::environment;
 
+/// Load variables from the collection root .env file only (no environment).
+#[tauri::command]
+pub async fn load_root_dotenv(collection_path: String) -> Result<HashMap<String, String>, String> {
+    let path = Path::new(&collection_path);
+    Ok(environment::load_root_dotenv(path))
+}
+
 #[tauri::command]
 pub async fn load_environments(collection_path: String) -> Result<Vec<EnvironmentFile>, String> {
     let path = Path::new(&collection_path);
@@ -21,32 +28,15 @@ pub async fn save_environment(
     environment::save_environment(path, &env)
 }
 
-/// Resolve all variables for a given environment, merging env variables + .env secrets.
+/// Resolve all variables for a given environment, merging:
+/// 1. Root .env variables (lowest priority)
+/// 2. Environment YAML variables
+/// 3. .apiark/.env secrets (highest priority)
 #[tauri::command]
 pub async fn get_resolved_variables(
     collection_path: String,
     environment_name: String,
 ) -> Result<HashMap<String, String>, String> {
     let path = Path::new(&collection_path);
-
-    // Load the named environment
-    let envs = environment::load_environments(path)?;
-    let env = envs
-        .iter()
-        .find(|e| e.name == environment_name)
-        .ok_or_else(|| format!("Environment '{}' not found", environment_name))?;
-
-    let mut variables = env.variables.clone();
-
-    // Load secrets from .env file
-    let secrets = environment::load_dotenv_secrets(path);
-
-    // Merge secrets that are declared in the environment's secrets list
-    for secret_key in &env.secrets {
-        if let Some(value) = secrets.get(secret_key) {
-            variables.insert(secret_key.clone(), value.clone());
-        }
-    }
-
-    Ok(variables)
+    environment::get_resolved_variables(path, &environment_name)
 }

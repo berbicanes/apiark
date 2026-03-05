@@ -130,9 +130,16 @@ pub async fn create_sample_collection() -> Result<String, String> {
         "name: Default\nvariables:\n  baseUrl: https://httpbin.org\n",
     ).map_err(|e| format!("Failed to write env: {e}"))?;
 
-    // .gitignore
+    // .gitignore (inside .apiark/)
     std::fs::write(apiark_dir.join(".gitignore"), ".env\n")
         .map_err(|e| format!("Failed to write .gitignore: {e}"))?;
+
+    // Root .gitignore (covers collection root .env file)
+    let root_gitignore = base.join(".gitignore");
+    if !root_gitignore.exists() {
+        std::fs::write(&root_gitignore, ".env\n.env.local\n")
+            .map_err(|e| format!("Failed to write root .gitignore: {e}"))?;
+    }
 
     // Sample requests
     write_sample(&basics_dir.join("simple-get.yaml"),

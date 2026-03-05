@@ -3,6 +3,7 @@ import type { EnvironmentData } from "@apiark/types";
 import {
   loadEnvironments as loadEnvironmentsApi,
   getResolvedVariables as getResolvedVariablesApi,
+  loadRootDotenv,
 } from "@/lib/tauri-api";
 
 interface EnvironmentState {
@@ -51,8 +52,18 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
 
   getResolvedVariables: async () => {
     const { activeCollectionPath, activeEnvironmentName, runtimeOverrides } = get();
-    if (!activeCollectionPath || !activeEnvironmentName) {
+    if (!activeCollectionPath) {
       return { ...runtimeOverrides };
+    }
+    if (!activeEnvironmentName) {
+      // No environment selected — still load root .env variables
+      try {
+        const rootVars = await loadRootDotenv(activeCollectionPath);
+        return { ...rootVars, ...runtimeOverrides };
+      } catch (err) {
+        console.error("Failed to load root .env:", err);
+        return { ...runtimeOverrides };
+      }
     }
     try {
       const resolved = await getResolvedVariablesApi(
