@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { useConsoleStore, type ConsoleLogEntry } from "@/stores/console-store";
-import { Terminal, Trash2, ChevronDown, Filter } from "lucide-react";
+import { Terminal, Trash2, ChevronUp, ChevronDown, Filter } from "lucide-react";
 
 export function ConsoleBottomBar() {
   const { entries, open, height, filter, toggle, clear, setHeight, setFilter } =
@@ -40,29 +40,36 @@ export function ConsoleBottomBar() {
     [height, setHeight],
   );
 
+  const hasErrors = entries.some((e) => e.level === "error");
+
   if (!open) {
     return (
-      <div className="flex items-center border-t border-[var(--color-border)] bg-[var(--color-elevated)]">
+      <div className="flex items-center border-t border-[var(--color-border)] bg-[var(--color-activity-bar)] px-1">
+        {/* Left status items */}
         <button
           onClick={toggle}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-elevated)] hover:text-[var(--color-text-primary)]"
         >
-          <Terminal className="h-4 w-4" />
+          <Terminal className="h-3.5 w-3.5" />
           Console
           {entries.length > 0 && (
-            <span className="rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-bold text-white">
+            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+              hasErrors
+                ? "bg-[var(--color-error)]/20 text-[var(--color-error)]"
+                : "bg-[var(--color-accent)]/20 text-[var(--color-accent)]"
+            }`}>
               {entries.length}
             </span>
           )}
+          <ChevronUp className="h-3 w-3 text-[var(--color-text-dimmed)]" />
         </button>
+
         <div className="flex-1" />
-        <button
-          onClick={toggle}
-          className="mr-3 rounded p-1 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]"
-          title="Open Console"
-        >
-          <ChevronDown className="h-4 w-4 rotate-180" />
-        </button>
+
+        {/* Right status items */}
+        <span className="px-3 text-[11px] text-[var(--color-text-dimmed)]">
+          ApiArk v0.1.0
+        </span>
       </div>
     );
   }
@@ -75,32 +82,32 @@ export function ConsoleBottomBar() {
       {/* Resize handle */}
       <div
         onMouseDown={handleMouseDown}
-        className={`h-1 cursor-row-resize hover:bg-[var(--color-accent)]/30 ${resizing ? "bg-[var(--color-accent)]/30" : ""}`}
+        className={`h-1 cursor-row-resize transition-colors hover:bg-[var(--color-accent)]/30 ${resizing ? "bg-[var(--color-accent)]/30" : ""}`}
       />
 
       {/* Header */}
-      <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-3 py-1">
-        <Terminal className="h-3 w-3 text-[var(--color-text-muted)]" />
-        <span className="text-xs font-medium text-[var(--color-text-secondary)]">
+      <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-3 py-1.5">
+        <Terminal className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+        <span className="text-xs font-semibold text-[var(--color-text-secondary)]">
           Console
         </span>
-        <span className="text-[10px] text-[var(--color-text-dimmed)]">
-          {filtered.length} entries
+        <span className="rounded-full bg-[var(--color-elevated)] px-1.5 py-0.5 text-[10px] text-[var(--color-text-dimmed)]">
+          {filtered.length}
         </span>
 
         <div className="flex-1" />
 
         {/* Filter */}
-        <div className="flex items-center gap-0.5">
-          <Filter className="mr-1 h-3 w-3 text-[var(--color-text-dimmed)]" />
+        <div className="flex items-center gap-0.5 rounded-lg bg-[var(--color-elevated)] p-0.5">
+          <Filter className="mx-1 h-3 w-3 text-[var(--color-text-dimmed)]" />
           {(["all", "log", "info", "warn", "error"] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`rounded px-1.5 py-0.5 text-[10px] ${
+              className={`rounded-md px-2 py-0.5 text-[10px] font-medium transition-colors ${
                 filter === f
                   ? "bg-[var(--color-accent)] text-white"
-                  : "text-[var(--color-text-muted)] hover:bg-[var(--color-elevated)]"
+                  : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
               }`}
             >
               {f}
@@ -110,17 +117,17 @@ export function ConsoleBottomBar() {
 
         <button
           onClick={clear}
-          className="rounded p-0.5 text-[var(--color-text-muted)] hover:bg-[var(--color-elevated)] hover:text-[var(--color-text-secondary)]"
+          className="rounded-md p-1 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-elevated)] hover:text-[var(--color-text-secondary)]"
           title="Clear console"
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
         <button
           onClick={toggle}
-          className="rounded p-0.5 text-[var(--color-text-muted)] hover:bg-[var(--color-elevated)] hover:text-[var(--color-text-secondary)]"
+          className="rounded-md p-1 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-elevated)] hover:text-[var(--color-text-secondary)]"
           title="Close console"
         >
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-3.5 w-3.5" />
         </button>
       </div>
 
@@ -149,20 +156,20 @@ function ConsoleRow({ entry }: { entry: ConsoleLogEntry }) {
   const levelColors: Record<string, string> = {
     log: "text-[var(--color-text-secondary)]",
     info: "text-blue-400",
-    warn: "text-yellow-400",
-    error: "text-red-400",
+    warn: "text-amber-400",
+    error: "text-[var(--color-error)]",
   };
 
   const bgColors: Record<string, string> = {
     log: "",
     info: "",
-    warn: "bg-yellow-500/5",
+    warn: "bg-amber-500/5",
     error: "bg-red-500/5",
   };
 
   return (
     <div
-      className={`flex gap-2 border-b border-[var(--color-border)]/50 px-3 py-0.5 ${bgColors[entry.level] ?? ""}`}
+      className={`flex gap-2 border-b border-[var(--color-border)]/30 px-3 py-1 ${bgColors[entry.level] ?? ""}`}
     >
       <span className="shrink-0 text-[var(--color-text-dimmed)]">{time}</span>
       <span

@@ -18,48 +18,37 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 const METHOD_COLORS: Record<HttpMethod, string> = {
-  GET: "text-green-500",
-  POST: "text-yellow-500",
-  PUT: "text-blue-500",
-  PATCH: "text-purple-500",
-  DELETE: "text-red-500",
-  HEAD: "text-cyan-500",
-  OPTIONS: "text-gray-500",
+  GET: "bg-emerald-500/15 text-emerald-400",
+  POST: "bg-amber-500/15 text-amber-400",
+  PUT: "bg-blue-500/15 text-blue-400",
+  PATCH: "bg-purple-500/15 text-purple-400",
+  DELETE: "bg-red-500/15 text-red-400",
+  HEAD: "bg-cyan-500/15 text-cyan-400",
+  OPTIONS: "bg-gray-500/15 text-gray-400",
 };
 
 function TabBadge({ tab }: { tab: Tab }) {
-  switch (tab.protocol) {
-    case "graphql":
-      return (
-        <span className="rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-bold text-purple-400">
-          GQL
-        </span>
-      );
-    case "websocket":
-      return (
-        <span className="rounded bg-cyan-500/20 px-1.5 py-0.5 text-[10px] font-bold text-cyan-400">
-          WS
-        </span>
-      );
-    case "sse":
-      return (
-        <span className="rounded bg-orange-500/20 px-1.5 py-0.5 text-[10px] font-bold text-orange-400">
-          SSE
-        </span>
-      );
-    case "grpc":
-      return (
-        <span className="rounded bg-green-500/20 px-1.5 py-0.5 text-[10px] font-bold text-green-400">
-          gRPC
-        </span>
-      );
-    default:
-      return (
-        <span className={`text-[10px] font-bold ${METHOD_COLORS[tab.method]}`}>
-          {tab.method}
-        </span>
-      );
+  const badges: Record<string, { bg: string; label: string }> = {
+    graphql: { bg: "bg-violet-500/15 text-violet-400", label: "GQL" },
+    websocket: { bg: "bg-cyan-500/15 text-cyan-400", label: "WS" },
+    sse: { bg: "bg-orange-500/15 text-orange-400", label: "SSE" },
+    grpc: { bg: "bg-emerald-500/15 text-emerald-400", label: "gRPC" },
+  };
+
+  if (tab.protocol !== "http") {
+    const badge = badges[tab.protocol];
+    return (
+      <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${badge?.bg ?? ""}`}>
+        {badge?.label ?? tab.protocol}
+      </span>
+    );
   }
+
+  return (
+    <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${METHOD_COLORS[tab.method]}`}>
+      {tab.method}
+    </span>
+  );
 }
 
 function SortableTab({
@@ -122,26 +111,23 @@ function SortableTab({
         {...listeners}
         onClick={onActivate}
         onContextMenu={handleContextMenu}
-        className={`group relative flex shrink-0 items-center gap-2 px-4 py-2 text-sm transition-all ${
+        className={`group relative flex shrink-0 items-center gap-2 rounded-t-lg px-4 py-2 text-[13px] transition-all ${
           isActive
-            ? "bg-[var(--color-surface)] text-[var(--color-text-primary)]"
-            : "text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]/50 hover:text-[var(--color-text-secondary)]"
+            ? "bg-[var(--color-card)] text-[var(--color-text-primary)] shadow-[0_-1px_4px_rgba(0,0,0,0.1)]"
+            : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
         }`}
       >
-        {isActive && (
-          <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--color-accent)]" />
-        )}
         <TabBadge tab={tab} />
         <span className="max-w-[140px] truncate">{tab.name}</span>
         {tab.isDirty && (
-          <span className="h-2 w-2 rounded-full bg-orange-400/80" />
+          <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--color-accent)]" />
         )}
         <span
           onClick={(e) => {
             e.stopPropagation();
             onClose();
           }}
-          className="ml-0.5 rounded p-0.5 opacity-0 transition-opacity hover:bg-[var(--color-border)] group-hover:opacity-100"
+          className="ml-0.5 rounded-md p-0.5 opacity-0 transition-opacity hover:bg-[var(--color-border)] group-hover:opacity-100"
         >
           <X className="h-3 w-3" />
         </span>
@@ -149,34 +135,28 @@ function SortableTab({
       {contextMenu && (
         <div
           ref={menuRef}
-          className="fixed z-50 min-w-[180px] rounded border border-[var(--color-border)] bg-[var(--color-elevated)] py-1 shadow-lg"
+          className="fixed z-50 min-w-[180px] overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] py-1 shadow-xl"
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
-          <button
-            onClick={() => { onClose(); setContextMenu(null); }}
-            className="flex w-full px-3 py-1.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
-          >
-            Close
-          </button>
-          <button
-            onClick={() => { onCloseOthers(); setContextMenu(null); }}
-            className="flex w-full px-3 py-1.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
-          >
-            Close Others
-          </button>
-          <button
-            onClick={() => { onCloseAll(); setContextMenu(null); }}
-            className="flex w-full px-3 py-1.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
-          >
-            Close All
-          </button>
-          <div className="my-1 border-t border-[var(--color-border)]" />
-          <button
-            onClick={() => { onDetach(); setContextMenu(null); }}
-            className="flex w-full px-3 py-1.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
-          >
-            Move to New Window
-          </button>
+          {[
+            { label: "Close", action: onClose },
+            { label: "Close Others", action: onCloseOthers },
+            { label: "Close All", action: onCloseAll },
+            null,
+            { label: "Move to New Window", action: onDetach },
+          ].map((item, i) =>
+            item === null ? (
+              <div key={i} className="my-1 border-t border-[var(--color-border)]" />
+            ) : (
+              <button
+                key={item.label}
+                onClick={() => { item.action(); setContextMenu(null); }}
+                className="flex w-full px-3 py-1.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-accent-glow)]"
+              >
+                {item.label}
+              </button>
+            ),
+          )}
         </div>
       )}
     </>
@@ -201,17 +181,17 @@ function NewTabDropdown() {
 
   const items = [
     { label: "HTTP Request", icon: Globe, action: newTab },
-    { label: "GraphQL", icon: Globe, action: newGraphQLTab, color: "text-purple-400" },
+    { label: "GraphQL", icon: Globe, action: newGraphQLTab, color: "text-violet-400" },
     { label: "WebSocket", icon: Zap, action: newWebSocketTab, color: "text-cyan-400" },
     { label: "SSE", icon: Radio, action: newSSETab, color: "text-orange-400" },
-    { label: "gRPC", icon: Globe, action: newGrpcTab, color: "text-green-400" },
+    { label: "gRPC", icon: Globe, action: newGrpcTab, color: "text-emerald-400" },
   ];
 
   return (
     <div ref={ref} className="relative flex items-center">
       <button
         onClick={() => setOpen(!open)}
-        className="mx-3 flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:brightness-110 active:scale-95"
+        className="ml-1 flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-[var(--color-accent-hover)] active:scale-95"
         title="New Tab"
       >
         <Plus className="h-4 w-4" strokeWidth={2.5} />
@@ -219,7 +199,7 @@ function NewTabDropdown() {
         <ChevronDown className="h-3 w-3 opacity-70" />
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-1 min-w-[160px] rounded border border-[var(--color-border)] bg-[var(--color-elevated)] py-1 shadow-lg">
+        <div className="absolute right-0 top-full z-50 mt-2 min-w-[180px] overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] py-1 shadow-xl">
           {items.map((item) => (
             <button
               key={item.label}
@@ -227,9 +207,9 @@ function NewTabDropdown() {
                 item.action();
                 setOpen(false);
               }}
-              className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
+              className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-accent-glow)]"
             >
-              <item.icon className={`h-3.5 w-3.5 ${item.color ?? "text-[var(--color-text-muted)]"}`} />
+              <item.icon className={`h-4 w-4 ${item.color ?? "text-[var(--color-text-muted)]"}`} />
               {item.label}
             </button>
           ))}
@@ -261,7 +241,7 @@ export function TabBar() {
   if (tabs.length === 0) return null;
 
   return (
-    <div data-tour="tabs" className="flex items-center border-b border-[var(--color-border)] bg-[var(--color-bg)]/80">
+    <div data-tour="tabs" className="flex items-end gap-1 bg-[var(--color-surface)] px-2 pt-2">
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
@@ -271,7 +251,7 @@ export function TabBar() {
           items={tabs.map((t) => t.id)}
           strategy={horizontalListSortingStrategy}
         >
-          <div className="flex flex-1 overflow-x-auto">
+          <div className="flex flex-1 items-end gap-0.5 overflow-x-auto">
             {tabs.map((tab) => (
               <SortableTab
                 key={tab.id}
@@ -287,7 +267,9 @@ export function TabBar() {
           </div>
         </SortableContext>
       </DndContext>
-      <NewTabDropdown />
+      <div className="pb-1.5">
+        <NewTabDropdown />
+      </div>
     </div>
   );
 }

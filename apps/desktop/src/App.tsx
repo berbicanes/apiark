@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
-import { CollectionSidebar } from "@/components/collection/collection-sidebar";
+import { ActivityBar, type ActivityView } from "@/components/layout/activity-bar";
+import { SidePanel } from "@/components/layout/side-panel";
 import { TabBar } from "@/components/tabs/tab-bar";
 import { UrlBar } from "@/components/request/url-bar";
 import { RequestPanel } from "@/components/request/request-panel";
@@ -26,12 +27,14 @@ import { MockServerDialog } from "@/components/mock/mock-server-dialog";
 import { MonitorDialog } from "@/components/scheduler/monitor-dialog";
 import { DocsPreviewDialog } from "@/components/docs/docs-preview-dialog";
 import { useDocsStore } from "@/stores/docs-store";
+import { useMockStore } from "@/stores/mock-store";
+import { useMonitorStore } from "@/stores/monitor-store";
 import { WelcomeScreen } from "@/components/onboarding/welcome-screen";
 import { GuidedTour } from "@/components/onboarding/guided-tour";
 import { ConsoleBottomBar } from "@/components/console/console-panel";
 import { useCollectionStore } from "@/stores/collection-store";
 import { AiAssistantDialog } from "@/components/ai/ai-assistant-dialog";
-import { AlertCircle, X, RefreshCw, FileX, GitMerge, Shield } from "lucide-react";
+import { AlertCircle, X, RefreshCw, FileX, GitMerge, Shield, Zap } from "lucide-react";
 import * as Dialog from "@radix-ui/react-dialog";
 
 function App() {
@@ -50,7 +53,8 @@ function App() {
   const [runnerOpen, setRunnerOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeView, setActiveView] = useState<ActivityView>("collections");
+  const [sidePanelVisible, setSidePanelVisible] = useState(true);
   const urlBarRef = useRef<HTMLInputElement>(null);
   const envSelectorRef = useRef<HTMLSelectElement>(null);
 
@@ -105,6 +109,16 @@ function App() {
 
   const openSettings = useCallback(() => setSettingsOpen(true), []);
   const openCurlImport = useCallback(() => setCurlImportOpen(true), []);
+
+  // Toggle side panel when clicking same activity view
+  const handleViewChange = useCallback((view: ActivityView) => {
+    if (view === activeView && sidePanelVisible) {
+      setSidePanelVisible(false);
+    } else {
+      setActiveView(view);
+      setSidePanelVisible(true);
+    }
+  }, [activeView, sidePanelVisible]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -168,7 +182,7 @@ function App() {
           break;
         case "\\":
           e.preventDefault();
-          setSidebarCollapsed((prev) => !prev);
+          setSidePanelVisible((prev) => !prev);
           break;
         case "enter":
           e.preventDefault();
@@ -223,18 +237,18 @@ function App() {
 
       {/* Auto-save error banner */}
       {autoSaveError && (
-        <div className="flex items-center gap-2 bg-red-500/10 px-4 py-2 text-sm text-red-400">
+        <div className="flex items-center gap-2 bg-[var(--color-error)]/10 px-4 py-2 text-sm text-[var(--color-error)]">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <span className="flex-1">Auto-save failed: {autoSaveError}</span>
           <button
             onClick={() => useTabStore.getState().autoSave()}
-            className="rounded bg-red-500/20 px-2 py-0.5 text-xs hover:bg-red-500/30"
+            className="rounded-md bg-[var(--color-error)]/20 px-2 py-0.5 text-xs hover:bg-[var(--color-error)]/30"
           >
             Retry
           </button>
           <button
             onClick={() => useTabStore.getState().clearAutoSaveError()}
-            className="rounded p-0.5 hover:bg-red-500/20"
+            className="rounded p-0.5 hover:bg-[var(--color-error)]/20"
           >
             <X className="h-3.5 w-3.5" />
           </button>
@@ -247,15 +261,34 @@ function App() {
       )}
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <CollectionSidebar
+        {/* Activity Bar */}
+        <ActivityBar
+          activeView={activeView}
+          onViewChange={handleViewChange}
           onOpenSettings={openSettings}
-          collapsed={sidebarCollapsed}
-          envSelectorRef={envSelectorRef}
+          onOpenAi={() => setAiOpen(true)}
+          onToggleConsole={() => useConsoleStore.getState().toggle()}
         />
 
+        {/* Side Panel */}
+        {sidePanelVisible && (
+          <SidePanel
+            activeView={activeView}
+            envSelectorRef={envSelectorRef}
+            onOpenMock={() => useMockStore.getState().openDialog()}
+            onOpenMonitor={() => useMonitorStore.getState().openDialog()}
+            onOpenDocs={() => {
+              // Open docs for first collection if available
+              const collections = useCollectionStore.getState().collections;
+              if (collections.length > 0) {
+                useDocsStore.getState().openDocs(collections[0].path, collections[0].name);
+              }
+            }}
+          />
+        )}
+
         {/* Main Panel */}
-        <main id="main-content" className="flex flex-1 flex-col overflow-hidden" role="main">
+        <main id="main-content" className="flex flex-1 flex-col overflow-hidden bg-[var(--color-card)]" role="main">
           {/* Tab Bar */}
           <TabBar />
 
@@ -267,7 +300,7 @@ function App() {
         </main>
       </div>
 
-      {/* Console panel */}
+      {/* Status bar / Console */}
       <ConsoleBottomBar />
 
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
@@ -339,22 +372,54 @@ function ProtocolView({
 }
 
 function EmptyState() {
-  const { newTab } = useTabStore();
+  const { newTab, newGraphQLTab, newWebSocketTab } = useTabStore();
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-      <p className="text-sm text-[var(--color-text-dimmed)]">
-        Open a request from the sidebar, or press{" "}
-        <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-elevated)] px-1.5 py-0.5 text-xs text-[var(--color-text-secondary)]">
+    <div className="flex flex-1 flex-col items-center justify-center gap-6">
+      {/* Logo */}
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--color-accent)] shadow-lg">
+        <Zap className="h-8 w-8 text-white" />
+      </div>
+
+      <div className="text-center">
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
+          Ready to build something?
+        </h2>
+        <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+          Create a new request or open a collection to get started
+        </p>
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={newTab}
+          className="flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-5 py-2.5 text-sm font-medium text-white transition-all hover:bg-[var(--color-accent-hover)] active:scale-[0.98]"
+        >
+          HTTP Request
+        </button>
+        <button
+          onClick={newGraphQLTab}
+          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-5 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-all hover:bg-[var(--color-card-hover)] active:scale-[0.98]"
+        >
+          GraphQL
+        </button>
+        <button
+          onClick={newWebSocketTab}
+          className="rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-5 py-2.5 text-sm font-medium text-[var(--color-text-secondary)] transition-all hover:bg-[var(--color-card-hover)] active:scale-[0.98]"
+        >
+          WebSocket
+        </button>
+      </div>
+
+      <p className="text-xs text-[var(--color-text-dimmed)]">
+        <kbd className="rounded border border-[var(--color-border)] bg-[var(--color-elevated)] px-1.5 py-0.5 text-[10px]">
           Ctrl+N
         </kbd>{" "}
-        to create one
+        new request{" "}
+        <kbd className="ml-2 rounded border border-[var(--color-border)] bg-[var(--color-elevated)] px-1.5 py-0.5 text-[10px]">
+          Ctrl+K
+        </kbd>{" "}
+        command palette
       </p>
-      <button
-        onClick={newTab}
-        className="rounded bg-[var(--color-elevated)] px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]"
-      >
-        New Request
-      </button>
     </div>
   );
 }
@@ -364,20 +429,20 @@ function CrashReportBanner() {
   if (settings.crashReportsEnabled !== null) return null;
 
   return (
-    <div className="flex items-center gap-2 bg-blue-500/10 px-4 py-2 text-sm text-blue-400">
+    <div className="flex items-center gap-2 bg-[var(--color-accent)]/10 px-4 py-2 text-sm text-[var(--color-accent)]">
       <Shield className="h-4 w-4 shrink-0" />
       <span className="flex-1">
         Help improve ApiArk by sending anonymous crash reports? No request data is ever included.
       </span>
       <button
         onClick={() => updateSettings({ crashReportsEnabled: true })}
-        className="rounded bg-blue-500/20 px-2 py-0.5 text-xs hover:bg-blue-500/30"
+        className="rounded-md bg-[var(--color-accent)]/20 px-3 py-0.5 text-xs font-medium hover:bg-[var(--color-accent)]/30"
       >
         Enable
       </button>
       <button
         onClick={() => updateSettings({ crashReportsEnabled: false })}
-        className="rounded bg-blue-500/20 px-2 py-0.5 text-xs hover:bg-blue-500/30"
+        className="rounded-md bg-[var(--color-accent)]/20 px-3 py-0.5 text-xs font-medium hover:bg-[var(--color-accent)]/30"
       >
         No thanks
       </button>
@@ -390,70 +455,35 @@ function ConflictBanner({ tabId, conflictState }: { tabId: string; conflictState
 
   if (conflictState === "merge-conflict") {
     return (
-      <div className="flex items-center gap-2 bg-orange-500/10 px-4 py-2 text-sm text-orange-400">
+      <div className="flex items-center gap-2 bg-[var(--color-warning)]/10 px-4 py-2 text-sm text-[var(--color-warning)]">
         <GitMerge className="h-4 w-4 shrink-0" />
         <span className="flex-1">
           This file has Git merge conflicts. Please resolve them in your editor or Git tool, then reload.
         </span>
-        <button
-          onClick={() => reloadFromDisk(tabId)}
-          className="rounded bg-orange-500/20 px-2 py-0.5 text-xs hover:bg-orange-500/30"
-        >
-          Reload
-        </button>
-        <button
-          onClick={() => closeTab(tabId)}
-          className="rounded bg-orange-500/20 px-2 py-0.5 text-xs hover:bg-orange-500/30"
-        >
-          Close
-        </button>
+        <button onClick={() => reloadFromDisk(tabId)} className="rounded-md bg-[var(--color-warning)]/20 px-2 py-0.5 text-xs hover:bg-[var(--color-warning)]/30">Reload</button>
+        <button onClick={() => closeTab(tabId)} className="rounded-md bg-[var(--color-warning)]/20 px-2 py-0.5 text-xs hover:bg-[var(--color-warning)]/30">Close</button>
       </div>
     );
   }
 
   if (conflictState === "deleted") {
     return (
-      <div className="flex items-center gap-2 bg-yellow-500/10 px-4 py-2 text-sm text-yellow-400">
+      <div className="flex items-center gap-2 bg-[var(--color-warning)]/10 px-4 py-2 text-sm text-[var(--color-warning)]">
         <FileX className="h-4 w-4 shrink-0" />
         <span className="flex-1">This file was deleted externally.</span>
-        <button
-          onClick={() => closeTab(tabId)}
-          className="rounded bg-yellow-500/20 px-2 py-0.5 text-xs hover:bg-yellow-500/30"
-        >
-          Close
-        </button>
-        <button
-          onClick={() => dismissConflict(tabId)}
-          className="rounded p-0.5 hover:bg-yellow-500/20"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
+        <button onClick={() => closeTab(tabId)} className="rounded-md bg-[var(--color-warning)]/20 px-2 py-0.5 text-xs hover:bg-[var(--color-warning)]/30">Close</button>
+        <button onClick={() => dismissConflict(tabId)} className="rounded p-0.5 hover:bg-[var(--color-warning)]/20"><X className="h-3.5 w-3.5" /></button>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 bg-blue-500/10 px-4 py-2 text-sm text-blue-400">
+    <div className="flex items-center gap-2 bg-[var(--color-accent)]/10 px-4 py-2 text-sm text-[var(--color-accent)]">
       <RefreshCw className="h-4 w-4 shrink-0" />
       <span className="flex-1">This file was changed externally.</span>
-      <button
-        onClick={() => reloadFromDisk(tabId)}
-        className="rounded bg-blue-500/20 px-2 py-0.5 text-xs hover:bg-blue-500/30"
-      >
-        Reload
-      </button>
-      <button
-        onClick={() => dismissConflict(tabId)}
-        className="rounded bg-blue-500/20 px-2 py-0.5 text-xs hover:bg-blue-500/30"
-      >
-        Keep Mine
-      </button>
-      <button
-        onClick={() => dismissConflict(tabId)}
-        className="rounded p-0.5 hover:bg-blue-500/20"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
+      <button onClick={() => reloadFromDisk(tabId)} className="rounded-md bg-[var(--color-accent)]/20 px-2 py-0.5 text-xs hover:bg-[var(--color-accent)]/30">Reload</button>
+      <button onClick={() => dismissConflict(tabId)} className="rounded-md bg-[var(--color-accent)]/20 px-2 py-0.5 text-xs hover:bg-[var(--color-accent)]/30">Keep Mine</button>
+      <button onClick={() => dismissConflict(tabId)} className="rounded p-0.5 hover:bg-[var(--color-accent)]/20"><X className="h-3.5 w-3.5" /></button>
     </div>
   );
 }
@@ -468,8 +498,8 @@ function MigrationDialog() {
   return (
     <Dialog.Root open onOpenChange={(open) => !open && dismissMigration()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl focus:outline-none">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl focus:outline-none">
           <div className="border-b border-[var(--color-border)] px-6 py-4">
             <Dialog.Title className="text-base font-semibold text-[var(--color-text-primary)]">
               {status.isNewer ? "Newer Collection Format" : "Collection Format Upgrade"}
@@ -497,25 +527,10 @@ function MigrationDialog() {
             )}
           </div>
           <div className="flex justify-end gap-2 border-t border-[var(--color-border)] px-6 py-3">
-            <button
-              onClick={dismissMigration}
-              className="rounded px-3 py-1.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-elevated)]"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={openReadOnly}
-              className="rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
-            >
-              Open Read-Only
-            </button>
+            <button onClick={dismissMigration} className="rounded-lg px-3 py-1.5 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-elevated)]">Cancel</button>
+            <button onClick={openReadOnly} className="rounded-lg bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]">Open Read-Only</button>
             {!status.isNewer && (
-              <button
-                onClick={acceptMigration}
-                className="rounded bg-[var(--color-accent)] px-3 py-1.5 text-sm text-white hover:opacity-90"
-              >
-                Upgrade
-              </button>
+              <button onClick={acceptMigration} className="rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-sm text-white hover:brightness-110">Upgrade</button>
             )}
           </div>
         </Dialog.Content>

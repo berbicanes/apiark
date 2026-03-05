@@ -59,28 +59,71 @@
   font-size: 0.875rem;
 }
 
-/* Dark theme (default) */
+/* Dark theme (default) — deep navy palette */
 [data-theme="dark"] {
-  --color-bg: #0a0a0b;
-  --color-surface: #141416;
-  --color-elevated: #1c1c1f;
-  --color-border: #2a2a2e;
-  --color-text-primary: #e4e4e7;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
-  --color-text-dimmed: #52525b;
-  --color-accent: #3b82f6;
+  --color-bg: #0c0e14;
+  --color-surface: #12151e;
+  --color-elevated: #1a1e2e;
+  --color-border: #252a3a;
+  --color-text-primary: #e2e4ed;
+  --color-text-secondary: #9ba1b5;
+  --color-text-muted: #6b7290;
+  --color-text-dimmed: #454b60;
+  --color-accent: #6366f1;
+  --color-accent-hover: #818cf8;
+  --color-accent-glow: rgba(99, 102, 241, 0.15);
+  --color-activity-bar: #0a0c12;
+  --color-card: #161a26;
+  --color-card-hover: #1c2030;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+  --color-gradient-from: #6366f1;
+  --color-gradient-to: #a855f7;
 }
 
 /* Light theme */
 [data-theme="light"] {
-  --color-bg: #ffffff;
-  --color-surface: #f4f4f5;
-  --color-elevated: #e4e4e7;
-  --color-border: #d4d4d8;
-  --color-text-primary: #18181b;
-  --color-text-secondary: #3f3f46;
-  --color-text-muted: #71717a;
-  --color-text-dimmed: #a1a1aa;
-  --color-accent: #2563eb;
+  --color-bg: #f8f9fc;
+  --color-surface: #f0f1f5;
+  --color-elevated: #e4e6ed;
+  --color-border: #d1d5e0;
+  --color-text-primary: #111827;
+  --color-text-secondary: #374151;
+  --color-text-muted: #6b7280;
+  --color-text-dimmed: #9ca3af;
+  --color-accent: #6366f1;
+  --color-accent-hover: #4f46e5;
+  --color-accent-glow: rgba(99, 102, 241, 0.1);
+  --color-activity-bar: #e8eaf0;
+  --color-card: #ffffff;
+  --color-card-hover: #f5f6fa;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-gradient-from: #6366f1;
+  --color-gradient-to: #a855f7;
+}
+
+/* Glass effect utility */
+.glass {
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+}
+
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-dimmed);
 }
