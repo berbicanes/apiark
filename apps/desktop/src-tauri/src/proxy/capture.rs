@@ -94,11 +94,10 @@ impl ProxyCaptureManager {
 
         let shared_state = Arc::new(state);
         let state_for_handler = Arc::clone(&shared_state);
-        let router = Router::new()
-            .fallback(move |req: axum::extract::Request| {
-                let state = Arc::clone(&state_for_handler);
-                async move { proxy_handler(state, req).await }
-            });
+        let router = Router::new().fallback(move |req: axum::extract::Request| {
+            let state = Arc::clone(&state_for_handler);
+            async move { proxy_handler(state, req).await }
+        });
 
         let addr = SocketAddr::from(([127, 0, 0, 1], port));
         let listener = TcpListener::bind(addr)
@@ -138,10 +137,7 @@ impl ProxyCaptureManager {
 }
 
 /// Forward the request to the target and capture the exchange.
-async fn proxy_handler(
-    state: Arc<ProxyState>,
-    req: axum::extract::Request,
-) -> impl IntoResponse {
+async fn proxy_handler(state: Arc<ProxyState>, req: axum::extract::Request) -> impl IntoResponse {
     let start = std::time::Instant::now();
     let method = req.method().to_string();
     let uri = req.uri().to_string();
@@ -165,7 +161,9 @@ async fn proxy_handler(
     if is_passthrough {
         match forward_request(req).await {
             Ok(resp) => return resp,
-            Err(_) => return (StatusCode::BAD_GATEWAY, "Passthrough forward failed").into_response(),
+            Err(_) => {
+                return (StatusCode::BAD_GATEWAY, "Passthrough forward failed").into_response()
+            }
         }
     }
 

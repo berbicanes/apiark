@@ -7,14 +7,11 @@ use super::{ImportBody, ImportData, ImportEnvironment, ImportItem, ImportWarning
 /// Parse an OpenAPI 3.0/3.1 spec (JSON or YAML) into ImportData.
 pub fn parse_openapi(content: &str) -> Result<ImportData, String> {
     // Parse as YAML (handles both JSON and YAML)
-    let root: Value = serde_yaml::from_str(content)
-        .map_err(|e| format!("Invalid OpenAPI spec: {e}"))?;
+    let root: Value =
+        serde_yaml::from_str(content).map_err(|e| format!("Invalid OpenAPI spec: {e}"))?;
 
     // Validate it's OpenAPI 3.x
-    let version = root
-        .get("openapi")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let version = root.get("openapi").and_then(|v| v.as_str()).unwrap_or("");
     if !version.starts_with("3.") {
         return Err(format!(
             "Unsupported OpenAPI version: '{version}'. Only 3.x is supported."
@@ -91,14 +88,8 @@ pub fn parse_openapi(content: &str) -> Result<ImportData, String> {
                 let mut params_in_url = Vec::new();
                 if let Some(params) = operation.get("parameters").and_then(|v| v.as_array()) {
                     for param in params {
-                        let param_name = param
-                            .get("name")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("");
-                        let param_in = param
-                            .get("in")
-                            .and_then(|v| v.as_str())
-                            .unwrap_or("");
+                        let param_name = param.get("name").and_then(|v| v.as_str()).unwrap_or("");
+                        let param_in = param.get("in").and_then(|v| v.as_str()).unwrap_or("");
 
                         let example_val = param
                             .get("example")
@@ -132,12 +123,8 @@ pub fn parse_openapi(content: &str) -> Result<ImportData, String> {
                 };
 
                 // Parse request body
-                let body = parse_request_body(
-                    operation.get("requestBody"),
-                    &root,
-                    &name,
-                    &mut warnings,
-                );
+                let body =
+                    parse_request_body(operation.get("requestBody"), &root, &name, &mut warnings);
 
                 let item = ImportItem::Request {
                     name: name.clone(),
@@ -160,10 +147,7 @@ pub fn parse_openapi(content: &str) -> Result<ImportData, String> {
                     .and_then(|v| v.as_str());
 
                 if let Some(tag) = tag {
-                    tag_folders
-                        .entry(tag.to_string())
-                        .or_default()
-                        .push(item);
+                    tag_folders.entry(tag.to_string()).or_default().push(item);
                 } else {
                     untagged.push(item);
                 }

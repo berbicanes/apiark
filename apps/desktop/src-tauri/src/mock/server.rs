@@ -46,7 +46,11 @@ impl MockServerManager {
         config: MockServerConfig,
         app: AppHandle,
     ) -> Result<MockServerStatus, String> {
-        let server_id = format!("mock_{}_{}", config.port, chrono::Utc::now().timestamp_millis());
+        let server_id = format!(
+            "mock_{}_{}",
+            config.port,
+            chrono::Utc::now().timestamp_millis()
+        );
 
         // Build endpoints from collection request files
         let endpoints = build_endpoints_from_collection(&config.collection_path)?;
@@ -98,9 +102,16 @@ impl MockServerManager {
                 .ok();
         });
 
-        tracing::info!(port = config.port, endpoints = endpoints.len(), "Mock server started");
+        tracing::info!(
+            port = config.port,
+            endpoints = endpoints.len(),
+            "Mock server started"
+        );
 
-        let mut servers = self.servers.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut servers = self
+            .servers
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         servers.insert(
             server_id.clone(),
             ServerHandle {
@@ -113,7 +124,10 @@ impl MockServerManager {
     }
 
     pub fn stop(&self, server_id: &str) -> Result<(), String> {
-        let mut servers = self.servers.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut servers = self
+            .servers
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         if let Some(handle) = servers.remove(server_id) {
             let _ = handle.shutdown_tx.send(());
             tracing::info!(id = server_id, "Mock server stopped");
@@ -122,7 +136,10 @@ impl MockServerManager {
     }
 
     pub fn list(&self) -> Result<Vec<MockServerStatus>, String> {
-        let servers = self.servers.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let servers = self
+            .servers
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         Ok(servers.values().map(|h| h.status.clone()).collect())
     }
 }
@@ -148,14 +165,19 @@ async fn handle_mock_request(
     }
 
     // Find matching endpoint
-    let endpoint = state.endpoints.iter().find(|e| {
-        e.method.eq_ignore_ascii_case(&method) && paths_match(&e.path, &path)
-    });
+    let endpoint = state
+        .endpoints
+        .iter()
+        .find(|e| e.method.eq_ignore_ascii_case(&method) && paths_match(&e.path, &path));
 
     let (status, body, content_type) = if let Some(ep) = endpoint {
         (ep.status, ep.body.clone(), ep.content_type.clone())
     } else {
-        (404, r#"{"error": "Not found"}"#.to_string(), "application/json".to_string())
+        (
+            404,
+            r#"{"error": "Not found"}"#.to_string(),
+            "application/json".to_string(),
+        )
     };
 
     let elapsed = start.elapsed().as_millis() as u64;
@@ -177,7 +199,9 @@ fn emit_log(state: &MockState, method: &str, path: &str, status: u16, time_ms: u
         time_ms,
         timestamp: chrono::Utc::now().to_rfc3339(),
     };
-    let _ = state.app.emit(&format!("mock:request:{}", state.server_id), &log);
+    let _ = state
+        .app
+        .emit(&format!("mock:request:{}", state.server_id), &log);
 }
 
 fn paths_match(pattern: &str, actual: &str) -> bool {
@@ -212,13 +236,25 @@ fn walk_yaml_files(
 
         if path.is_dir() {
             // Skip .apiark directory
-            if path.file_name().map(|n| n.to_string_lossy().starts_with('.')).unwrap_or(false) {
+            if path
+                .file_name()
+                .map(|n| n.to_string_lossy().starts_with('.'))
+                .unwrap_or(false)
+            {
                 continue;
             }
             walk_yaml_files(root, &path, endpoints)?;
-        } else if path.extension().map(|e| e == "yaml" || e == "yml").unwrap_or(false) {
+        } else if path
+            .extension()
+            .map(|e| e == "yaml" || e == "yml")
+            .unwrap_or(false)
+        {
             // Skip folder config files
-            if path.file_name().map(|n| n.to_string_lossy().starts_with('_')).unwrap_or(false) {
+            if path
+                .file_name()
+                .map(|n| n.to_string_lossy().starts_with('_'))
+                .unwrap_or(false)
+            {
                 continue;
             }
 

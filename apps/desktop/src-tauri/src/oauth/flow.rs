@@ -11,33 +11,43 @@ pub async fn execute_oauth_flow(
     store: &OAuthTokenStore,
     open_browser: impl Fn(&str) -> Result<(), String>,
 ) -> Result<String, String> {
-    let (grant_type, auth_url, token_url, client_id, client_secret, scope, callback_url, username, password, use_pkce) =
-        match auth {
-            AuthConfig::Oauth2 {
-                grant_type,
-                auth_url,
-                token_url,
-                client_id,
-                client_secret,
-                scope,
-                callback_url,
-                username,
-                password,
-                use_pkce,
-            } => (
-                grant_type,
-                auth_url,
-                token_url,
-                client_id,
-                client_secret,
-                scope,
-                callback_url,
-                username,
-                password,
-                use_pkce,
-            ),
-            _ => return Err("Not an OAuth2 auth config".to_string()),
-        };
+    let (
+        grant_type,
+        auth_url,
+        token_url,
+        client_id,
+        client_secret,
+        scope,
+        callback_url,
+        username,
+        password,
+        use_pkce,
+    ) = match auth {
+        AuthConfig::Oauth2 {
+            grant_type,
+            auth_url,
+            token_url,
+            client_id,
+            client_secret,
+            scope,
+            callback_url,
+            username,
+            password,
+            use_pkce,
+        } => (
+            grant_type,
+            auth_url,
+            token_url,
+            client_id,
+            client_secret,
+            scope,
+            callback_url,
+            username,
+            password,
+            use_pkce,
+        ),
+        _ => return Err("Not an OAuth2 auth config".to_string()),
+    };
 
     let cache_key = OAuthTokenStore::cache_key(client_id, auth_url);
 
@@ -67,7 +77,15 @@ pub async fn execute_oauth_flow(
             client_credentials_flow(token_url, client_id, client_secret, scope).await?
         }
         OAuth2GrantType::Password => {
-            password_flow(token_url, client_id, client_secret, scope, username, password).await?
+            password_flow(
+                token_url,
+                client_id,
+                client_secret,
+                scope,
+                username,
+                password,
+            )
+            .await?
         }
         OAuth2GrantType::AuthorizationCode => {
             auth_code_flow(
@@ -165,7 +183,10 @@ async fn client_credentials_flow(
         return Err(format!("Token endpoint returned {status}: {body}"));
     }
 
-    let body = resp.text().await.map_err(|e| format!("Failed to read token response body: {e}"))?;
+    let body = resp
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read token response body: {e}"))?;
 
     let token_resp: TokenResponse = serde_json::from_str(&body)
         .map_err(|e| format!("Failed to parse token response: {e}\nBody: {body}"))?;
@@ -208,7 +229,10 @@ async fn password_flow(
         return Err(format!("Token endpoint returned {status}: {body}"));
     }
 
-    let body = resp.text().await.map_err(|e| format!("Failed to read token response body: {e}"))?;
+    let body = resp
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read token response body: {e}"))?;
 
     let token_resp: TokenResponse = serde_json::from_str(&body)
         .map_err(|e| format!("Failed to parse token response: {e}\nBody: {body}"))?;
@@ -264,11 +288,7 @@ async fn auth_code_flow(
         auth_url,
         auth_params
             .iter()
-            .map(|(k, v)| format!(
-                "{}={}",
-                urlencoding::encode(k),
-                urlencoding::encode(v)
-            ))
+            .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
             .collect::<Vec<_>>()
             .join("&")
     );
@@ -320,7 +340,10 @@ async fn auth_code_flow(
         return Err(format!("Token endpoint returned {status}: {body}"));
     }
 
-    let body = resp.text().await.map_err(|e| format!("Failed to read token response body: {e}"))?;
+    let body = resp
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read token response body: {e}"))?;
 
     let token_resp: TokenResponse = serde_json::from_str(&body)
         .map_err(|e| format!("Failed to parse token response: {e}\nBody: {body}"))?;
@@ -357,11 +380,7 @@ async fn implicit_flow(
         auth_url,
         auth_params
             .iter()
-            .map(|(k, v)| format!(
-                "{}={}",
-                urlencoding::encode(k),
-                urlencoding::encode(v)
-            ))
+            .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
             .collect::<Vec<_>>()
             .join("&")
     );
@@ -421,7 +440,10 @@ async fn refresh_token_flow(
         return Err(format!("Token refresh returned {status}: {body}"));
     }
 
-    let body = resp.text().await.map_err(|e| format!("Failed to read token response body: {e}"))?;
+    let body = resp
+        .text()
+        .await
+        .map_err(|e| format!("Failed to read token response body: {e}"))?;
 
     let token_resp: TokenResponse = serde_json::from_str(&body)
         .map_err(|e| format!("Failed to parse token response: {e}\nBody: {body}"))?;

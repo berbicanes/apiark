@@ -37,9 +37,6 @@ pub async fn grpc_call_unary(
 }
 
 #[tauri::command]
-pub async fn grpc_disconnect(
-    address: String,
-    grpc: State<'_, GrpcManager>,
-) -> Result<(), String> {
+pub async fn grpc_disconnect(address: String, grpc: State<'_, GrpcManager>) -> Result<(), String> {
     grpc.disconnect(&address)
 }

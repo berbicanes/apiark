@@ -76,7 +76,10 @@ impl MonitorManager {
             .await;
         });
 
-        let mut monitors = self.monitors.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut monitors = self
+            .monitors
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         monitors.insert(
             monitor_id.clone(),
             MonitorHandle {
@@ -90,7 +93,10 @@ impl MonitorManager {
     }
 
     pub fn delete(&self, monitor_id: &str) -> Result<(), String> {
-        let mut monitors = self.monitors.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut monitors = self
+            .monitors
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         if let Some(handle) = monitors.remove(monitor_id) {
             let _ = handle.shutdown_tx.send(());
             tracing::info!(id = monitor_id, "Monitor deleted");
@@ -99,7 +105,10 @@ impl MonitorManager {
     }
 
     pub fn toggle(&self, monitor_id: &str) -> Result<MonitorStatus, String> {
-        let mut monitors = self.monitors.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut monitors = self
+            .monitors
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         if let Some(handle) = monitors.get_mut(monitor_id) {
             handle.status.enabled = !handle.status.enabled;
             Ok(handle.status.clone())
@@ -109,7 +118,10 @@ impl MonitorManager {
     }
 
     pub fn list(&self) -> Result<Vec<MonitorStatus>, String> {
-        let monitors = self.monitors.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let monitors = self
+            .monitors
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         Ok(monitors.values().map(|h| h.status.clone()).collect())
     }
 }
@@ -129,10 +141,7 @@ fn update_monitor_status(
     }
 }
 
-fn is_monitor_enabled(
-    monitors: &Mutex<HashMap<String, MonitorHandle>>,
-    monitor_id: &str,
-) -> bool {
+fn is_monitor_enabled(monitors: &Mutex<HashMap<String, MonitorHandle>>, monitor_id: &str) -> bool {
     monitors
         .lock()
         .ok()
@@ -167,7 +176,9 @@ async fn run_monitor_loop(
         };
 
         let now = chrono::Utc::now();
-        let wait_duration = (next - now).to_std().unwrap_or(std::time::Duration::from_secs(60));
+        let wait_duration = (next - now)
+            .to_std()
+            .unwrap_or(std::time::Duration::from_secs(60));
 
         // Wait until next run or shutdown
         tokio::select! {
@@ -206,14 +217,23 @@ async fn run_monitor_loop(
         let timestamp = chrono::Utc::now().to_rfc3339();
         let (status_str, summary) = match &result {
             Ok(summary) => {
-                let s = if summary.total_failed == 0 { "pass" } else { "fail" };
+                let s = if summary.total_failed == 0 {
+                    "pass"
+                } else {
+                    "fail"
+                };
                 (s.to_string(), Some(summary.clone()))
             }
             Err(_) => ("fail".to_string(), None),
         };
 
         // Update monitor status
-        update_monitor_status(&monitors, &monitor_id, timestamp.clone(), status_str.clone());
+        update_monitor_status(
+            &monitors,
+            &monitor_id,
+            timestamp.clone(),
+            status_str.clone(),
+        );
 
         // Build result event
         let monitor_result = MonitorResult {

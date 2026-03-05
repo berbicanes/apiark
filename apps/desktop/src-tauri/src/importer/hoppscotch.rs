@@ -6,8 +6,7 @@ use super::{ImportBody, ImportData, ImportItem, ImportWarning};
 
 /// Parse a Hoppscotch collection JSON string into ImportData.
 pub fn parse_hoppscotch(content: &str) -> Result<ImportData, String> {
-    let root: Value =
-        serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
+    let root: Value = serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
 
     // Hoppscotch collections have: v (version number), name, folders[], requests[]
     let collection_name = root
@@ -128,8 +127,14 @@ fn parse_request(req: &Value, warnings: &mut Vec<ImportWarning>) -> Option<Impor
         body: Box::new(body),
         auth: Box::new(auth),
         description: None,
-        pre_request_script: req.get("preRequestScript").and_then(|v| v.as_str()).map(String::from),
-        post_response_script: req.get("testScript").and_then(|v| v.as_str()).map(String::from),
+        pre_request_script: req
+            .get("preRequestScript")
+            .and_then(|v| v.as_str())
+            .map(String::from),
+        post_response_script: req
+            .get("testScript")
+            .and_then(|v| v.as_str())
+            .map(String::from),
         tests: None,
     })
 }
@@ -143,10 +148,7 @@ fn parse_body(req: &Value) -> Option<ImportBody> {
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
-    let raw_body = body
-        .get("body")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let raw_body = body.get("body").and_then(|v| v.as_str()).unwrap_or("");
 
     if raw_body.is_empty() {
         return None;
@@ -180,12 +182,24 @@ fn parse_auth(
 
     match auth_type {
         "bearer" => {
-            let token = auth.get("token").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let token = auth
+                .get("token")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
             Some(crate::models::auth::AuthConfig::Bearer { token })
         }
         "basic" => {
-            let username = auth.get("username").and_then(|v| v.as_str()).unwrap_or("").to_string();
-            let password = auth.get("password").and_then(|v| v.as_str()).unwrap_or("").to_string();
+            let username = auth
+                .get("username")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let password = auth
+                .get("password")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
             Some(crate::models::auth::AuthConfig::Basic { username, password })
         }
         _ => None,

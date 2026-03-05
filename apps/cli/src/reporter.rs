@@ -94,15 +94,17 @@ th {{ background: #141416; }}
   <div class="stat"><div class="value">{}ms</div>Total Time</div>
 </div>
 "#,
-        summary.total_requests,
-        summary.total_passed,
-        summary.total_failed,
-        summary.total_time_ms
+        summary.total_requests, summary.total_passed, summary.total_failed, summary.total_time_ms
     );
 
     for iteration in &summary.iterations {
-        html.push_str(&format!("<h2>Iteration {}</h2>\n<table>\n", iteration.iteration));
-        html.push_str("<tr><th>Status</th><th>Method</th><th>Name</th><th>Time</th><th>Result</th></tr>\n");
+        html.push_str(&format!(
+            "<h2>Iteration {}</h2>\n<table>\n",
+            iteration.iteration
+        ));
+        html.push_str(
+            "<tr><th>Status</th><th>Method</th><th>Name</th><th>Time</th><th>Result</th></tr>\n",
+        );
 
         for r in &iteration.results {
             let status_class = match r.status {

@@ -97,8 +97,14 @@ fn scan_directory(dir: &Path) -> Result<Vec<CollectionNode>, String> {
     }
 
     // Sort: folders first (by order then alpha), then requests (by order then alpha)
-    folders.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| node_name(&a.1).cmp(node_name(&b.1))));
-    requests.sort_by(|a, b| a.0.cmp(&b.0).then_with(|| node_name(&a.1).cmp(node_name(&b.1))));
+    folders.sort_by(|a, b| {
+        a.0.cmp(&b.0)
+            .then_with(|| node_name(&a.1).cmp(node_name(&b.1)))
+    });
+    requests.sort_by(|a, b| {
+        a.0.cmp(&b.0)
+            .then_with(|| node_name(&a.1).cmp(node_name(&b.1)))
+    });
 
     let mut result: Vec<CollectionNode> = folders.into_iter().map(|(_, n)| n).collect();
     result.extend(requests.into_iter().map(|(_, n)| n));
@@ -140,10 +146,7 @@ pub fn read_request(path: &Path) -> Result<RequestFile, String> {
     let content =
         fs::read_to_string(path).map_err(|e| format!("Failed to read {}: {e}", path.display()))?;
     if has_merge_conflicts(&content) {
-        return Err(format!(
-            "MERGE_CONFLICT:{}",
-            path.display()
-        ));
+        return Err(format!("MERGE_CONFLICT:{}", path.display()));
     }
     serde_yaml::from_str::<RequestFile>(&content)
         .map_err(|e| format!("Invalid request YAML {}: {e}", path.display()))
@@ -151,13 +154,17 @@ pub fn read_request(path: &Path) -> Result<RequestFile, String> {
 
 /// Write a request file atomically (write to .tmp, then rename).
 pub fn write_request(path: &Path, request: &RequestFile) -> Result<(), String> {
-    let yaml = serde_yaml::to_string(request)
-        .map_err(|e| format!("Failed to serialize request: {e}"))?;
+    let yaml =
+        serde_yaml::to_string(request).map_err(|e| format!("Failed to serialize request: {e}"))?;
     atomic_write(path, &yaml)
 }
 
 /// Create a new request YAML file.
-pub fn create_request_file(dir: &Path, filename: &str, request: &RequestFile) -> Result<PathBuf, String> {
+pub fn create_request_file(
+    dir: &Path,
+    filename: &str,
+    request: &RequestFile,
+) -> Result<PathBuf, String> {
     let file_path = dir.join(format!("{filename}.yaml"));
     if file_path.exists() {
         return Err(format!("File already exists: {}", file_path.display()));
@@ -172,8 +179,7 @@ pub fn create_folder(parent: &Path, name: &str) -> Result<PathBuf, String> {
     if folder_path.exists() {
         return Err(format!("Folder already exists: {}", folder_path.display()));
     }
-    fs::create_dir_all(&folder_path)
-        .map_err(|e| format!("Failed to create folder: {e}"))?;
+    fs::create_dir_all(&folder_path).map_err(|e| format!("Failed to create folder: {e}"))?;
     Ok(folder_path)
 }
 
@@ -193,19 +199,15 @@ pub fn delete_item(path: &Path, collection_name: &str) -> Result<String, String>
         .unwrap_or_else(|| "unknown".to_string());
     let trash_dir = trash_base.join(format!("{timestamp}_{item_name}"));
 
-    fs::create_dir_all(&trash_dir)
-        .map_err(|e| format!("Failed to create trash dir: {e}"))?;
+    fs::create_dir_all(&trash_dir).map_err(|e| format!("Failed to create trash dir: {e}"))?;
 
     let dest = trash_dir.join(&item_name);
     if path.is_dir() {
         copy_dir_all(path, &dest)?;
-        fs::remove_dir_all(path)
-            .map_err(|e| format!("Failed to remove original dir: {e}"))?;
+        fs::remove_dir_all(path).map_err(|e| format!("Failed to remove original dir: {e}"))?;
     } else {
-        fs::copy(path, &dest)
-            .map_err(|e| format!("Failed to copy to trash: {e}"))?;
-        fs::remove_file(path)
-            .map_err(|e| format!("Failed to remove original file: {e}"))?;
+        fs::copy(path, &dest).map_err(|e| format!("Failed to copy to trash: {e}"))?;
+        fs::remove_file(path).map_err(|e| format!("Failed to remove original file: {e}"))?;
     }
 
     Ok(trash_dir.to_string_lossy().to_string())
@@ -219,8 +221,7 @@ fn copy_dir_all(src: &Path, dst: &Path) -> Result<(), String> {
         if entry.path().is_dir() {
             copy_dir_all(&entry.path(), &dest_path)?;
         } else {
-            fs::copy(entry.path(), &dest_path)
-                .map_err(|e| format!("Failed to copy file: {e}"))?;
+            fs::copy(entry.path(), &dest_path).map_err(|e| format!("Failed to copy file: {e}"))?;
         }
     }
     Ok(())
@@ -228,9 +229,7 @@ fn copy_dir_all(src: &Path, dst: &Path) -> Result<(), String> {
 
 /// Rename a file or folder.
 pub fn rename_item(path: &Path, new_name: &str) -> Result<PathBuf, String> {
-    let parent = path
-        .parent()
-        .ok_or("Cannot get parent directory")?;
+    let parent = path.parent().ok_or("Cannot get parent directory")?;
 
     let new_path = if path.is_dir() {
         parent.join(new_name)
@@ -248,8 +247,7 @@ pub fn rename_item(path: &Path, new_name: &str) -> Result<PathBuf, String> {
         return Err("A file or folder with that name already exists".to_string());
     }
 
-    fs::rename(path, &new_path)
-        .map_err(|e| format!("Failed to rename: {e}"))?;
+    fs::rename(path, &new_path).map_err(|e| format!("Failed to rename: {e}"))?;
 
     // If it's a request YAML, also update the name field inside
     if new_path.is_file() {
@@ -284,12 +282,14 @@ pub fn load_collection_config(collection_path: &Path) -> Result<CollectionConfig
     let config_path = collection_path.join(".apiark").join("apiark.yaml");
     let content = fs::read_to_string(&config_path)
         .map_err(|e| format!("Failed to read collection config: {e}"))?;
-    serde_yaml::from_str(&content)
-        .map_err(|e| format!("Invalid collection config YAML: {e}"))
+    serde_yaml::from_str(&content).map_err(|e| format!("Invalid collection config YAML: {e}"))
 }
 
 /// Save the collection config to .apiark/apiark.yaml (atomic write).
-pub fn save_collection_config(collection_path: &Path, config: &CollectionConfig) -> Result<(), String> {
+pub fn save_collection_config(
+    collection_path: &Path,
+    config: &CollectionConfig,
+) -> Result<(), String> {
     let config_path = collection_path.join(".apiark").join("apiark.yaml");
     let yaml = serde_yaml::to_string(config)
         .map_err(|e| format!("Failed to serialize collection config: {e}"))?;
@@ -299,12 +299,10 @@ pub fn save_collection_config(collection_path: &Path, config: &CollectionConfig)
 /// Write content atomically: write to .tmp file, then rename.
 fn atomic_write(path: &Path, content: &str) -> Result<(), String> {
     let tmp_path = path.with_extension("apiark.tmp");
-    fs::write(&tmp_path, content)
-        .map_err(|e| format!("Failed to write temp file: {e}"))?;
-    fs::rename(&tmp_path, path)
-        .map_err(|e| {
-            // Clean up tmp file on rename failure
-            let _ = fs::remove_file(&tmp_path);
-            format!("Failed to rename temp file: {e}")
-        })
+    fs::write(&tmp_path, content).map_err(|e| format!("Failed to write temp file: {e}"))?;
+    fs::rename(&tmp_path, path).map_err(|e| {
+        // Clean up tmp file on rename failure
+        let _ = fs::remove_file(&tmp_path);
+        format!("Failed to rename temp file: {e}")
+    })
 }

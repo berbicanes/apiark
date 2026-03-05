@@ -1,11 +1,15 @@
 use std::path::{Path, PathBuf};
 
-use crate::models::collection::{CollectionConfig, CollectionDefaults, CollectionNode, RequestFile};
+use crate::models::collection::{
+    CollectionConfig, CollectionDefaults, CollectionNode, RequestFile,
+};
 use crate::models::request::HttpMethod;
 use crate::storage::collection;
 
 #[tauri::command]
-pub async fn get_collection_defaults(collection_path: String) -> Result<CollectionDefaults, String> {
+pub async fn get_collection_defaults(
+    collection_path: String,
+) -> Result<CollectionDefaults, String> {
     let path = collection_path.clone();
     tokio::task::spawn_blocking(move || {
         let config = collection::load_collection_config(Path::new(&path))?;
@@ -135,8 +139,7 @@ pub async fn create_sample_collection() -> Result<String, String> {
     let basics_dir = base.join("basics");
 
     for d in [&apiark_dir, &env_dir, &basics_dir] {
-        std::fs::create_dir_all(d)
-            .map_err(|e| format!("Failed to create directory: {e}"))?;
+        std::fs::create_dir_all(d).map_err(|e| format!("Failed to create directory: {e}"))?;
     }
 
     // Collection config
@@ -145,8 +148,8 @@ pub async fn create_sample_collection() -> Result<String, String> {
         version: 1,
         defaults: Default::default(),
     };
-    let config_yaml = serde_yaml::to_string(&config)
-        .map_err(|e| format!("Failed to serialize config: {e}"))?;
+    let config_yaml =
+        serde_yaml::to_string(&config).map_err(|e| format!("Failed to serialize config: {e}"))?;
     std::fs::write(apiark_dir.join("apiark.yaml"), config_yaml)
         .map_err(|e| format!("Failed to write config: {e}"))?;
 
@@ -154,7 +157,8 @@ pub async fn create_sample_collection() -> Result<String, String> {
     std::fs::write(
         env_dir.join("default.yaml"),
         "name: Default\nvariables:\n  baseUrl: https://httpbin.org\n",
-    ).map_err(|e| format!("Failed to write env: {e}"))?;
+    )
+    .map_err(|e| format!("Failed to write env: {e}"))?;
 
     // .gitignore (inside .apiark/)
     std::fs::write(apiark_dir.join(".gitignore"), ".env\n")
@@ -188,6 +192,5 @@ pub async fn create_sample_collection() -> Result<String, String> {
 }
 
 fn write_sample(path: &PathBuf, content: &str) -> Result<(), String> {
-    std::fs::write(path, content)
-        .map_err(|e| format!("Failed to write {}: {e}", path.display()))
+    std::fs::write(path, content).map_err(|e| format!("Failed to write {}: {e}", path.display()))
 }

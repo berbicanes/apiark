@@ -19,10 +19,7 @@ pub async fn load_environments(collection_path: String) -> Result<Vec<Environmen
 }
 
 #[tauri::command]
-pub async fn save_environment(
-    collection_path: String,
-    env: EnvironmentFile,
-) -> Result<(), String> {
+pub async fn save_environment(collection_path: String, env: EnvironmentFile) -> Result<(), String> {
     let path = Path::new(&collection_path);
     tracing::debug!(path = %collection_path, name = %env.name, "Saving environment");
     environment::save_environment(path, &env)

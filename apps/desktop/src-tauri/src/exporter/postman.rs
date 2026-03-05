@@ -11,9 +11,7 @@ pub fn export_to_postman(collection_path: &Path) -> Result<String, String> {
     let tree = load_collection_tree(collection_path)?;
 
     let (name, children) = match &tree {
-        CollectionNode::Collection {
-            name, children, ..
-        } => (name.clone(), children),
+        CollectionNode::Collection { name, children, .. } => (name.clone(), children),
         _ => return Err("Expected a collection node at root".to_string()),
     };
 
@@ -36,9 +34,7 @@ fn export_nodes(nodes: &[CollectionNode]) -> Result<Vec<Value>, String> {
 
     for node in nodes {
         match node {
-            CollectionNode::Folder {
-                name, children, ..
-            } => {
+            CollectionNode::Folder { name, children, .. } => {
                 let sub_items = export_nodes(children)?;
                 items.push(json!({
                     "name": name,
@@ -56,9 +52,7 @@ fn export_nodes(nodes: &[CollectionNode]) -> Result<Vec<Value>, String> {
                     }
                 }
             }
-            CollectionNode::Collection {
-                name, children, ..
-            } => {
+            CollectionNode::Collection { name, children, .. } => {
                 // Nested collections become folders
                 let sub_items = export_nodes(children)?;
                 items.push(json!({
@@ -236,7 +230,13 @@ fn export_auth(auth: &AuthConfig) -> Option<Value> {
                 {"key": "password", "value": password, "type": "string"}
             ]
         })),
-        AuthConfig::AwsV4 { access_key, secret_key, region, service, session_token } => Some(json!({
+        AuthConfig::AwsV4 {
+            access_key,
+            secret_key,
+            region,
+            service,
+            session_token,
+        } => Some(json!({
             "type": "awsv4",
             "awsv4": [
                 {"key": "accessKey", "value": access_key, "type": "string"},
@@ -250,7 +250,9 @@ fn export_auth(auth: &AuthConfig) -> Option<Value> {
             // JWT Bearer has no direct Postman equivalent
             None
         }
-        AuthConfig::Ntlm { username, password, .. } => Some(json!({
+        AuthConfig::Ntlm {
+            username, password, ..
+        } => Some(json!({
             "type": "ntlm",
             "ntlm": [
                 {"key": "username", "value": username, "type": "string"},

@@ -21,7 +21,10 @@ impl CollectionWatcher {
     }
 
     pub fn watch(&self, collection_path: &str, app: AppHandle) -> Result<(), String> {
-        let mut watchers = self.watchers.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut watchers = self
+            .watchers
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
 
         // Don't watch the same collection twice
         if watchers.contains_key(collection_path) {
@@ -92,7 +95,10 @@ impl CollectionWatcher {
     }
 
     pub fn unwatch(&self, collection_path: &str) -> Result<(), String> {
-        let mut watchers = self.watchers.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut watchers = self
+            .watchers
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         if let Some(mut watcher) = watchers.remove(collection_path) {
             let _ = watcher.unwatch(Path::new(collection_path));
             tracing::info!(path = %collection_path, "Stopped watching collection");

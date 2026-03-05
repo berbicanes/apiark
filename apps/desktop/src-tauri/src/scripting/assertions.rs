@@ -75,7 +75,8 @@ fn build_response_json(response: &ResponseSnapshot) -> Value {
         headers_map.insert(k.to_lowercase(), Value::String(v.clone()));
     }
 
-    let body_value = serde_json::from_str(&response.body).unwrap_or(Value::String(response.body.clone()));
+    let body_value =
+        serde_json::from_str(&response.body).unwrap_or(Value::String(response.body.clone()));
 
     let mut root = serde_json::Map::new();
     root.insert("status".to_string(), Value::Number(response.status.into()));
@@ -322,9 +323,7 @@ fn yaml_to_json(v: &serde_yaml::Value) -> Value {
             }
         }
         serde_yaml::Value::String(s) => Value::String(s.clone()),
-        serde_yaml::Value::Sequence(seq) => {
-            Value::Array(seq.iter().map(yaml_to_json).collect())
-        }
+        serde_yaml::Value::Sequence(seq) => Value::Array(seq.iter().map(yaml_to_json).collect()),
         serde_yaml::Value::Mapping(map) => {
             let obj: serde_json::Map<String, Value> = map
                 .iter()
@@ -421,7 +420,11 @@ mod tests {
 
     #[test]
     fn test_nested_body_path() {
-        let resp = make_response(200, r#"{"data": {"user": {"email": "test@example.com"}}}"#, 100);
+        let resp = make_response(
+            200,
+            r#"{"data": {"user": {"email": "test@example.com"}}}"#,
+            100,
+        );
         let yaml = parse_yaml_assert("body.data.user.email:\n  eq: \"test@example.com\"");
         let results = evaluate_assertions(&yaml, &resp);
         assert!(results[0].passed);
@@ -429,7 +432,11 @@ mod tests {
 
     #[test]
     fn test_array_index() {
-        let resp = make_response(200, r#"{"users": [{"name": "Alice"}, {"name": "Bob"}]}"#, 100);
+        let resp = make_response(
+            200,
+            r#"{"users": [{"name": "Alice"}, {"name": "Bob"}]}"#,
+            100,
+        );
         let yaml = parse_yaml_assert("body.users[0].name:\n  eq: Alice");
         let results = evaluate_assertions(&yaml, &resp);
         assert!(results[0].passed);

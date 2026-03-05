@@ -23,7 +23,8 @@ pub async fn connect_sse(
 
     // Build request
     let client = reqwest::Client::new();
-    let mut req = client.get(&params.url)
+    let mut req = client
+        .get(&params.url)
         .header("Accept", "text/event-stream")
         .header("Cache-Control", "no-cache");
 

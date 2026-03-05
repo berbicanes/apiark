@@ -30,10 +30,15 @@ pub fn build_client(params: &SendRequestParams) -> Result<Client, HttpEngineErro
     // Custom CA certificate
     if let Some(ca_path) = &params.ca_cert_path {
         if !ca_path.is_empty() {
-            let ca_pem = std::fs::read(ca_path)
-                .map_err(|e| HttpEngineError::RequestError(format!("Failed to read CA cert '{}': {}", ca_path, e)))?;
-            let cert = reqwest::Certificate::from_pem(&ca_pem)
-                .map_err(|e| HttpEngineError::RequestError(format!("Invalid CA certificate: {}", e)))?;
+            let ca_pem = std::fs::read(ca_path).map_err(|e| {
+                HttpEngineError::RequestError(format!(
+                    "Failed to read CA cert '{}': {}",
+                    ca_path, e
+                ))
+            })?;
+            let cert = reqwest::Certificate::from_pem(&ca_pem).map_err(|e| {
+                HttpEngineError::RequestError(format!("Invalid CA certificate: {}", e))
+            })?;
             builder = builder.add_root_certificate(cert);
         }
     }
@@ -41,21 +46,30 @@ pub fn build_client(params: &SendRequestParams) -> Result<Client, HttpEngineErro
     // Client certificate (mutual TLS)
     if let Some(cert_path) = &params.client_cert_path {
         if !cert_path.is_empty() {
-            let cert_data = std::fs::read(cert_path)
-                .map_err(|e| HttpEngineError::RequestError(format!("Failed to read client cert '{}': {}", cert_path, e)))?;
+            let cert_data = std::fs::read(cert_path).map_err(|e| {
+                HttpEngineError::RequestError(format!(
+                    "Failed to read client cert '{}': {}",
+                    cert_path, e
+                ))
+            })?;
 
             // PEM format — combine cert + key into a single PEM buffer
             let mut pem_buf = cert_data;
             if let Some(key_path) = &params.client_key_path {
                 if !key_path.is_empty() {
-                    let key_data = std::fs::read(key_path)
-                        .map_err(|e| HttpEngineError::RequestError(format!("Failed to read client key '{}': {}", key_path, e)))?;
+                    let key_data = std::fs::read(key_path).map_err(|e| {
+                        HttpEngineError::RequestError(format!(
+                            "Failed to read client key '{}': {}",
+                            key_path, e
+                        ))
+                    })?;
                     pem_buf.push(b'\n');
                     pem_buf.extend_from_slice(&key_data);
                 }
             }
-            let identity = reqwest::Identity::from_pem(&pem_buf)
-                .map_err(|e| HttpEngineError::RequestError(format!("Invalid PEM client certificate: {}", e)))?;
+            let identity = reqwest::Identity::from_pem(&pem_buf).map_err(|e| {
+                HttpEngineError::RequestError(format!("Invalid PEM client certificate: {}", e))
+            })?;
             builder = builder.identity(identity);
         }
     }
@@ -80,8 +94,8 @@ pub fn build_url_with_params(
     params: &[KeyValuePair],
     auth: &Option<AuthConfig>,
 ) -> Result<Url, HttpEngineError> {
-    let mut url =
-        Url::parse(base_url).map_err(|e| HttpEngineError::InvalidUrl(format!("{}: {}", e, base_url)))?;
+    let mut url = Url::parse(base_url)
+        .map_err(|e| HttpEngineError::InvalidUrl(format!("{}: {}", e, base_url)))?;
 
     // Add enabled query params
     {
@@ -120,7 +134,11 @@ pub fn build_request(
     let mut builder = client.request(method, url);
 
     // Apply headers
-    for header in params.headers.iter().filter(|h| h.enabled && !h.key.is_empty()) {
+    for header in params
+        .headers
+        .iter()
+        .filter(|h| h.enabled && !h.key.is_empty())
+    {
         builder = builder.header(&header.key, &header.value);
     }
 
@@ -147,7 +165,11 @@ pub fn build_request(
 }
 
 /// Apply authentication to the request builder.
-fn apply_auth(mut builder: RequestBuilder, auth: &Option<AuthConfig>, params: &SendRequestParams) -> RequestBuilder {
+fn apply_auth(
+    mut builder: RequestBuilder,
+    auth: &Option<AuthConfig>,
+    params: &SendRequestParams,
+) -> RequestBuilder {
     match auth {
         Some(AuthConfig::Bearer { token }) => {
             builder = builder.bearer_auth(token);
@@ -163,7 +185,10 @@ fn apply_auth(mut builder: RequestBuilder, auth: &Option<AuthConfig>, params: &S
             builder = builder.header(key, value);
         }
         // ApiKey::Query is handled in build_url_with_params
-        Some(AuthConfig::ApiKey { add_to: ApiKeyLocation::Query, .. }) => {}
+        Some(AuthConfig::ApiKey {
+            add_to: ApiKeyLocation::Query,
+            ..
+        }) => {}
         // OAuth2 is resolved before reaching here (converted to Bearer in interpolate_auth)
         Some(AuthConfig::Oauth2 { .. }) => {}
         // Digest auth — we store credentials; actual challenge-response is complex.
@@ -222,21 +247,19 @@ fn apply_auth(mut builder: RequestBuilder, auth: &Option<AuthConfig>, params: &S
             algorithm,
             payload,
             header_prefix,
-        }) => {
-            match auth_handlers::generate_jwt(secret, algorithm, payload) {
-                Ok(token) => {
-                    let value = if header_prefix.is_empty() {
-                        token
-                    } else {
-                        format!("{header_prefix} {token}")
-                    };
-                    builder = builder.header("Authorization", value);
-                }
-                Err(e) => {
-                    tracing::warn!("JWT generation failed: {e}");
-                }
+        }) => match auth_handlers::generate_jwt(secret, algorithm, payload) {
+            Ok(token) => {
+                let value = if header_prefix.is_empty() {
+                    token
+                } else {
+                    format!("{header_prefix} {token}")
+                };
+                builder = builder.header("Authorization", value);
             }
-        }
+            Err(e) => {
+                tracing::warn!("JWT generation failed: {e}");
+            }
+        },
         Some(AuthConfig::Ntlm {
             domain,
             workstation,
@@ -283,7 +306,11 @@ fn apply_body(
         }
         BodyType::FormData => {
             let mut form = reqwest::multipart::Form::new();
-            for kv in body.form_data.iter().filter(|kv| kv.enabled && !kv.key.is_empty()) {
+            for kv in body
+                .form_data
+                .iter()
+                .filter(|kv| kv.enabled && !kv.key.is_empty())
+            {
                 form = form.text(kv.key.clone(), kv.value.clone());
             }
             Ok(builder.multipart(form))

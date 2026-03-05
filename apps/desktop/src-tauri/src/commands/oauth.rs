@@ -15,7 +15,10 @@ pub async fn oauth_start_flow(
         let app = app.clone();
         tauri::async_runtime::spawn(async move {
             use tauri_plugin_shell::ShellExt;
-            if let Err(e) = app.shell().open(&url, None::<tauri_plugin_shell::open::Program>) {
+            if let Err(e) = app
+                .shell()
+                .open(&url, None::<tauri_plugin_shell::open::Program>)
+            {
                 tracing::error!("Failed to open browser: {e}");
             }
         });

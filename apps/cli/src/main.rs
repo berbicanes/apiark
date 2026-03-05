@@ -95,9 +95,9 @@ async fn main() -> anyhow::Result<()> {
             reporter,
             output,
         } => {
-            let path = PathBuf::from(&collection).canonicalize().map_err(|e| {
-                anyhow::anyhow!("Collection path not found: {collection}: {e}")
-            })?;
+            let path = PathBuf::from(&collection)
+                .canonicalize()
+                .map_err(|e| anyhow::anyhow!("Collection path not found: {collection}: {e}"))?;
 
             let config = collection::load_config(&path)?;
             println!("{} {}", "Running:".bold(), config.name);
@@ -106,14 +106,9 @@ async fn main() -> anyhow::Result<()> {
                 println!("{} {}", "Environment:".bold(), env_name);
             }
 
-            let summary = runner::run_collection(
-                &path,
-                env.as_deref(),
-                delay,
-                iterations,
-                data.as_deref(),
-            )
-            .await?;
+            let summary =
+                runner::run_collection(&path, env.as_deref(), delay, iterations, data.as_deref())
+                    .await?;
 
             // Print summary line
             println!();

@@ -29,7 +29,10 @@ pub async fn sse_connect(
     let (cancel_tx, cancel_rx) = watch::channel(false);
 
     {
-        let mut connections = state.connections.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut connections = state
+            .connections
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         // Cancel existing connection if any
         if let Some(old) = connections.remove(&connection_id) {
             let _ = old.send(true);
@@ -39,7 +42,11 @@ pub async fn sse_connect(
 
     let conn_id = connection_id.clone();
     let app_clone = app.clone();
-    let state_inner = state.inner().connections.lock().map_err(|e| format!("Lock error: {e}"))?;
+    let state_inner = state
+        .inner()
+        .connections
+        .lock()
+        .map_err(|e| format!("Lock error: {e}"))?;
     drop(state_inner); // release lock before spawning
 
     tokio::spawn(async move {
@@ -54,7 +61,10 @@ pub async fn sse_disconnect(
     state: State<'_, SseManager>,
     connection_id: String,
 ) -> Result<(), String> {
-    let mut connections = state.connections.lock().map_err(|e| format!("Lock error: {e}"))?;
+    let mut connections = state
+        .connections
+        .lock()
+        .map_err(|e| format!("Lock error: {e}"))?;
     if let Some(cancel) = connections.remove(&connection_id) {
         let _ = cancel.send(true);
     }

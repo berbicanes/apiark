@@ -10,10 +10,7 @@ struct DocRequest {
     request: RequestFile,
 }
 
-pub fn generate_docs(
-    collection_path: &str,
-    format: &DocsFormat,
-) -> Result<String, String> {
+pub fn generate_docs(collection_path: &str, format: &DocsFormat) -> Result<String, String> {
     let path = Path::new(collection_path);
     let mut requests: Vec<DocRequest> = Vec::new();
 
@@ -212,9 +209,7 @@ fn generate_html(collection_name: &str, requests: &[DocRequest]) -> String {
         let req = &doc.request;
         let method = format!("{:?}", req.method).to_uppercase();
 
-        html.push_str(&format!(
-            "<section id=\"req-{i}\" class=\"endpoint\">\n"
-        ));
+        html.push_str(&format!("<section id=\"req-{i}\" class=\"endpoint\">\n"));
         html.push_str(&format!(
             "<h3><span class=\"method method-{m}\">{method}</span> <code>{}</code></h3>\n",
             html_escape(&req.url),

@@ -12,8 +12,8 @@ pub fn load_environments(collection_path: &Path) -> Result<Vec<EnvironmentFile>,
     }
 
     let mut envs = Vec::new();
-    let entries = fs::read_dir(&env_dir)
-        .map_err(|e| format!("Failed to read environments dir: {e}"))?;
+    let entries =
+        fs::read_dir(&env_dir).map_err(|e| format!("Failed to read environments dir: {e}"))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| format!("Failed to read dir entry: {e}"))?;
@@ -114,22 +114,19 @@ pub fn get_resolved_variables(
 /// Save an environment file to disk.
 pub fn save_environment(collection_path: &Path, env: &EnvironmentFile) -> Result<(), String> {
     let env_dir = collection_path.join(".apiark").join("environments");
-    fs::create_dir_all(&env_dir)
-        .map_err(|e| format!("Failed to create environments dir: {e}"))?;
+    fs::create_dir_all(&env_dir).map_err(|e| format!("Failed to create environments dir: {e}"))?;
 
     let filename = env.name.to_lowercase().replace(' ', "-");
     let file_path = env_dir.join(format!("{filename}.yaml"));
 
-    let yaml = serde_yaml::to_string(env)
-        .map_err(|e| format!("Failed to serialize environment: {e}"))?;
+    let yaml =
+        serde_yaml::to_string(env).map_err(|e| format!("Failed to serialize environment: {e}"))?;
 
     // Atomic write
     let tmp_path = file_path.with_extension("apiark.tmp");
-    fs::write(&tmp_path, &yaml)
-        .map_err(|e| format!("Failed to write temp file: {e}"))?;
-    fs::rename(&tmp_path, &file_path)
-        .map_err(|e| {
-            let _ = fs::remove_file(&tmp_path);
-            format!("Failed to rename temp file: {e}")
-        })
+    fs::write(&tmp_path, &yaml).map_err(|e| format!("Failed to write temp file: {e}"))?;
+    fs::rename(&tmp_path, &file_path).map_err(|e| {
+        let _ = fs::remove_file(&tmp_path);
+        format!("Failed to rename temp file: {e}")
+    })
 }

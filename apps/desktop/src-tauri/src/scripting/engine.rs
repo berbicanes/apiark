@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use rquickjs::{Context, Runtime};
 
-use super::{
-    ConsoleEntry, RequestSnapshot, ScriptContext, ScriptPhase, ScriptResult, TestResult,
-};
+use super::{ConsoleEntry, RequestSnapshot, ScriptContext, ScriptPhase, ScriptResult, TestResult};
 
 const ARK_API_JS: &str = include_str!("ark_api.js");
 
@@ -154,9 +152,7 @@ fn parse_mutations(json: &str, original_ctx: &ScriptContext) -> Result<ScriptRes
     })
 }
 
-fn extract_store_mutations(
-    value: Option<&serde_json::Value>,
-) -> HashMap<String, Option<String>> {
+fn extract_store_mutations(value: Option<&serde_json::Value>) -> HashMap<String, Option<String>> {
     value
         .and_then(|v| v.as_object())
         .map(|obj| {
@@ -268,7 +264,8 @@ mod tests {
     #[test]
     fn test_env_get() {
         let mut ctx = empty_context();
-        ctx.env.insert("baseUrl".to_string(), "https://api.test.com".to_string());
+        ctx.env
+            .insert("baseUrl".to_string(), "https://api.test.com".to_string());
         let result = execute_script(
             r#"
             var url = ark.env.get("baseUrl");

@@ -46,9 +46,7 @@ Respond with a JSON object containing exactly these fields:
 
 Only respond with the JSON object, no other text."#;
 
-    let mut messages = vec![
-        serde_json::json!({ "role": "system", "content": system_prompt }),
-    ];
+    let mut messages = vec![serde_json::json!({ "role": "system", "content": system_prompt })];
 
     if let Some(ctx) = &params.context {
         messages.push(serde_json::json!({
@@ -64,7 +62,10 @@ Only respond with the JSON object, no other text."#;
 
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("{}/chat/completions", params.endpoint.trim_end_matches('/')))
+        .post(format!(
+            "{}/chat/completions",
+            params.endpoint.trim_end_matches('/')
+        ))
         .header("Authorization", format!("Bearer {}", params.api_key))
         .header("Content-Type", "application/json")
         .json(&serde_json::json!({
@@ -153,7 +154,10 @@ Only respond with the JSON object, no other text."#;
 
     let client = reqwest::Client::new();
     let response = client
-        .post(format!("{}/chat/completions", params.endpoint.trim_end_matches('/')))
+        .post(format!(
+            "{}/chat/completions",
+            params.endpoint.trim_end_matches('/')
+        ))
         .header("Authorization", format!("Bearer {}", params.api_key))
         .header("Content-Type", "application/json")
         .json(&serde_json::json!({

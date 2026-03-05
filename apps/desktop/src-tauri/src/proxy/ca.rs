@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use rcgen::{CertificateParams, KeyPair, IsCa, BasicConstraints, PKCS_ECDSA_P256_SHA256};
+use rcgen::{BasicConstraints, CertificateParams, IsCa, KeyPair, PKCS_ECDSA_P256_SHA256};
 
 /// Get the directory where proxy CA files are stored.
 fn proxy_dir() -> PathBuf {
@@ -30,28 +30,25 @@ pub fn ca_exists() -> bool {
 /// Returns the paths to (cert, key) files.
 pub fn generate_ca() -> Result<(PathBuf, PathBuf), String> {
     let dir = proxy_dir();
-    fs::create_dir_all(&dir)
-        .map_err(|e| format!("Failed to create proxy directory: {e}"))?;
+    fs::create_dir_all(&dir).map_err(|e| format!("Failed to create proxy directory: {e}"))?;
 
     let key_pair = KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256)
         .map_err(|e| format!("Failed to generate key pair: {e}"))?;
 
     let mut params = CertificateParams::default();
     params.is_ca = IsCa::Ca(BasicConstraints::Unconstrained);
-    params.distinguished_name.push(
-        rcgen::DnType::CommonName,
-        "ApiArk Local CA",
-    );
-    params.distinguished_name.push(
-        rcgen::DnType::OrganizationName,
-        "ApiArk",
-    );
+    params
+        .distinguished_name
+        .push(rcgen::DnType::CommonName, "ApiArk Local CA");
+    params
+        .distinguished_name
+        .push(rcgen::DnType::OrganizationName, "ApiArk");
     // Valid for 10 years
     params.not_before = time::OffsetDateTime::now_utc();
-    params.not_after = time::OffsetDateTime::now_utc()
-        + time::Duration::days(3650);
+    params.not_after = time::OffsetDateTime::now_utc() + time::Duration::days(3650);
 
-    let cert = params.self_signed(&key_pair)
+    let cert = params
+        .self_signed(&key_pair)
         .map_err(|e| format!("Failed to generate CA certificate: {e}"))?;
 
     let cert_pem = cert.pem();
@@ -60,10 +57,8 @@ pub fn generate_ca() -> Result<(PathBuf, PathBuf), String> {
     let cert_path = ca_cert_path();
     let key_path = ca_key_path();
 
-    fs::write(&cert_path, &cert_pem)
-        .map_err(|e| format!("Failed to write CA cert: {e}"))?;
-    fs::write(&key_path, &key_pem)
-        .map_err(|e| format!("Failed to write CA key: {e}"))?;
+    fs::write(&cert_path, &cert_pem).map_err(|e| format!("Failed to write CA cert: {e}"))?;
+    fs::write(&key_path, &key_pem).map_err(|e| format!("Failed to write CA key: {e}"))?;
 
     // Set restrictive permissions on the key file (Unix only)
     #[cfg(unix)]

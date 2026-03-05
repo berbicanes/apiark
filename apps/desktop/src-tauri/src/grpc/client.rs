@@ -4,9 +4,9 @@ use std::time::Instant;
 
 use prost::Message;
 use prost_reflect::{DescriptorPool, DynamicMessage, MessageDescriptor};
+use tauri::{AppHandle, Emitter};
 use tonic::transport::Channel;
 use tonic::IntoRequest;
-use tauri::{AppHandle, Emitter};
 
 use super::{GrpcMetadata, GrpcResponse, GrpcStreamMessage};
 
@@ -35,7 +35,10 @@ impl GrpcManager {
     /// Get or create a channel to the given address
     async fn get_channel(&self, address: &str) -> Result<Channel, String> {
         {
-            let channels = self.channels.lock().map_err(|e| format!("Lock error: {e}"))?;
+            let channels = self
+                .channels
+                .lock()
+                .map_err(|e| format!("Lock error: {e}"))?;
             if let Some(ch) = channels.get(address) {
                 return Ok(ch.clone());
             }
@@ -47,7 +50,10 @@ impl GrpcManager {
             .await
             .map_err(|e| format!("Failed to connect to gRPC server: {e}"))?;
 
-        let mut channels = self.channels.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut channels = self
+            .channels
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         channels.insert(address.to_string(), channel.clone());
         Ok(channel)
     }
@@ -66,30 +72,34 @@ impl GrpcManager {
 
         let pool = {
             let pools = self.pools.lock().map_err(|e| format!("Lock error: {e}"))?;
-            pools.get(connection_id).cloned()
-                .ok_or_else(|| "No proto schema loaded for this connection. Load a .proto file first.".to_string())?
+            pools.get(connection_id).cloned().ok_or_else(|| {
+                "No proto schema loaded for this connection. Load a .proto file first.".to_string()
+            })?
         };
 
         // Find the method descriptor
         let full_method = format!("{service_name}.{method_name}");
-        let svc_desc = pool.services()
+        let svc_desc = pool
+            .services()
             .find(|s| s.full_name() == service_name)
             .ok_or_else(|| format!("Service not found: {service_name}"))?;
 
-        let method_desc = svc_desc.methods()
+        let method_desc = svc_desc
+            .methods()
             .find(|m| m.name() == method_name)
             .ok_or_else(|| format!("Method not found: {method_name}"))?;
 
         let input_desc = method_desc.input();
 
         // Parse JSON to DynamicMessage
-        let json_value: serde_json::Value = serde_json::from_str(request_json)
-            .map_err(|e| format!("Invalid JSON: {e}"))?;
+        let json_value: serde_json::Value =
+            serde_json::from_str(request_json).map_err(|e| format!("Invalid JSON: {e}"))?;
         let request_msg = json_to_dynamic_message(&input_desc, &json_value)?;
 
         // Encode to bytes
         let mut request_bytes = Vec::new();
-        request_msg.encode(&mut request_bytes)
+        request_msg
+            .encode(&mut request_bytes)
             .map_err(|e| format!("Failed to encode request: {e}"))?;
 
         // Build the path: /{package.ServiceName}/{MethodName}
@@ -99,7 +109,10 @@ impl GrpcManager {
 
         // Make raw gRPC call using tonic's codec
         let mut grpc_client = tonic::client::Grpc::new(channel);
-        grpc_client.ready().await.map_err(|e| format!("Channel not ready: {e}"))?;
+        grpc_client
+            .ready()
+            .await
+            .map_err(|e| format!("Channel not ready: {e}"))?;
 
         let codec = tonic::codec::ProstCodec::<Vec<u8>, Vec<u8>>::default();
 
@@ -117,7 +130,11 @@ impl GrpcManager {
         }
 
         let response = grpc_client
-            .unary(request, path.parse().map_err(|e| format!("Invalid path: {e}"))?, codec)
+            .unary(
+                request,
+                path.parse().map_err(|e| format!("Invalid path: {e}"))?,
+                codec,
+            )
             .await
             .map_err(|e| format!("gRPC call failed: {e}"))?;
 
@@ -144,7 +161,10 @@ impl GrpcManager {
 
     /// Disconnect from a gRPC server
     pub fn disconnect(&self, address: &str) -> Result<(), String> {
-        let mut channels = self.channels.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut channels = self
+            .channels
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         channels.remove(address);
         Ok(())
     }

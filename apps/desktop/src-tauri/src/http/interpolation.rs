@@ -29,10 +29,16 @@ fn resolve_dynamic(name: &str) -> Option<String> {
         "$timestamp" => Some(chrono::Utc::now().timestamp().to_string()),
         "$timestampMs" => Some(chrono::Utc::now().timestamp_millis().to_string()),
         "$isoTimestamp" => Some(chrono::Utc::now().to_rfc3339()),
-        "$randomInt" => Some(rand::random::<u32>().to_string().chars().take(4).collect::<String>()
-            .parse::<u32>()
-            .map(|v| (v % 1001).to_string())
-            .unwrap_or_else(|_| "0".to_string())),
+        "$randomInt" => Some(
+            rand::random::<u32>()
+                .to_string()
+                .chars()
+                .take(4)
+                .collect::<String>()
+                .parse::<u32>()
+                .map(|v| (v % 1001).to_string())
+                .unwrap_or_else(|_| "0".to_string()),
+        ),
         "$randomFloat" => {
             let val: f64 = rand::random();
             Some(format!("{:.6}", val))
@@ -94,10 +100,7 @@ mod tests {
     #[test]
     fn test_unresolved_left_as_is() {
         let vars = HashMap::new();
-        assert_eq!(
-            interpolate("{{unknown}}", &vars),
-            "{{unknown}}"
-        );
+        assert_eq!(interpolate("{{unknown}}", &vars), "{{unknown}}");
     }
 
     #[test]

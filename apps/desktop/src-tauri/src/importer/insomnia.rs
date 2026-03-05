@@ -127,11 +127,7 @@ fn build_tree(
     items
 }
 
-fn parse_request(
-    res: &Value,
-    name: &str,
-    warnings: &mut Vec<ImportWarning>,
-) -> Option<ImportItem> {
+fn parse_request(res: &Value, name: &str, warnings: &mut Vec<ImportWarning>) -> Option<ImportItem> {
     let method = res
         .get("method")
         .and_then(|v| v.as_str())
@@ -151,11 +147,7 @@ fn parse_request(
                 h.get("name").and_then(|v| v.as_str()),
                 h.get("value").and_then(|v| v.as_str()),
             ) {
-                if !h
-                    .get("disabled")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(false)
-                {
+                if !h.get("disabled").and_then(|v| v.as_bool()).unwrap_or(false) {
                     headers.insert(k.to_string(), v.to_string());
                 }
             }

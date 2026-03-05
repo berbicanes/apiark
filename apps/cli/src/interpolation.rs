@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use regex::Regex;
+use std::collections::HashMap;
 
 /// Interpolate `{{variable}}` references in a string.
 pub fn interpolate(input: &str, variables: &HashMap<String, String>) -> String {
@@ -37,7 +37,11 @@ fn resolve_dynamic(name: &str) -> Option<String> {
             let s: String = (0..16)
                 .map(|_| {
                     let idx = rng.gen_range(0..36);
-                    if idx < 10 { (b'0' + idx) as char } else { (b'a' + idx - 10) as char }
+                    if idx < 10 {
+                        (b'0' + idx) as char
+                    } else {
+                        (b'a' + idx - 10) as char
+                    }
                 })
                 .collect();
             Some(s)
@@ -45,7 +49,9 @@ fn resolve_dynamic(name: &str) -> Option<String> {
         "$randomEmail" => {
             use rand::Rng;
             let mut rng = rand::thread_rng();
-            let user: String = (0..8).map(|_| (b'a' + rng.gen_range(0..26)) as char).collect();
+            let user: String = (0..8)
+                .map(|_| (b'a' + rng.gen_range(0..26)) as char)
+                .collect();
             Some(format!("{user}@example.com"))
         }
         _ => None,

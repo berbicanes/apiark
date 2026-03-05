@@ -1,4 +1,4 @@
-use tauri::{AppHandle, Manager, WebviewWindowBuilder, WebviewUrl};
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 
 /// Open a new application window.
 #[tauri::command]

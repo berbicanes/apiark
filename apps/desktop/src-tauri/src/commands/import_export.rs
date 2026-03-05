@@ -30,13 +30,10 @@ pub fn detect_import_format(file_path: &str) -> Result<String, String> {
         return Err("Directory does not appear to be a Bruno collection".to_string());
     }
 
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read file: {e}"))?;
+    let content = std::fs::read_to_string(path).map_err(|e| format!("Failed to read file: {e}"))?;
 
     // Check for Postman v2.1
-    if content.contains("\"schema\"")
-        && content.contains("getpostman.com")
-    {
+    if content.contains("\"schema\"") && content.contains("getpostman.com") {
         return Ok("postman".to_string());
     }
     // Also detect by info.schema field

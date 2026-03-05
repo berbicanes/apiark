@@ -31,9 +31,7 @@ fn collect_requests(
     dir: &Path,
     results: &mut Vec<(String, RequestFile)>,
 ) -> anyhow::Result<()> {
-    let mut entries: Vec<_> = fs::read_dir(dir)?
-        .filter_map(|e| e.ok())
-        .collect();
+    let mut entries: Vec<_> = fs::read_dir(dir)?.filter_map(|e| e.ok()).collect();
 
     // Check for _folder.yaml ordering
     let folder_config = dir.join("_folder.yaml");
@@ -51,8 +49,14 @@ fn collect_requests(
         entries.sort_by(|a, b| {
             let a_name = a.file_name().to_string_lossy().to_string();
             let b_name = b.file_name().to_string_lossy().to_string();
-            let a_stem = a_name.strip_suffix(".yaml").or(a_name.strip_suffix(".yml")).unwrap_or(&a_name);
-            let b_stem = b_name.strip_suffix(".yaml").or(b_name.strip_suffix(".yml")).unwrap_or(&b_name);
+            let a_stem = a_name
+                .strip_suffix(".yaml")
+                .or(a_name.strip_suffix(".yml"))
+                .unwrap_or(&a_name);
+            let b_stem = b_name
+                .strip_suffix(".yaml")
+                .or(b_name.strip_suffix(".yml"))
+                .unwrap_or(&b_name);
             let a_idx = order.iter().position(|o| o == a_stem).unwrap_or(usize::MAX);
             let b_idx = order.iter().position(|o| o == b_stem).unwrap_or(usize::MAX);
             a_idx.cmp(&b_idx).then(a_name.cmp(&b_name))

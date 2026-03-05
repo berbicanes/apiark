@@ -1,8 +1,8 @@
 #[allow(unused_imports)]
-use md5::{Md5, Digest as Md5Digest};
+use md5::{Digest as Md5Digest, Md5};
 
 use hmac::{Hmac, Mac};
-use sha2::{Sha256, Digest as Sha256Digest};
+use sha2::{Digest as Sha256Digest, Sha256};
 
 /// Generate Digest Auth header value.
 /// Used when implementing full challenge-response Digest auth (future).
@@ -73,12 +73,19 @@ pub fn compute_aws_v4_auth(
         ("x-amz-date".to_string(), amz_date.clone()),
     ];
     if !session_token.is_empty() {
-        signed_headers.push(("x-amz-security-token".to_string(), session_token.to_string()));
+        signed_headers.push((
+            "x-amz-security-token".to_string(),
+            session_token.to_string(),
+        ));
     }
     // Include user headers
     for (k, v) in headers {
         let lower = k.to_lowercase();
-        if lower != "host" && lower != "x-amz-date" && lower != "authorization" && lower != "x-amz-security-token" {
+        if lower != "host"
+            && lower != "x-amz-date"
+            && lower != "authorization"
+            && lower != "x-amz-security-token"
+        {
             signed_headers.push((lower, v.clone()));
         }
     }
@@ -108,7 +115,10 @@ pub fn compute_aws_v4_auth(
     );
 
     // Derive signing key
-    let k_date = hmac_sha256(format!("AWS4{secret_key}").as_bytes(), date_stamp.as_bytes());
+    let k_date = hmac_sha256(
+        format!("AWS4{secret_key}").as_bytes(),
+        date_stamp.as_bytes(),
+    );
     let k_region = hmac_sha256(&k_date, region.as_bytes());
     let k_service = hmac_sha256(&k_region, service.as_bytes());
     let k_signing = hmac_sha256(&k_service, b"aws4_request");
@@ -125,19 +135,18 @@ pub fn compute_aws_v4_auth(
         ("x-amz-content-sha256".to_string(), payload_hash),
     ];
     if !session_token.is_empty() {
-        extra_headers.push(("x-amz-security-token".to_string(), session_token.to_string()));
+        extra_headers.push((
+            "x-amz-security-token".to_string(),
+            session_token.to_string(),
+        ));
     }
 
     (auth_header, extra_headers)
 }
 
 /// Generate a JWT token.
-pub fn generate_jwt(
-    secret: &str,
-    algorithm: &str,
-    payload_json: &str,
-) -> Result<String, String> {
-    use jsonwebtoken::{encode, EncodingKey, Header, Algorithm};
+pub fn generate_jwt(secret: &str, algorithm: &str, payload_json: &str) -> Result<String, String> {
+    use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 
     let alg = match algorithm.to_uppercase().as_str() {
         "HS256" => Algorithm::HS256,
@@ -151,8 +160,8 @@ pub fn generate_jwt(
         other => return Err(format!("Unsupported JWT algorithm: {other}")),
     };
 
-    let claims: serde_json::Value = serde_json::from_str(payload_json)
-        .map_err(|e| format!("Invalid JWT payload JSON: {e}"))?;
+    let claims: serde_json::Value =
+        serde_json::from_str(payload_json).map_err(|e| format!("Invalid JWT payload JSON: {e}"))?;
 
     let header = Header::new(alg);
 
@@ -164,15 +173,12 @@ pub fn generate_jwt(
             EncodingKey::from_rsa_pem(secret.as_bytes())
                 .map_err(|e| format!("Invalid RSA PEM key: {e}"))?
         }
-        Algorithm::ES256 | Algorithm::ES384 => {
-            EncodingKey::from_ec_pem(secret.as_bytes())
-                .map_err(|e| format!("Invalid EC PEM key: {e}"))?
-        }
+        Algorithm::ES256 | Algorithm::ES384 => EncodingKey::from_ec_pem(secret.as_bytes())
+            .map_err(|e| format!("Invalid EC PEM key: {e}"))?,
         _ => return Err(format!("Unsupported algorithm: {algorithm}")),
     };
 
-    encode(&header, &claims, &key)
-        .map_err(|e| format!("Failed to generate JWT: {e}"))
+    encode(&header, &claims, &key).map_err(|e| format!("Failed to generate JWT: {e}"))
 }
 
 #[allow(dead_code)]
@@ -189,8 +195,7 @@ fn sha256_hex(input: &str) -> String {
 }
 
 fn hmac_sha256(key: &[u8], data: &[u8]) -> Vec<u8> {
-    let mut mac = Hmac::<Sha256>::new_from_slice(key)
-        .expect("HMAC can take key of any size");
+    let mut mac = Hmac::<Sha256>::new_from_slice(key).expect("HMAC can take key of any size");
     mac.update(data);
     mac.finalize().into_bytes().to_vec()
 }
@@ -245,7 +250,7 @@ pub fn generate_ntlm_authenticate(
     workstation: &str,
 ) -> Result<String, String> {
     use base64::Engine;
-    use md4::{Md4, Digest as Md4Digest};
+    use md4::{Digest as Md4Digest, Md4};
 
     let challenge = base64::engine::general_purpose::STANDARD
         .decode(challenge_b64.trim())
@@ -265,7 +270,10 @@ pub fn generate_ntlm_authenticate(
 
     // Compute NTLMv1 response (24 bytes)
     // NT Hash = MD4(UTF-16LE(password))
-    let password_utf16: Vec<u8> = password.encode_utf16().flat_map(|c| c.to_le_bytes()).collect();
+    let password_utf16: Vec<u8> = password
+        .encode_utf16()
+        .flat_map(|c| c.to_le_bytes())
+        .collect();
     let mut md4 = Md4::new();
     md4.update(&password_utf16);
     let nt_hash = md4.finalize();
@@ -308,7 +316,7 @@ pub fn generate_ntlm_authenticate(
     let mut msg = Vec::new();
     msg.extend_from_slice(b"NTLMSSP\0");
     msg.extend_from_slice(&3u32.to_le_bytes()); // Type 3
-    // LM security buffer
+                                                // LM security buffer
     msg.extend_from_slice(&lm_len.to_le_bytes());
     msg.extend_from_slice(&lm_len.to_le_bytes());
     msg.extend_from_slice(&lm_offset.to_le_bytes());

@@ -4,7 +4,9 @@ use std::path::Path;
 
 use super::{ImportBody, ImportData, ImportItem};
 use crate::models::auth::AuthConfig;
-use crate::models::collection::{CollectionConfig, CollectionDefaults, RequestBodyFile, RequestFile};
+use crate::models::collection::{
+    CollectionConfig, CollectionDefaults, RequestBodyFile, RequestFile,
+};
 use crate::models::request::HttpMethod;
 
 /// Write ImportData to disk as an ApiArk collection.
@@ -44,10 +46,13 @@ pub fn write_import(data: &ImportData, target_dir: &Path) -> Result<String, Stri
             .map_err(|e| format!("Failed to create environments directory: {e}"))?;
 
         for env in &data.environments {
-            let env_data = serde_yaml::to_string(&serde_yaml::to_value(&EnvFile {
-                name: &env.name,
-                variables: &env.variables,
-            }).map_err(|e| format!("Failed to serialize environment: {e}"))?)
+            let env_data = serde_yaml::to_string(
+                &serde_yaml::to_value(&EnvFile {
+                    name: &env.name,
+                    variables: &env.variables,
+                })
+                .map_err(|e| format!("Failed to serialize environment: {e}"))?,
+            )
             .map_err(|e| format!("Failed to serialize environment: {e}"))?;
 
             let env_filename = sanitize_filename(&env.name);
@@ -155,7 +160,9 @@ fn sanitize_filename(name: &str) -> String {
         })
         .collect();
 
-    let sanitized = sanitized.trim_matches(|c: char| c == '-' || c == '_' || c == '.').to_string();
+    let sanitized = sanitized
+        .trim_matches(|c: char| c == '-' || c == '_' || c == '.')
+        .to_string();
 
     if sanitized.is_empty() {
         "untitled".to_string()

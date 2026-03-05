@@ -102,8 +102,7 @@ impl CookieJarManager {
         let json = serde_json::to_string_pretty(&cookies)
             .map_err(|e| format!("Failed to serialize cookies: {e}"))?;
 
-        std::fs::write(&path, json)
-            .map_err(|e| format!("Failed to write cookies: {e}"))?;
+        std::fs::write(&path, json).map_err(|e| format!("Failed to write cookies: {e}"))?;
 
         Ok(())
     }
@@ -122,11 +121,11 @@ impl CookieJarManager {
             return Ok(());
         }
 
-        let json = std::fs::read_to_string(&path)
-            .map_err(|e| format!("Failed to read cookies: {e}"))?;
+        let json =
+            std::fs::read_to_string(&path).map_err(|e| format!("Failed to read cookies: {e}"))?;
 
-        let cookies: Vec<CookieEntry> = serde_json::from_str(&json)
-            .map_err(|e| format!("Failed to parse cookies: {e}"))?;
+        let cookies: Vec<CookieEntry> =
+            serde_json::from_str(&json).map_err(|e| format!("Failed to parse cookies: {e}"))?;
 
         let mut jars = self.jars.lock().map_err(|e| format!("Lock error: {e}"))?;
         jars.insert(collection_path.to_string(), cookies);

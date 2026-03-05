@@ -79,10 +79,7 @@ pub fn terminal_create(
     // Store session
     {
         let mut sessions = manager.sessions.lock().map_err(|e| e.to_string())?;
-        sessions.insert(
-            id.clone(),
-            TerminalSession { writer, pair },
-        );
+        sessions.insert(id.clone(), TerminalSession { writer, pair });
     }
 
     // Spawn reader thread to emit output events

@@ -1,7 +1,4 @@
 mod commands;
-mod mqtt;
-mod plugins;
-mod proxy;
 mod docs;
 mod exporter;
 mod grpc;
@@ -9,9 +6,12 @@ pub mod http;
 mod importer;
 mod mock;
 pub mod models;
-mod scheduler;
+mod mqtt;
 mod oauth;
+mod plugins;
+mod proxy;
 mod runner;
+mod scheduler;
 pub mod scripting;
 mod sse;
 pub mod storage;
@@ -21,52 +21,65 @@ mod websocket;
 use std::sync::{Arc, Mutex};
 
 use commands::ai::{ai_generate_request, ai_generate_tests};
-use commands::collection::{
-    create_folder, create_request, delete_item, get_collection_defaults, open_collection,
-    read_request_file, rename_item, create_sample_collection, save_folder_order,
-    save_request_file, update_collection_defaults,
-};
-use commands::environment::{get_resolved_variables, load_environments, load_root_dotenv, save_environment};
-use commands::greet;
-use commands::history::{clear_history, delete_history_entry, get_history, search_history, AppState};
-use commands::http::{read_full_response, send_request, send_request_with_scripts};
-use commands::curl::{export_curl_command, parse_curl_command};
-use commands::import_export::{detect_import_format, export_collection, import_collection, import_preview};
-use commands::oauth::{oauth_clear_token, oauth_get_token_status, oauth_start_flow};
-use commands::runner::run_collection_command;
-use commands::sse::{sse_connect, sse_disconnect, SseManager};
-use commands::websocket::{ws_connect, ws_disconnect, ws_send};
-use websocket::manager::WsManager;
-use commands::settings::{get_settings, update_settings, SettingsState};
-use commands::cookies::{get_cookie_jar, delete_cookie, clear_cookie_jar};
-use commands::grpc::{grpc_load_proto, grpc_call_unary, grpc_disconnect};
-use commands::docs::{generate_docs, preview_docs};
 use commands::backup::{export_app_state, import_app_state};
-use commands::license::{get_license_status, activate_license, deactivate_license, LicenseState};
+use commands::collection::{
+    create_folder, create_request, create_sample_collection, delete_item, get_collection_defaults,
+    open_collection, read_request_file, rename_item, save_folder_order, save_request_file,
+    update_collection_defaults,
+};
+use commands::cookies::{clear_cookie_jar, delete_cookie, get_cookie_jar};
+use commands::curl::{export_curl_command, parse_curl_command};
+use commands::docs::{generate_docs, preview_docs};
+use commands::environment::{
+    get_resolved_variables, load_environments, load_root_dotenv, save_environment,
+};
+use commands::greet;
+use commands::grpc::{grpc_call_unary, grpc_disconnect, grpc_load_proto};
+use commands::history::{
+    clear_history, delete_history_entry, get_history, search_history, AppState,
+};
+use commands::http::{read_full_response, send_request, send_request_with_scripts};
+use commands::import_export::{
+    detect_import_format, export_collection, import_collection, import_preview,
+};
+use commands::license::{activate_license, deactivate_license, get_license_status, LicenseState};
 use commands::migration::{check_collection_version, migrate_collection};
-use commands::mock::{start_mock_server, stop_mock_server, list_mock_servers};
-use commands::scheduler::{create_monitor, delete_monitor, toggle_monitor, list_monitors, get_monitor_results};
-use grpc::client::GrpcManager;
-use mock::server::MockServerManager;
-use scheduler::monitor::MonitorManager;
-use commands::state::{load_persisted_state, save_persisted_state};
-use commands::trash::{list_trash, restore_from_trash, empty_trash};
-use commands::watcher::{watch_collection, unwatch_collection};
-use commands::updater::{list_rollback_versions, backup_current_binary, clear_backups};
-use commands::window::open_new_window;
-use commands::plugins::{list_plugins, toggle_plugin, uninstall_plugin, install_plugin};
-use commands::mqtt::{mqtt_connect, mqtt_subscribe, mqtt_publish, mqtt_disconnect};
+use commands::mock::{list_mock_servers, start_mock_server, stop_mock_server};
+use commands::mqtt::{mqtt_connect, mqtt_disconnect, mqtt_publish, mqtt_subscribe};
+use commands::oauth::{oauth_clear_token, oauth_get_token_status, oauth_start_flow};
+use commands::plugins::{install_plugin, list_plugins, toggle_plugin, uninstall_plugin};
+use commands::proxy::{
+    proxy_ca_exists, proxy_clear_captures, proxy_generate_ca, proxy_get_ca_cert,
+    proxy_get_captures, proxy_set_passthrough, proxy_start, proxy_status, proxy_stop,
+};
+use commands::runner::run_collection_command;
+use commands::scheduler::{
+    create_monitor, delete_monitor, get_monitor_results, list_monitors, toggle_monitor,
+};
+use commands::settings::{get_settings, update_settings, SettingsState};
 use commands::socketio::socketio_build_url;
-use plugins::manager::PluginManager;
-use commands::proxy::{proxy_start, proxy_stop, proxy_status, proxy_get_captures, proxy_clear_captures, proxy_set_passthrough, proxy_generate_ca, proxy_get_ca_cert, proxy_ca_exists};
-use commands::terminal::{terminal_create, terminal_write, terminal_resize, terminal_close, TerminalManager};
-use proxy::capture::ProxyCaptureManager;
+use commands::sse::{sse_connect, sse_disconnect, SseManager};
+use commands::state::{load_persisted_state, save_persisted_state};
+use commands::terminal::{
+    terminal_close, terminal_create, terminal_resize, terminal_write, TerminalManager,
+};
+use commands::trash::{empty_trash, list_trash, restore_from_trash};
+use commands::updater::{backup_current_binary, clear_backups, list_rollback_versions};
+use commands::watcher::{unwatch_collection, watch_collection};
+use commands::websocket::{ws_connect, ws_disconnect, ws_send};
+use commands::window::open_new_window;
+use grpc::client::GrpcManager;
+use http::cookies::CookieJarManager;
+use mock::server::MockServerManager;
 use mqtt::client::MqttManager;
 use oauth::OAuthTokenStore;
-use http::cookies::CookieJarManager;
-use watcher::collection_watcher::CollectionWatcher;
+use plugins::manager::PluginManager;
+use proxy::capture::ProxyCaptureManager;
+use scheduler::monitor::MonitorManager;
 use storage::history::HistoryDb;
 use storage::settings;
+use watcher::collection_watcher::CollectionWatcher;
+use websocket::manager::WsManager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -117,7 +130,10 @@ pub fn run() {
             "message": payload,
         });
         let path = crash_dir.join(format!("crash_{timestamp}.json"));
-        let _ = std::fs::write(&path, serde_json::to_string_pretty(&report).unwrap_or_default());
+        let _ = std::fs::write(
+            &path,
+            serde_json::to_string_pretty(&report).unwrap_or_default(),
+        );
         tracing::error!("PANIC at {location}: {payload}");
         default_hook(info);
     }));
@@ -153,7 +169,10 @@ pub fn run() {
     };
 
     let license_state = LicenseState::new(&apiark_dir);
-    tracing::info!("License tier: {:?}", license_state.status.lock().unwrap().tier);
+    tracing::info!(
+        "License tier: {:?}",
+        license_state.status.lock().unwrap().tier
+    );
 
     tauri::Builder::default()
         .manage(app_state)

@@ -15,8 +15,8 @@ pub async fn export_app_state(
         .ok_or("Could not determine home directory")?
         .join(".apiark");
 
-    let file = fs::File::create(&output_path)
-        .map_err(|e| format!("Failed to create export file: {e}"))?;
+    let file =
+        fs::File::create(&output_path).map_err(|e| format!("Failed to create export file: {e}"))?;
     let mut zip = zip::ZipWriter::new(file);
     let options = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated);
@@ -38,8 +38,8 @@ pub async fn export_app_state(
     // state.json (open tabs, window state)
     let state_path = apiark_dir.join("state.json");
     if state_path.exists() {
-        let content = fs::read_to_string(&state_path)
-            .map_err(|e| format!("Failed to read state: {e}"))?;
+        let content =
+            fs::read_to_string(&state_path).map_err(|e| format!("Failed to read state: {e}"))?;
         zip.start_file("state.json", options)
             .map_err(|e| format!("Zip error: {e}"))?;
         zip.write_all(content.as_bytes())
@@ -51,8 +51,8 @@ pub async fn export_app_state(
     if include_history {
         let db_path = apiark_dir.join("data.db");
         if db_path.exists() {
-            let content = fs::read(&db_path)
-                .map_err(|e| format!("Failed to read history DB: {e}"))?;
+            let content =
+                fs::read(&db_path).map_err(|e| format!("Failed to read history DB: {e}"))?;
             zip.start_file("data.db", options)
                 .map_err(|e| format!("Zip error: {e}"))?;
             zip.write_all(&content)
@@ -79,10 +79,8 @@ pub async fn import_app_state(zip_path: String) -> Result<ImportSummary, String>
 
     let _ = fs::create_dir_all(&apiark_dir);
 
-    let file = fs::File::open(&zip_path)
-        .map_err(|e| format!("Failed to open import file: {e}"))?;
-    let mut archive = zip::ZipArchive::new(file)
-        .map_err(|e| format!("Invalid zip file: {e}"))?;
+    let file = fs::File::open(&zip_path).map_err(|e| format!("Failed to open import file: {e}"))?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|e| format!("Invalid zip file: {e}"))?;
 
     let mut files_restored = Vec::new();
     let mut history_entries: Option<String> = None;
@@ -96,7 +94,8 @@ pub async fn import_app_state(zip_path: String) -> Result<ImportSummary, String>
         match name.as_str() {
             "settings.json" => {
                 let mut content = String::new();
-                entry.read_to_string(&mut content)
+                entry
+                    .read_to_string(&mut content)
                     .map_err(|e| format!("Failed to read settings from zip: {e}"))?;
 
                 // Merge: parse both old and new, new values override old
@@ -108,13 +107,13 @@ pub async fn import_app_state(zip_path: String) -> Result<ImportSummary, String>
                     content
                 };
 
-                fs::write(&target, merged)
-                    .map_err(|e| format!("Failed to write settings: {e}"))?;
+                fs::write(&target, merged).map_err(|e| format!("Failed to write settings: {e}"))?;
                 files_restored.push("settings.json".to_string());
             }
             "state.json" => {
                 let mut content = String::new();
-                entry.read_to_string(&mut content)
+                entry
+                    .read_to_string(&mut content)
                     .map_err(|e| format!("Failed to read state from zip: {e}"))?;
                 fs::write(apiark_dir.join("state.json"), content)
                     .map_err(|e| format!("Failed to write state: {e}"))?;
@@ -122,7 +121,8 @@ pub async fn import_app_state(zip_path: String) -> Result<ImportSummary, String>
             }
             "data.db" => {
                 let mut content = Vec::new();
-                entry.read_to_end(&mut content)
+                entry
+                    .read_to_end(&mut content)
                     .map_err(|e| format!("Failed to read history DB from zip: {e}"))?;
 
                 // Back up existing DB
@@ -137,7 +137,9 @@ pub async fn import_app_state(zip_path: String) -> Result<ImportSummary, String>
 
                 // Count entries for summary
                 if let Ok(conn) = rusqlite::Connection::open(&db_path) {
-                    if let Ok(count) = conn.query_row("SELECT COUNT(*) FROM history", [], |r| r.get::<_, i64>(0)) {
+                    if let Ok(count) =
+                        conn.query_row("SELECT COUNT(*) FROM history", [], |r| r.get::<_, i64>(0))
+                    {
                         history_entries = Some(format!("{count} entries"));
                     }
                 }
@@ -157,10 +159,10 @@ pub async fn import_app_state(zip_path: String) -> Result<ImportSummary, String>
 
 /// Merge two JSON objects: new values override old, unrecognized keys preserved.
 fn merge_json(existing: &str, incoming: &str) -> String {
-    let mut base: serde_json::Value = serde_json::from_str(existing)
-        .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
-    let overlay: serde_json::Value = serde_json::from_str(incoming)
-        .unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
+    let mut base: serde_json::Value =
+        serde_json::from_str(existing).unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
+    let overlay: serde_json::Value =
+        serde_json::from_str(incoming).unwrap_or(serde_json::Value::Object(serde_json::Map::new()));
 
     if let (serde_json::Value::Object(ref mut base_map), serde_json::Value::Object(overlay_map)) =
         (&mut base, overlay)

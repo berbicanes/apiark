@@ -107,12 +107,7 @@ impl PluginManager {
     }
 
     pub fn list(&self) -> Vec<PluginInfo> {
-        self.plugins
-            .lock()
-            .unwrap()
-            .values()
-            .cloned()
-            .collect()
+        self.plugins.lock().unwrap().values().cloned().collect()
     }
 
     pub fn toggle(&self, name: &str) -> Result<bool, String> {
@@ -200,8 +195,7 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), String> {
         if src_path.is_dir() {
             copy_dir_recursive(&src_path, &dst_path)?;
         } else {
-            std::fs::copy(&src_path, &dst_path)
-                .map_err(|e| format!("Failed to copy file: {e}"))?;
+            std::fs::copy(&src_path, &dst_path).map_err(|e| format!("Failed to copy file: {e}"))?;
         }
     }
     Ok(())

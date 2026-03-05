@@ -110,17 +110,15 @@ fn scan_bruno_dir(
             }
         } else if file_name.ends_with(".bru") {
             match fs::read_to_string(&path) {
-                Ok(content) => {
-                    match parse_bru_request(&content) {
-                        Some(item) => requests.push(item),
-                        None => {
-                            warnings.push(ImportWarning {
-                                item_name: file_name.clone(),
-                                message: "Could not parse .bru file — skipped.".to_string(),
-                            });
-                        }
+                Ok(content) => match parse_bru_request(&content) {
+                    Some(item) => requests.push(item),
+                    None => {
+                        warnings.push(ImportWarning {
+                            item_name: file_name.clone(),
+                            message: "Could not parse .bru file — skipped.".to_string(),
+                        });
                     }
-                }
+                },
                 Err(e) => {
                     warnings.push(ImportWarning {
                         item_name: file_name.clone(),

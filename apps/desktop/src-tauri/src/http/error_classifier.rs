@@ -8,7 +8,10 @@ pub fn classify_reqwest_error(err: reqwest::Error, timeout_ms: u64) -> HttpEngin
 
     if err.is_connect() {
         let msg = err.to_string();
-        if msg.contains("dns error") || msg.contains("Name or service not known") || msg.contains("getaddrinfo") {
+        if msg.contains("dns error")
+            || msg.contains("Name or service not known")
+            || msg.contains("getaddrinfo")
+        {
             return HttpEngineError::DnsFailure(err.to_string());
         }
         return HttpEngineError::ConnectionRefused(err.to_string());

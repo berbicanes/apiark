@@ -4,7 +4,9 @@ use tonic::transport::Channel;
 use super::{GrpcCallType, GrpcMethodInfo, GrpcServiceInfo};
 
 /// Discover services from a gRPC server using server reflection.
-pub async fn reflect_services(address: &str) -> Result<(Vec<GrpcServiceInfo>, DescriptorPool), String> {
+pub async fn reflect_services(
+    address: &str,
+) -> Result<(Vec<GrpcServiceInfo>, DescriptorPool), String> {
     let channel = Channel::from_shared(address.to_string())
         .map_err(|e| format!("Invalid gRPC address: {e}"))?
         .connect()
@@ -20,7 +22,9 @@ pub async fn reflect_services(address: &str) -> Result<(Vec<GrpcServiceInfo>, De
     // For each service, get file descriptors and build the pool
     let mut file_descriptor_bytes: Vec<Vec<u8>> = vec![];
     for svc_name in &services {
-        if svc_name == "grpc.reflection.v1alpha.ServerReflection" || svc_name == "grpc.reflection.v1.ServerReflection" {
+        if svc_name == "grpc.reflection.v1alpha.ServerReflection"
+            || svc_name == "grpc.reflection.v1.ServerReflection"
+        {
             continue;
         }
         let fds = get_file_descriptors(&mut client, svc_name).await?;

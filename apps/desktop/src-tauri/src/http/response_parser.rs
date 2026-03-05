@@ -67,10 +67,8 @@ pub async fn parse_response(
     // Check if we need to truncate
     if bytes.len() > TRUNCATE_THRESHOLD {
         // Save full body to temp file
-        let temp_path = std::env::temp_dir().join(format!(
-            "apiark-response-{}",
-            uuid::Uuid::new_v4()
-        ));
+        let temp_path =
+            std::env::temp_dir().join(format!("apiark-response-{}", uuid::Uuid::new_v4()));
 
         if let Err(e) = std::fs::write(&temp_path, &bytes) {
             tracing::warn!("Failed to write response temp file: {e}");
@@ -78,9 +76,8 @@ pub async fn parse_response(
         }
 
         let truncated_bytes = &bytes[..TRUNCATE_THRESHOLD];
-        let body = String::from_utf8(truncated_bytes.to_vec()).unwrap_or_else(|_| {
-            format!("<binary data: {} bytes>", size_bytes)
-        });
+        let body = String::from_utf8(truncated_bytes.to_vec())
+            .unwrap_or_else(|_| format!("<binary data: {} bytes>", size_bytes));
 
         let temp_path_str = if temp_path.exists() {
             Some(temp_path.to_string_lossy().to_string())

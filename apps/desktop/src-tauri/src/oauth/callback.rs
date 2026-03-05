@@ -64,24 +64,22 @@ pub async fn start_callback_server(
         )
         .route(
             "/callback/token",
-            axum::routing::post(
-                move |Query(params): Query<CallbackParams>| {
-                    let result_tx = result_tx.clone();
-                    async move {
-                        let result = CallbackResult {
-                            code: None,
-                            state: params.state,
-                            access_token: params.access_token,
-                            token_type: params.token_type,
-                            expires_in: params.expires_in,
-                        };
-                        if let Some(tx) = result_tx.lock().await.take() {
-                            let _ = tx.send(result);
-                        }
-                        Html(SUCCESS_HTML.to_string())
+            axum::routing::post(move |Query(params): Query<CallbackParams>| {
+                let result_tx = result_tx.clone();
+                async move {
+                    let result = CallbackResult {
+                        code: None,
+                        state: params.state,
+                        access_token: params.access_token,
+                        token_type: params.token_type,
+                        expires_in: params.expires_in,
+                    };
+                    if let Some(tx) = result_tx.lock().await.take() {
+                        let _ = tx.send(result);
                     }
-                },
-            ),
+                    Html(SUCCESS_HTML.to_string())
+                }
+            }),
         );
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port));

@@ -84,7 +84,11 @@ pub fn parse_curl(input: &str) -> Result<ParsedCurlRequest, String> {
 
     // Infer method from data presence
     let method = method.unwrap_or_else(|| {
-        if data.is_some() { "POST".to_string() } else { "GET".to_string() }
+        if data.is_some() {
+            "POST".to_string()
+        } else {
+            "GET".to_string()
+        }
     });
 
     // Infer body type from content-type header
@@ -222,7 +226,10 @@ mod tests {
     #[test]
     fn test_basic_auth() {
         let result = parse_curl("curl -u user:pass https://example.com").unwrap();
-        assert_eq!(result.auth_basic, Some(("user".to_string(), "pass".to_string())));
+        assert_eq!(
+            result.auth_basic,
+            Some(("user".to_string(), "pass".to_string()))
+        );
     }
 
     #[test]

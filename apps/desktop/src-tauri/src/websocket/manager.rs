@@ -32,7 +32,10 @@ impl WsManager {
     ) -> Result<(), String> {
         // Check for existing connection
         {
-            let connections = self.connections.lock().map_err(|e| format!("Lock error: {e}"))?;
+            let connections = self
+                .connections
+                .lock()
+                .map_err(|e| format!("Lock error: {e}"))?;
             if connections.contains_key(&connection_id) {
                 return Err("Connection already exists".to_string());
             }
@@ -43,7 +46,10 @@ impl WsManager {
 
         // Store connection
         {
-            let mut connections = self.connections.lock().map_err(|e| format!("Lock error: {e}"))?;
+            let mut connections = self
+                .connections
+                .lock()
+                .map_err(|e| format!("Lock error: {e}"))?;
             connections.insert(
                 connection_id.clone(),
                 WsConnection {
@@ -200,7 +206,10 @@ impl WsManager {
     }
 
     pub fn send(&self, connection_id: &str, message: String) -> Result<(), String> {
-        let connections = self.connections.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let connections = self
+            .connections
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         let conn = connections
             .get(connection_id)
             .ok_or_else(|| format!("No connection with id: {connection_id}"))?;
@@ -210,7 +219,10 @@ impl WsManager {
     }
 
     pub fn disconnect(&self, connection_id: &str) -> Result<(), String> {
-        let mut connections = self.connections.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut connections = self
+            .connections
+            .lock()
+            .map_err(|e| format!("Lock error: {e}"))?;
         if let Some(conn) = connections.remove(connection_id) {
             let _ = conn.cancel.send(true);
         }

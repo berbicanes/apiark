@@ -25,7 +25,10 @@ pub fn socketio_build_url(url: String, namespace: String) -> Result<String, Stri
 
     // Socket.IO path
     if !parsed.path().contains("socket.io") {
-        parsed.set_path(&format!("{}/socket.io/", parsed.path().trim_end_matches('/')));
+        parsed.set_path(&format!(
+            "{}/socket.io/",
+            parsed.path().trim_end_matches('/')
+        ));
     }
 
     // Add EIO version and transport
@@ -35,9 +38,7 @@ pub fn socketio_build_url(url: String, namespace: String) -> Result<String, Stri
         .append_pair("transport", "websocket");
 
     if namespace != "/" {
-        parsed
-            .query_pairs_mut()
-            .append_pair("nsp", &namespace);
+        parsed.query_pairs_mut().append_pair("nsp", &namespace);
     }
 
     // Convert http(s) to ws(s)

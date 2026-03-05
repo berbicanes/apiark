@@ -8,13 +8,13 @@ use crate::http::client::HttpEngine;
 use crate::http::interpolation;
 use crate::models::auth::AuthConfig;
 use crate::models::collection::{CollectionNode, RequestFile};
-use crate::models::request::{
-    BodyType, HttpMethod, KeyValuePair, RequestBody, SendRequestParams,
-};
+use crate::models::request::{BodyType, HttpMethod, KeyValuePair, RequestBody, SendRequestParams};
 use crate::oauth::OAuthTokenStore;
 use crate::scripting::assertions::evaluate_assertions_from_yaml;
 use crate::scripting::engine::execute_script;
-use crate::scripting::{ConsoleEntry, RequestSnapshot, ResponseSnapshot, ScriptContext, ScriptPhase};
+use crate::scripting::{
+    ConsoleEntry, RequestSnapshot, ResponseSnapshot, ScriptContext, ScriptPhase,
+};
 use crate::storage::collection::{load_collection_tree, read_request};
 use crate::storage::environment;
 use crate::storage::history::HistoryDb;
@@ -177,20 +177,36 @@ fn interpolate_auth(auth: &AuthConfig, vars: &HashMap<String, String>) -> AuthCo
             username: interpolation::interpolate(username, vars),
             password: interpolation::interpolate(password, vars),
         },
-        AuthConfig::AwsV4 { access_key, secret_key, region, service, session_token } => AuthConfig::AwsV4 {
+        AuthConfig::AwsV4 {
+            access_key,
+            secret_key,
+            region,
+            service,
+            session_token,
+        } => AuthConfig::AwsV4 {
             access_key: interpolation::interpolate(access_key, vars),
             secret_key: interpolation::interpolate(secret_key, vars),
             region: interpolation::interpolate(region, vars),
             service: interpolation::interpolate(service, vars),
             session_token: interpolation::interpolate(session_token, vars),
         },
-        AuthConfig::JwtBearer { secret, algorithm, payload, header_prefix } => AuthConfig::JwtBearer {
+        AuthConfig::JwtBearer {
+            secret,
+            algorithm,
+            payload,
+            header_prefix,
+        } => AuthConfig::JwtBearer {
             secret: interpolation::interpolate(secret, vars),
             algorithm: algorithm.clone(),
             payload: interpolation::interpolate(payload, vars),
             header_prefix: header_prefix.clone(),
         },
-        AuthConfig::Ntlm { username, password, domain, workstation } => AuthConfig::Ntlm {
+        AuthConfig::Ntlm {
+            username,
+            password,
+            domain,
+            workstation,
+        } => AuthConfig::Ntlm {
             username: interpolation::interpolate(username, vars),
             password: interpolation::interpolate(password, vars),
             domain: interpolation::interpolate(domain, vars),
@@ -199,11 +215,18 @@ fn interpolate_auth(auth: &AuthConfig, vars: &HashMap<String, String>) -> AuthCo
     }
 }
 
-fn apply_env_mutations(vars: &mut HashMap<String, String>, mutations: &HashMap<String, Option<String>>) {
+fn apply_env_mutations(
+    vars: &mut HashMap<String, String>,
+    mutations: &HashMap<String, Option<String>>,
+) {
     for (key, value) in mutations {
         match value {
-            Some(v) => { vars.insert(key.clone(), v.clone()); }
-            None => { vars.remove(key); }
+            Some(v) => {
+                vars.insert(key.clone(), v.clone());
+            }
+            None => {
+                vars.remove(key);
+            }
         }
     }
 }
@@ -219,11 +242,18 @@ async fn run_single_request(
     let mut interpolated = interpolate_params(&params, vars);
 
     // Resolve OAuth token if applicable
-    if let Some(AuthConfig::Oauth2 { ref client_id, ref auth_url, .. }) = interpolated.auth {
+    if let Some(AuthConfig::Oauth2 {
+        ref client_id,
+        ref auth_url,
+        ..
+    }) = interpolated.auth
+    {
         let key = OAuthTokenStore::cache_key(client_id, auth_url);
         match oauth_store.get(&key) {
             Some(token) if !token.is_expired() => {
-                interpolated.auth = Some(AuthConfig::Bearer { token: token.access_token });
+                interpolated.auth = Some(AuthConfig::Bearer {
+                    token: token.access_token,
+                });
             }
             _ => {
                 return RequestRunResult {
@@ -277,7 +307,11 @@ async fn run_single_request(
     let resp_snapshot = ResponseSnapshot {
         status: response.status,
         status_text: response.status_text.clone(),
-        headers: response.headers.iter().map(|h| (h.key.clone(), h.value.clone())).collect(),
+        headers: response
+            .headers
+            .iter()
+            .map(|h| (h.key.clone(), h.value.clone()))
+            .collect(),
         body: response.body.clone(),
         time_ms: response.time_ms,
         size_bytes: response.size_bytes,
@@ -289,7 +323,12 @@ async fn run_single_request(
             let req_snapshot = RequestSnapshot {
                 method: method_str.clone(),
                 url: url_str.clone(),
-                headers: interpolated.headers.iter().filter(|h| h.enabled).map(|h| (h.key.clone(), h.value.clone())).collect(),
+                headers: interpolated
+                    .headers
+                    .iter()
+                    .filter(|h| h.enabled)
+                    .map(|h| (h.key.clone(), h.value.clone()))
+                    .collect(),
                 body: interpolated.body.as_ref().map(|b| b.content.clone()),
             };
             let ctx = ScriptContext {
@@ -315,7 +354,10 @@ async fn run_single_request(
 
     // Evaluate declarative assertions
     if let Some(ref assert_value) = file.assert {
-        let assertions = crate::scripting::assertions::evaluate_assertions_from_yaml(assert_value, &resp_snapshot);
+        let assertions = crate::scripting::assertions::evaluate_assertions_from_yaml(
+            assert_value,
+            &resp_snapshot,
+        );
         assertion_count = assertions.len();
         assertion_passed = assertions.iter().filter(|a| a.passed).count();
     }
@@ -326,7 +368,12 @@ async fn run_single_request(
             let req_snapshot = RequestSnapshot {
                 method: method_str.clone(),
                 url: url_str.clone(),
-                headers: interpolated.headers.iter().filter(|h| h.enabled).map(|h| (h.key.clone(), h.value.clone())).collect(),
+                headers: interpolated
+                    .headers
+                    .iter()
+                    .filter(|h| h.enabled)
+                    .map(|h| (h.key.clone(), h.value.clone()))
+                    .collect(),
                 body: interpolated.body.as_ref().map(|b| b.content.clone()),
             };
             let ctx = ScriptContext {
@@ -383,10 +430,13 @@ pub async fn run_collection(
     let request_paths = if let Some(ref folder_path) = config.folder_path {
         fn find_folder<'a>(node: &'a CollectionNode, target: &str) -> Option<&'a CollectionNode> {
             match node {
-                CollectionNode::Folder { path, .. } | CollectionNode::Collection { path, .. } if path == target => {
+                CollectionNode::Folder { path, .. } | CollectionNode::Collection { path, .. }
+                    if path == target =>
+                {
                     Some(node)
                 }
-                CollectionNode::Collection { children, .. } | CollectionNode::Folder { children, .. } => {
+                CollectionNode::Collection { children, .. }
+                | CollectionNode::Folder { children, .. } => {
                     children.iter().find_map(|c| find_folder(c, target))
                 }
                 CollectionNode::Request { .. } => None,
@@ -418,7 +468,11 @@ pub async fn run_collection(
         vec![HashMap::new()] // Single empty row = 1 iteration without data
     };
 
-    let iterations = if config.iterations > 0 { config.iterations } else { 1 };
+    let iterations = if config.iterations > 0 {
+        config.iterations
+    } else {
+        1
+    };
     let run_id = uuid::Uuid::new_v4().to_string();
     let total_requests = request_paths.len();
 
@@ -458,13 +512,16 @@ pub async fn run_collection(
                     };
 
                     // Emit progress
-                    let _ = app.emit("runner:progress", RunProgress {
-                        run_id: run_id.clone(),
-                        iteration,
-                        request_index: req_idx,
-                        total_requests,
-                        result: result.clone(),
-                    });
+                    let _ = app.emit(
+                        "runner:progress",
+                        RunProgress {
+                            run_id: run_id.clone(),
+                            iteration,
+                            request_index: req_idx,
+                            total_requests,
+                            result: result.clone(),
+                        },
+                    );
 
                     if config.stop_on_error {
                         iteration_results.push(result);
@@ -478,13 +535,16 @@ pub async fn run_collection(
             let result = run_single_request(&file, &mut vars, &history_db, oauth_store).await;
 
             // Emit progress event
-            let _ = app.emit("runner:progress", RunProgress {
-                run_id: run_id.clone(),
-                iteration,
-                request_index: req_idx,
-                total_requests,
-                result: result.clone(),
-            });
+            let _ = app.emit(
+                "runner:progress",
+                RunProgress {
+                    run_id: run_id.clone(),
+                    iteration,
+                    request_index: req_idx,
+                    total_requests,
+                    result: result.clone(),
+                },
+            );
 
             if result.passed {
                 total_passed += 1;

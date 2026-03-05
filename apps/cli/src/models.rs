@@ -65,8 +65,13 @@ pub enum BodyType {
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum AuthConfig {
     None,
-    Bearer { token: String },
-    Basic { username: String, password: String },
+    Bearer {
+        token: String,
+    },
+    Basic {
+        username: String,
+        password: String,
+    },
     ApiKey {
         key: String,
         value: String,
@@ -81,7 +86,10 @@ pub enum AuthConfig {
         #[serde(default)]
         token: String,
     },
-    Digest { username: String, password: String },
+    Digest {
+        username: String,
+        password: String,
+    },
     #[serde(rename = "aws-v4")]
     AwsV4 {
         #[serde(rename = "accessKey")]
@@ -136,7 +144,9 @@ pub struct CollectionConfig {
     pub version: u32,
 }
 
-fn default_version() -> u32 { 1 }
+fn default_version() -> u32 {
+    1
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

@@ -95,7 +95,11 @@ fn load_license_status(path: &std::path::Path) -> LicenseStatus {
             let valid = !expired || in_grace;
 
             LicenseStatus {
-                tier: if valid { claims.tier } else { LicenseTier::Free },
+                tier: if valid {
+                    claims.tier
+                } else {
+                    LicenseTier::Free
+                },
                 email: Some(claims.email),
                 expires_at: Some(
                     chrono::DateTime::from_timestamp(claims.exp, 0)

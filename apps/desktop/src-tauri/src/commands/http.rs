@@ -66,19 +66,28 @@ pub async fn send_request(
     let mut result = HttpEngine::send(interpolated.clone()).await;
 
     // NTLM challenge-response: if we get 401 with NTLM Type 2, resend with Type 3
-    if let (Ok(ref response), Some(AuthConfig::Ntlm { username, password, domain, workstation })) =
-        (&result, &interpolated.auth)
+    if let (
+        Ok(ref response),
+        Some(AuthConfig::Ntlm {
+            username,
+            password,
+            domain,
+            workstation,
+        }),
+    ) = (&result, &interpolated.auth)
     {
         if response.status == 401 {
             // Look for NTLM challenge in WWW-Authenticate header
-            if let Some(challenge) = response
-                .headers
-                .iter()
-                .find(|h| h.key.eq_ignore_ascii_case("www-authenticate") && h.value.starts_with("NTLM "))
-            {
+            if let Some(challenge) = response.headers.iter().find(|h| {
+                h.key.eq_ignore_ascii_case("www-authenticate") && h.value.starts_with("NTLM ")
+            }) {
                 let challenge_b64 = challenge.value.trim_start_matches("NTLM ").trim();
                 match crate::http::auth_handlers::generate_ntlm_authenticate(
-                    challenge_b64, username, password, domain, workstation,
+                    challenge_b64,
+                    username,
+                    password,
+                    domain,
+                    workstation,
                 ) {
                     Ok(type3) => {
                         // Rebuild request with Type 3 auth header
@@ -104,7 +113,14 @@ pub async fn send_request(
         }
     }
 
-    record_history(&state, &interpolated, &params, &result, collection_path, request_name);
+    record_history(
+        &state,
+        &interpolated,
+        &params,
+        &result,
+        collection_path,
+        request_name,
+    );
 
     result.map_err(|e| {
         let http_error: HttpError = e.into();
@@ -296,7 +312,10 @@ pub async fn read_full_response(path: String) -> Result<String, String> {
 
 // ── Helpers ──
 
-fn interpolate_params(params: &SendRequestParams, vars: &HashMap<String, String>) -> SendRequestParams {
+fn interpolate_params(
+    params: &SendRequestParams,
+    vars: &HashMap<String, String>,
+) -> SendRequestParams {
     let mut interpolated = params.clone();
     interpolated.url = interpolation::interpolate(&params.url, vars);
 
@@ -371,11 +390,18 @@ fn response_snapshot_from_data(response: &ResponseData) -> ResponseSnapshot {
     }
 }
 
-fn apply_env_mutations(vars: &mut HashMap<String, String>, mutations: &HashMap<String, Option<String>>) {
+fn apply_env_mutations(
+    vars: &mut HashMap<String, String>,
+    mutations: &HashMap<String, Option<String>>,
+) {
     for (key, value) in mutations {
         match value {
-            Some(v) => { vars.insert(key.clone(), v.clone()); }
-            None => { vars.remove(key); }
+            Some(v) => {
+                vars.insert(key.clone(), v.clone());
+            }
+            None => {
+                vars.remove(key);
+            }
         }
     }
 }
@@ -447,11 +473,7 @@ fn interpolate_auth(auth: &AuthConfig, vars: &HashMap<String, String>) -> AuthCo
             username: interpolation::interpolate(username, vars),
             password: interpolation::interpolate(password, vars),
         },
-        AuthConfig::ApiKey {
-            key,
-            value,
-            add_to,
-        } => AuthConfig::ApiKey {
+        AuthConfig::ApiKey { key, value, add_to } => AuthConfig::ApiKey {
             key: interpolation::interpolate(key, vars),
             value: interpolation::interpolate(value, vars),
             add_to: add_to.clone(),
@@ -483,20 +505,36 @@ fn interpolate_auth(auth: &AuthConfig, vars: &HashMap<String, String>) -> AuthCo
             username: interpolation::interpolate(username, vars),
             password: interpolation::interpolate(password, vars),
         },
-        AuthConfig::AwsV4 { access_key, secret_key, region, service, session_token } => AuthConfig::AwsV4 {
+        AuthConfig::AwsV4 {
+            access_key,
+            secret_key,
+            region,
+            service,
+            session_token,
+        } => AuthConfig::AwsV4 {
             access_key: interpolation::interpolate(access_key, vars),
             secret_key: interpolation::interpolate(secret_key, vars),
             region: interpolation::interpolate(region, vars),
             service: interpolation::interpolate(service, vars),
             session_token: interpolation::interpolate(session_token, vars),
         },
-        AuthConfig::JwtBearer { secret, algorithm, payload, header_prefix } => AuthConfig::JwtBearer {
+        AuthConfig::JwtBearer {
+            secret,
+            algorithm,
+            payload,
+            header_prefix,
+        } => AuthConfig::JwtBearer {
             secret: interpolation::interpolate(secret, vars),
             algorithm: algorithm.clone(),
             payload: interpolation::interpolate(payload, vars),
             header_prefix: header_prefix.clone(),
         },
-        AuthConfig::Ntlm { username, password, domain, workstation } => AuthConfig::Ntlm {
+        AuthConfig::Ntlm {
+            username,
+            password,
+            domain,
+            workstation,
+        } => AuthConfig::Ntlm {
             username: interpolation::interpolate(username, vars),
             password: interpolation::interpolate(password, vars),
             domain: interpolation::interpolate(domain, vars),
@@ -542,9 +580,18 @@ fn resolve_oauth_token(
 /// Replaces auth tokens, passwords, and secret-like header values with [REDACTED].
 fn redact_secrets(json: &str) -> String {
     let sensitive_keys = [
-        "token", "password", "secret", "accessToken", "refreshToken",
-        "secretKey", "accessKey", "sessionToken", "apiKey",
-        "clientSecret", "authorizationUrl", "tokenUrl",
+        "token",
+        "password",
+        "secret",
+        "accessToken",
+        "refreshToken",
+        "secretKey",
+        "accessKey",
+        "sessionToken",
+        "apiKey",
+        "clientSecret",
+        "authorizationUrl",
+        "tokenUrl",
     ];
 
     let Ok(mut value) = serde_json::from_str::<serde_json::Value>(json) else {

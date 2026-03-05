@@ -28,10 +28,12 @@ pub fn check_version(collection_path: &Path) -> Result<VersionStatus, String> {
         #[serde(default = "default_v1")]
         version: u32,
     }
-    fn default_v1() -> u32 { 1 }
+    fn default_v1() -> u32 {
+        1
+    }
 
-    let parsed: VersionOnly = serde_yaml::from_str(&content)
-        .map_err(|e| format!("Invalid collection config: {e}"))?;
+    let parsed: VersionOnly =
+        serde_yaml::from_str(&content).map_err(|e| format!("Invalid collection config: {e}"))?;
 
     Ok(VersionStatus {
         collection_version: parsed.version,
@@ -85,11 +87,11 @@ fn run_migration(collection_path: &Path, _from: u32, _to: u32) -> Result<u32, St
 /// Update the version field in the collection's apiark.yaml config.
 fn update_config_version(collection_path: &Path, version: u32) -> Result<(), String> {
     let config_path = collection_path.join(".apiark").join("apiark.yaml");
-    let content = fs::read_to_string(&config_path)
-        .map_err(|e| format!("Failed to read config: {e}"))?;
+    let content =
+        fs::read_to_string(&config_path).map_err(|e| format!("Failed to read config: {e}"))?;
 
-    let mut config: serde_yaml::Value = serde_yaml::from_str(&content)
-        .map_err(|e| format!("Failed to parse config: {e}"))?;
+    let mut config: serde_yaml::Value =
+        serde_yaml::from_str(&content).map_err(|e| format!("Failed to parse config: {e}"))?;
 
     if let serde_yaml::Value::Mapping(ref mut map) = config {
         map.insert(
@@ -98,16 +100,14 @@ fn update_config_version(collection_path: &Path, version: u32) -> Result<(), Str
         );
     }
 
-    let yaml = serde_yaml::to_string(&config)
-        .map_err(|e| format!("Failed to serialize config: {e}"))?;
+    let yaml =
+        serde_yaml::to_string(&config).map_err(|e| format!("Failed to serialize config: {e}"))?;
 
     // Atomic write
     let tmp_path = config_path.with_extension("apiark.tmp");
-    fs::write(&tmp_path, &yaml)
-        .map_err(|e| format!("Failed to write temp file: {e}"))?;
-    fs::rename(&tmp_path, &config_path)
-        .map_err(|e| {
-            let _ = fs::remove_file(&tmp_path);
-            format!("Failed to rename temp file: {e}")
-        })
+    fs::write(&tmp_path, &yaml).map_err(|e| format!("Failed to write temp file: {e}"))?;
+    fs::rename(&tmp_path, &config_path).map_err(|e| {
+        let _ = fs::remove_file(&tmp_path);
+        format!("Failed to rename temp file: {e}")
+    })
 }

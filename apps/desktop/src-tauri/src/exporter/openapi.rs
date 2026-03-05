@@ -11,9 +11,7 @@ pub fn export_to_openapi(collection_path: &Path) -> Result<String, String> {
     let tree = load_collection_tree(collection_path)?;
 
     let (name, children) = match &tree {
-        CollectionNode::Collection {
-            name, children, ..
-        } => (name.clone(), children),
+        CollectionNode::Collection { name, children, .. } => (name.clone(), children),
         _ => return Err("Expected a collection node at root".to_string()),
     };
 
@@ -23,10 +21,7 @@ pub fn export_to_openapi(collection_path: &Path) -> Result<String, String> {
     collect_operations(children, &mut paths, &mut tags, None)?;
 
     // Build tags array
-    let tags_array: Vec<Value> = tags
-        .iter()
-        .map(|t| json!({"name": t}))
-        .collect();
+    let tags_array: Vec<Value> = tags.iter().map(|t| json!({"name": t})).collect();
 
     // Build paths object
     let mut paths_obj = serde_json::Map::new();
@@ -60,9 +55,7 @@ fn collect_operations(
 ) -> Result<(), String> {
     for node in nodes {
         match node {
-            CollectionNode::Folder {
-                name, children, ..
-            } => {
+            CollectionNode::Folder { name, children, .. } => {
                 if !tags.contains(name) {
                     tags.push(name.clone());
                 }
@@ -197,10 +190,7 @@ fn add_operation(
             .insert("requestBody".to_string(), request_body);
     }
 
-    paths
-        .entry(url_path)
-        .or_default()
-        .insert(method, operation);
+    paths.entry(url_path).or_default().insert(method, operation);
 }
 
 /// Extract the path portion from a URL, handling variables.

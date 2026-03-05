@@ -14,13 +14,15 @@ pub fn read_data_file(path: &str) -> Result<Vec<HashMap<String, String>>, String
         "csv" => read_csv(path),
         "json" => read_json(path),
         "yaml" | "yml" => read_yaml(path),
-        _ => Err(format!("Unsupported data file format: .{ext}. Use .csv, .json, or .yaml")),
+        _ => Err(format!(
+            "Unsupported data file format: .{ext}. Use .csv, .json, or .yaml"
+        )),
     }
 }
 
 fn read_csv(path: &Path) -> Result<Vec<HashMap<String, String>>, String> {
-    let mut reader = csv::Reader::from_path(path)
-        .map_err(|e| format!("Failed to read CSV file: {e}"))?;
+    let mut reader =
+        csv::Reader::from_path(path).map_err(|e| format!("Failed to read CSV file: {e}"))?;
 
     let headers = reader
         .headers()
@@ -43,11 +45,11 @@ fn read_csv(path: &Path) -> Result<Vec<HashMap<String, String>>, String> {
 }
 
 fn read_json(path: &Path) -> Result<Vec<HashMap<String, String>>, String> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read JSON file: {e}"))?;
+    let content =
+        std::fs::read_to_string(path).map_err(|e| format!("Failed to read JSON file: {e}"))?;
 
-    let value: serde_json::Value = serde_json::from_str(&content)
-        .map_err(|e| format!("Invalid JSON: {e}"))?;
+    let value: serde_json::Value =
+        serde_json::from_str(&content).map_err(|e| format!("Invalid JSON: {e}"))?;
 
     match value {
         serde_json::Value::Array(arr) => {
@@ -74,11 +76,11 @@ fn read_json(path: &Path) -> Result<Vec<HashMap<String, String>>, String> {
 }
 
 fn read_yaml(path: &Path) -> Result<Vec<HashMap<String, String>>, String> {
-    let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("Failed to read YAML file: {e}"))?;
+    let content =
+        std::fs::read_to_string(path).map_err(|e| format!("Failed to read YAML file: {e}"))?;
 
-    let value: serde_yaml::Value = serde_yaml::from_str(&content)
-        .map_err(|e| format!("Invalid YAML: {e}"))?;
+    let value: serde_yaml::Value =
+        serde_yaml::from_str(&content).map_err(|e| format!("Invalid YAML: {e}"))?;
 
     match value {
         serde_yaml::Value::Sequence(seq) => {

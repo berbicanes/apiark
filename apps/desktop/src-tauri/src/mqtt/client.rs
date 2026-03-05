@@ -65,11 +65,7 @@ impl MqttManager {
             }
         }
 
-        let mut options = MqttOptions::new(
-            &params.client_id,
-            &params.broker_url,
-            params.port,
-        );
+        let mut options = MqttOptions::new(&params.client_id, &params.broker_url, params.port);
         options.set_keep_alive(Duration::from_secs(params.keep_alive_secs));
 
         if let (Some(user), Some(pass)) = (&params.username, &params.password) {
@@ -124,23 +120,18 @@ impl MqttManager {
             }
         });
 
-        self.connections
-            .lock()
-            .unwrap()
-            .insert(connection_id.to_string(), MqttConnection {
+        self.connections.lock().unwrap().insert(
+            connection_id.to_string(),
+            MqttConnection {
                 client,
                 shutdown: tx,
-            });
+            },
+        );
 
         Ok(())
     }
 
-    pub async fn subscribe(
-        &self,
-        connection_id: &str,
-        topic: &str,
-        qos: u8,
-    ) -> Result<(), String> {
+    pub async fn subscribe(&self, connection_id: &str, topic: &str, qos: u8) -> Result<(), String> {
         let client = {
             let connections = self.connections.lock().unwrap();
             let conn = connections.get(connection_id).ok_or("Not connected")?;
@@ -190,9 +181,7 @@ impl MqttManager {
     }
 
     pub async fn disconnect(&self, connection_id: &str) -> Result<(), String> {
-        let conn = {
-            self.connections.lock().unwrap().remove(connection_id)
-        };
+        let conn = { self.connections.lock().unwrap().remove(connection_id) };
         if let Some(conn) = conn {
             let _ = conn.shutdown.send(());
             let _ = conn.client.disconnect().await;

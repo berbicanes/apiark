@@ -13,8 +13,7 @@ pub fn export_to_apiark_zip(collection_path: &Path) -> Result<String, String> {
     let tmp_dir = std::env::temp_dir();
     let zip_path = tmp_dir.join(format!("{collection_name}.apiark.zip"));
 
-    let file = File::create(&zip_path)
-        .map_err(|e| format!("Failed to create zip file: {e}"))?;
+    let file = File::create(&zip_path).map_err(|e| format!("Failed to create zip file: {e}"))?;
     let mut zip = zip::ZipWriter::new(file);
     let options = zip::write::SimpleFileOptions::default()
         .compression_method(zip::CompressionMethod::Deflated);

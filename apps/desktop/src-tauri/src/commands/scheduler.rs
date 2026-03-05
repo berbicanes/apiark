@@ -16,10 +16,7 @@ pub fn create_monitor(
 }
 
 #[tauri::command]
-pub fn delete_monitor(
-    monitor_id: &str,
-    manager: State<'_, MonitorManager>,
-) -> Result<(), String> {
+pub fn delete_monitor(monitor_id: &str, manager: State<'_, MonitorManager>) -> Result<(), String> {
     manager.delete(monitor_id)
 }
 
@@ -32,9 +29,7 @@ pub fn toggle_monitor(
 }
 
 #[tauri::command]
-pub fn list_monitors(
-    manager: State<'_, MonitorManager>,
-) -> Result<Vec<MonitorStatus>, String> {
+pub fn list_monitors(manager: State<'_, MonitorManager>) -> Result<Vec<MonitorStatus>, String> {
     manager.list()
 }
 

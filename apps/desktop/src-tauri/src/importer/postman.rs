@@ -7,8 +7,7 @@ use crate::models::auth::AuthConfig;
 
 /// Parse a Postman Collection v2.1 JSON string into ImportData.
 pub fn parse_postman(content: &str) -> Result<ImportData, String> {
-    let root: Value =
-        serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
+    let root: Value = serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
 
     let info = root
         .get("info")
@@ -57,7 +56,10 @@ pub fn parse_postman(content: &str) -> Result<ImportData, String> {
 }
 
 fn parse_items(items: &[Value], warnings: &mut Vec<ImportWarning>) -> Vec<ImportItem> {
-    items.iter().filter_map(|item| parse_item(item, warnings)).collect()
+    items
+        .iter()
+        .filter_map(|item| parse_item(item, warnings))
+        .collect()
 }
 
 fn parse_item(item: &Value, warnings: &mut Vec<ImportWarning>) -> Option<ImportItem> {
@@ -303,7 +305,9 @@ fn parse_auth(auth_val: Option<&Value>) -> Option<AuthConfig> {
                 .and_then(|arr| {
                     arr.iter().find_map(|item| {
                         if item.get("key").and_then(|v| v.as_str()) == Some("token") {
-                            item.get("value").and_then(|v| v.as_str()).map(|s| s.to_string())
+                            item.get("value")
+                                .and_then(|v| v.as_str())
+                                .map(|s| s.to_string())
                         } else {
                             None
                         }
@@ -320,7 +324,9 @@ fn parse_auth(auth_val: Option<&Value>) -> Option<AuthConfig> {
                     .and_then(|arr| {
                         arr.iter().find_map(|item| {
                             if item.get("key").and_then(|v| v.as_str()) == Some(field) {
-                                item.get("value").and_then(|v| v.as_str()).map(|s| s.to_string())
+                                item.get("value")
+                                    .and_then(|v| v.as_str())
+                                    .map(|s| s.to_string())
                             } else {
                                 None
                             }
@@ -341,7 +347,9 @@ fn parse_auth(auth_val: Option<&Value>) -> Option<AuthConfig> {
                     .and_then(|arr| {
                         arr.iter().find_map(|item| {
                             if item.get("key").and_then(|v| v.as_str()) == Some(field) {
-                                item.get("value").and_then(|v| v.as_str()).map(|s| s.to_string())
+                                item.get("value")
+                                    .and_then(|v| v.as_str())
+                                    .map(|s| s.to_string())
                             } else {
                                 None
                             }

@@ -131,7 +131,8 @@ pub fn load_settings(path: &Path) -> AppSettings {
 
 pub fn save_settings(path: &Path, settings: &AppSettings) -> Result<(), String> {
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).map_err(|e| format!("Failed to create settings directory: {e}"))?;
+        std::fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create settings directory: {e}"))?;
     }
 
     let json = serde_json::to_string_pretty(settings)
@@ -139,10 +140,8 @@ pub fn save_settings(path: &Path, settings: &AppSettings) -> Result<(), String> 
 
     // Atomic write: write to .tmp then rename
     let tmp_path = path.with_extension("json.tmp");
-    std::fs::write(&tmp_path, &json)
-        .map_err(|e| format!("Failed to write settings: {e}"))?;
-    std::fs::rename(&tmp_path, path)
-        .map_err(|e| format!("Failed to rename settings file: {e}"))?;
+    std::fs::write(&tmp_path, &json).map_err(|e| format!("Failed to write settings: {e}"))?;
+    std::fs::rename(&tmp_path, path).map_err(|e| format!("Failed to rename settings file: {e}"))?;
 
     Ok(())
 }

@@ -29,7 +29,9 @@ pub async fn mqtt_publish(
     retain: bool,
     state: tauri::State<'_, MqttManager>,
 ) -> Result<(), String> {
-    state.publish(&connection_id, &topic, &payload, qos, retain).await
+    state
+        .publish(&connection_id, &topic, &payload, qos, retain)
+        .await
 }
 
 #[tauri::command]

@@ -30,8 +30,7 @@ pub async fn list_trash() -> Result<Vec<TrashItem>, String> {
     let mut items = Vec::new();
 
     // Iterate collection directories inside trash
-    let collections = fs::read_dir(&base)
-        .map_err(|e| format!("Failed to read trash dir: {e}"))?;
+    let collections = fs::read_dir(&base).map_err(|e| format!("Failed to read trash dir: {e}"))?;
 
     for col_entry in collections {
         let col_entry = col_entry.map_err(|e| format!("Read error: {e}"))?;
@@ -82,10 +81,7 @@ pub async fn list_trash() -> Result<Vec<TrashItem>, String> {
 }
 
 #[tauri::command]
-pub async fn restore_from_trash(
-    trash_path: String,
-    restore_to: String,
-) -> Result<(), String> {
+pub async fn restore_from_trash(trash_path: String, restore_to: String) -> Result<(), String> {
     let trash_dir = PathBuf::from(&trash_path);
     let restore_dir = PathBuf::from(&restore_to);
 
@@ -94,8 +90,7 @@ pub async fn restore_from_trash(
     }
 
     // Move each item from trash dir back to restore location
-    let entries = fs::read_dir(&trash_dir)
-        .map_err(|e| format!("Failed to read trash dir: {e}"))?;
+    let entries = fs::read_dir(&trash_dir).map_err(|e| format!("Failed to read trash dir: {e}"))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| format!("Read error: {e}"))?;
@@ -108,8 +103,7 @@ pub async fn restore_from_trash(
             ));
         }
 
-        fs::rename(entry.path(), &dest)
-            .map_err(|e| format!("Failed to restore: {e}"))?;
+        fs::rename(entry.path(), &dest).map_err(|e| format!("Failed to restore: {e}"))?;
     }
 
     // Remove the now-empty trash directory
@@ -123,8 +117,7 @@ pub async fn restore_from_trash(
 pub async fn empty_trash() -> Result<(), String> {
     let base = trash_base()?;
     if base.exists() {
-        fs::remove_dir_all(&base)
-            .map_err(|e| format!("Failed to empty trash: {e}"))?;
+        fs::remove_dir_all(&base).map_err(|e| format!("Failed to empty trash: {e}"))?;
     }
     tracing::info!("Trash emptied");
     Ok(())

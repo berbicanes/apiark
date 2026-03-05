@@ -1,5 +1,5 @@
-use crate::proxy::capture::{CapturedRequest, ProxyCaptureManager, ProxyStatus};
 use crate::proxy::ca;
+use crate::proxy::capture::{CapturedRequest, ProxyCaptureManager, ProxyStatus};
 
 #[tauri::command]
 pub async fn proxy_start(

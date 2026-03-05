@@ -6,7 +6,9 @@ use protox::Compiler;
 use super::{GrpcCallType, GrpcMethodInfo, GrpcServiceInfo};
 
 /// Parse .proto files from a path (file or directory) and return service info.
-pub fn parse_proto_file(proto_path: &str) -> Result<(Vec<GrpcServiceInfo>, DescriptorPool), String> {
+pub fn parse_proto_file(
+    proto_path: &str,
+) -> Result<(Vec<GrpcServiceInfo>, DescriptorPool), String> {
     let path = Path::new(proto_path);
 
     if !path.exists() {
@@ -25,13 +27,18 @@ pub fn parse_proto_file(proto_path: &str) -> Result<(Vec<GrpcServiceInfo>, Descr
     }
 
     // Use protox to compile protos into FileDescriptorSet
-    let mut compiler = Compiler::new(
-        vec![path.parent().unwrap_or(Path::new(".")).to_path_buf()],
-    ).map_err(|e| format!("Failed to create proto compiler: {e}"))?;
+    let mut compiler = Compiler::new(vec![path.parent().unwrap_or(Path::new(".")).to_path_buf()])
+        .map_err(|e| format!("Failed to create proto compiler: {e}"))?;
 
     for proto in &proto_files {
-        let name = proto.file_name().unwrap_or_default().to_string_lossy().to_string();
-        compiler.open_file(name.as_str()).map_err(|e| format!("Failed to open proto {name}: {e}"))?;
+        let name = proto
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        compiler
+            .open_file(name.as_str())
+            .map_err(|e| format!("Failed to open proto {name}: {e}"))?;
     }
 
     let fds = compiler.file_descriptor_set();

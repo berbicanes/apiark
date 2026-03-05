@@ -6,14 +6,13 @@ use super::{ImportBody, ImportData, ImportItem, ImportWarning};
 
 /// Static asset extensions to filter out
 const STATIC_EXTENSIONS: &[&str] = &[
-    ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
-    ".woff", ".woff2", ".ttf", ".eot", ".map", ".webp",
+    ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf",
+    ".eot", ".map", ".webp",
 ];
 
 /// Parse a HAR (HTTP Archive) JSON string into ImportData.
 pub fn parse_har(content: &str) -> Result<ImportData, String> {
-    let root: Value =
-        serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
+    let root: Value = serde_json::from_str(content).map_err(|e| format!("Invalid JSON: {e}"))?;
 
     let log = root
         .get("log")
@@ -42,7 +41,11 @@ pub fn parse_har(content: &str) -> Result<ImportData, String> {
         // Filter out static assets
         let url_lower = url.to_lowercase();
         if STATIC_EXTENSIONS.iter().any(|ext| {
-            url_lower.split('?').next().unwrap_or(&url_lower).ends_with(ext)
+            url_lower
+                .split('?')
+                .next()
+                .unwrap_or(&url_lower)
+                .ends_with(ext)
         }) {
             continue;
         }
@@ -122,7 +125,11 @@ fn derive_request_name(url: &str, method: &str, index: usize) -> String {
         let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
         if !segments.is_empty() {
             let last_segments: Vec<&str> = segments.iter().rev().take(2).copied().collect();
-            let name_part = last_segments.into_iter().rev().collect::<Vec<_>>().join("/");
+            let name_part = last_segments
+                .into_iter()
+                .rev()
+                .collect::<Vec<_>>()
+                .join("/");
             return format!("{method} {name_part}");
         }
     }
@@ -137,10 +144,7 @@ fn parse_post_data(request: &Value) -> Option<ImportBody> {
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
-    let text = post_data
-        .get("text")
-        .and_then(|v| v.as_str())
-        .unwrap_or("");
+    let text = post_data.get("text").and_then(|v| v.as_str()).unwrap_or("");
 
     if text.is_empty() {
         return None;

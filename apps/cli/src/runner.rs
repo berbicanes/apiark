@@ -90,10 +90,7 @@ pub async fn run_collection(
                 "FAIL".red().to_string()
             };
 
-            let time_str = result
-                .time_ms
-                .map(|t| format!("{t}ms"))
-                .unwrap_or_default();
+            let time_str = result.time_ms.map(|t| format!("{t}ms")).unwrap_or_default();
 
             println!(
                 "  [{pass_str}] {method} {name} → {status} ({time})",
@@ -181,10 +178,14 @@ async fn run_single_request(
         let content = interpolation::interpolate(&body.content, vars);
         match body.body_type.as_str() {
             "json" => {
-                builder = builder.header("Content-Type", "application/json").body(content);
+                builder = builder
+                    .header("Content-Type", "application/json")
+                    .body(content);
             }
             "xml" => {
-                builder = builder.header("Content-Type", "application/xml").body(content);
+                builder = builder
+                    .header("Content-Type", "application/xml")
+                    .body(content);
             }
             "raw" => {
                 builder = builder.header("Content-Type", "text/plain").body(content);
