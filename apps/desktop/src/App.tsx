@@ -356,19 +356,11 @@ function ProtocolView({
   urlBarRef: React.RefObject<HTMLInputElement | null>;
 }) {
   const { isCompact } = useResponsive();
-  const savedRatio = useSettingsStore((s) => s.settings.panelRatio);
+  const panelRatio = useSettingsStore((s) => s.settings.panelRatio);
   const layout = useSettingsStore((s) => s.settings.layout);
   const { updateSettings } = useSettingsStore();
   const containerRef = useRef<HTMLDivElement>(null);
-  // Local state for smooth dragging — only persists to settings on mouse up
-  const [localRatio, setLocalRatio] = useState(savedRatio);
-
-  // Sync local state when settings change externally (e.g. from settings dialog)
-  const prevSaved = useRef(savedRatio);
-  if (prevSaved.current !== savedRatio) {
-    prevSaved.current = savedRatio;
-    setLocalRatio(savedRatio);
-  }
+  const requestPanelRef = useRef<HTMLDivElement>(null);
 
   const isVertical = isCompact || layout === "vertical";
 
@@ -380,9 +372,14 @@ function ProtocolView({
   );
 
   const handleDoubleClick = useCallback(() => {
-    setLocalRatio(0.5);
+    // Reset to 50/50 — update DOM immediately + persist
+    const panel = requestPanelRef.current;
+    if (panel) {
+      if (isVertical) panel.style.height = "50%";
+      else panel.style.width = "50%";
+    }
     updateSettings({ panelRatio: 0.5 });
-  }, [updateSettings]);
+  }, [updateSettings, isVertical]);
 
   switch (protocol) {
     case "graphql":
@@ -403,11 +400,12 @@ function ProtocolView({
             className={`flex flex-1 overflow-hidden ${isVertical ? "flex-col" : "flex-row"}`}
           >
             <div
+              ref={requestPanelRef}
               data-tour="request-panel"
-              className="flex flex-col overflow-hidden"
+              className="flex shrink-0 flex-col overflow-hidden"
               style={isVertical
-                ? { height: `${localRatio * 100}%` }
-                : { width: `${localRatio * 100}%` }
+                ? { height: `${panelRatio * 100}%` }
+                : { width: `${panelRatio * 100}%` }
               }
             >
               <RequestPanel />
@@ -415,13 +413,13 @@ function ProtocolView({
             <PanelDivider
               direction={isVertical ? "vertical" : "horizontal"}
               containerRef={containerRef}
-              onResize={setLocalRatio}
+              panelRef={requestPanelRef}
               onResizeEnd={handleResizeEnd}
               onDoubleClick={handleDoubleClick}
             />
             <div
               data-tour="response-panel"
-              className="flex flex-1 flex-col overflow-hidden"
+              className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
             >
               <ResponsePanel />
             </div>

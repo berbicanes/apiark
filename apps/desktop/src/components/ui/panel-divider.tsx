@@ -2,41 +2,48 @@ import { useCallback, useRef } from "react";
 
 interface PanelDividerProps {
   direction: "horizontal" | "vertical";
-  onResize: (ratio: number) => void;
+  panelRef: React.RefObject<HTMLDivElement | null>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   onResizeEnd: (ratio: number) => void;
   onDoubleClick: () => void;
-  containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function PanelDivider({ direction, onResize, onResizeEnd, onDoubleClick, containerRef }: PanelDividerProps) {
-  const dragging = useRef(false);
+/**
+ * Draggable divider that resizes panels by directly mutating DOM styles
+ * during drag for maximum smoothness (no React re-renders until mouse up).
+ */
+export function PanelDivider({ direction, panelRef, containerRef, onResizeEnd, onDoubleClick }: PanelDividerProps) {
   const lastRatio = useRef(0.5);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      dragging.current = true;
 
       const container = containerRef.current;
-      if (!container) return;
+      const panel = panelRef.current;
+      if (!container || !panel) return;
 
       const rect = container.getBoundingClientRect();
+      const isH = direction === "horizontal";
 
       const onMouseMove = (ev: MouseEvent) => {
-        if (!dragging.current) return;
         let ratio: number;
-        if (direction === "horizontal") {
+        if (isH) {
           ratio = (ev.clientX - rect.left) / rect.width;
         } else {
           ratio = (ev.clientY - rect.top) / rect.height;
         }
         ratio = Math.min(0.8, Math.max(0.2, ratio));
         lastRatio.current = ratio;
-        onResize(ratio);
+        // Direct DOM mutation — no React re-render, instant feedback
+        if (isH) {
+          panel.style.width = `${ratio * 100}%`;
+        } else {
+          panel.style.height = `${ratio * 100}%`;
+        }
       };
 
       const onMouseUp = () => {
-        dragging.current = false;
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
         document.body.style.cursor = "";
@@ -44,12 +51,12 @@ export function PanelDivider({ direction, onResize, onResizeEnd, onDoubleClick, 
         onResizeEnd(lastRatio.current);
       };
 
-      document.body.style.cursor = direction === "horizontal" ? "col-resize" : "row-resize";
+      document.body.style.cursor = isH ? "col-resize" : "row-resize";
       document.body.style.userSelect = "none";
       document.addEventListener("mousemove", onMouseMove);
       document.addEventListener("mouseup", onMouseUp);
     },
-    [direction, onResize, onResizeEnd, containerRef],
+    [direction, panelRef, containerRef, onResizeEnd],
   );
 
   const isHorizontal = direction === "horizontal";
@@ -60,24 +67,24 @@ export function PanelDivider({ direction, onResize, onResizeEnd, onDoubleClick, 
       onDoubleClick={onDoubleClick}
       className={`group relative shrink-0 ${
         isHorizontal
-          ? "w-1 cursor-col-resize"
-          : "h-1 cursor-row-resize"
+          ? "w-1.5 cursor-col-resize"
+          : "h-1.5 cursor-row-resize"
       }`}
     >
       {/* Visible line */}
       <div
-        className={`absolute bg-[var(--color-border)] transition-colors group-hover:bg-[var(--color-accent)]/50 ${
+        className={`absolute bg-[var(--color-border)] transition-colors group-hover:bg-[var(--color-accent)] group-active:bg-[var(--color-accent)] ${
           isHorizontal
-            ? "inset-y-0 left-0 w-px"
-            : "inset-x-0 top-0 h-px"
+            ? "inset-y-0 left-[2px] w-0.5 rounded-full"
+            : "inset-x-0 top-[2px] h-0.5 rounded-full"
         }`}
       />
-      {/* Wider hit target */}
+      {/* Wider invisible hit target */}
       <div
         className={`absolute ${
           isHorizontal
-            ? "inset-y-0 -left-1 w-3"
-            : "inset-x-0 -top-1 h-3"
+            ? "inset-y-0 -left-1.5 w-5"
+            : "inset-x-0 -top-1.5 h-5"
         }`}
       />
     </div>
