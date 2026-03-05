@@ -4,8 +4,6 @@ import {
   Search,
   Plus,
   Settings,
-  Sun,
-  Moon,
   FolderOpen,
   Upload,
   Download,
@@ -17,7 +15,6 @@ import {
 import { useTabStore } from "@/stores/tab-store";
 import { useCollectionStore } from "@/stores/collection-store";
 import { useEnvironmentStore } from "@/stores/environment-store";
-import { useSettingsStore } from "@/stores/settings-store";
 import { useDiffStore } from "@/stores/diff-store";
 import { useMockStore } from "@/stores/mock-store";
 import { useMonitorStore } from "@/stores/monitor-store";
@@ -58,7 +55,6 @@ export function CommandPalette({
   const { tabs, newTab, newGraphQLTab, newWebSocketTab, newSSETab, newGrpcTab, setActiveTab } = useTabStore();
   const { collections } = useCollectionStore();
   const { environments, setActiveEnvironment } = useEnvironmentStore();
-  const { settings, updateSettings } = useSettingsStore();
   const { openTab } = useTabStore();
 
   // Build command list dynamically
@@ -124,16 +120,6 @@ export function CommandPalette({
         action: () => { onOpenImport(); onOpenChange(false); },
       });
     }
-    cmds.push({
-      id: "toggle-theme",
-      label: `Switch to ${settings.theme === "dark" ? "Light" : "Dark"} Theme`,
-      category: "General",
-      icon: settings.theme === "dark" ? Sun : Moon,
-      action: () => {
-        updateSettings({ theme: settings.theme === "dark" ? "light" : "dark" });
-        onOpenChange(false);
-      },
-    });
 
     cmds.push({
       id: "compare-responses",
@@ -242,7 +228,7 @@ export function CommandPalette({
     }
 
     return cmds;
-  }, [tabs, collections, environments, settings.theme, newTab, newGraphQLTab, newWebSocketTab, newSSETab, setActiveTab, setActiveEnvironment, openTab, updateSettings, onOpenChange, onOpenSettings, onOpenCurlImport, onOpenRunner]);
+  }, [tabs, collections, environments, newTab, newGraphQLTab, newWebSocketTab, newSSETab, setActiveTab, setActiveEnvironment, openTab, onOpenChange, onOpenSettings, onOpenCurlImport, onOpenRunner]);
 
   // Filter commands by query (fuzzy match)
   const filtered = useMemo(() => {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { X, Sun, Moon, Monitor, FolderOpen, Download, Upload, RefreshCw } from "lucide-react";
+import { X, FolderOpen, Download, Upload, RefreshCw } from "lucide-react";
 import { useSettingsStore } from "@/stores/settings-store";
 import type { AppSettings } from "@apiark/types";
 import { open as openFileDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
@@ -39,33 +39,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
                 General
               </h3>
-
-              {/* Theme */}
-              <div className="mb-4">
-                <label className="mb-2 block text-sm text-[var(--color-text-secondary)]">
-                  Theme
-                </label>
-                <div className="flex gap-2">
-                  {([
-                    { value: "dark", label: "Dark", icon: Moon },
-                    { value: "light", label: "Light", icon: Sun },
-                    { value: "system", label: "System", icon: Monitor },
-                  ] as const).map(({ value, label, icon: Icon }) => (
-                    <button
-                      key={value}
-                      onClick={() => update({ theme: value })}
-                      className={`flex items-center gap-2 rounded px-4 py-2 text-sm transition-colors ${
-                        settings.theme === value
-                          ? "bg-[var(--color-accent)] text-white"
-                          : "bg-[var(--color-elevated)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                      }`}
-                    >
-                      <Icon className="h-4 w-4" />
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
 
               {/* Sidebar width */}
               <div>

@@ -1,7 +1,6 @@
-import { useRef, useCallback, useEffect } from "react";
+import { useRef, useCallback } from "react";
 import Editor, { type OnMount, loader } from "@monaco-editor/react";
 import type * as Monaco from "monaco-editor";
-import { useSettingsStore } from "@/stores/settings-store";
 
 // Configure Monaco to use local bundled files (not CDN) for Tauri offline support
 loader.config({
@@ -10,42 +9,32 @@ loader.config({
   },
 });
 
-// ApiArk dark theme definition
-const APIARK_DARK_THEME: Monaco.editor.IStandaloneThemeData = {
-  base: "vs-dark",
-  inherit: true,
-  rules: [
-    { token: "comment", foreground: "6b7290", fontStyle: "italic" },
-    { token: "keyword", foreground: "a78bfa" },
-    { token: "string", foreground: "6ee7b7" },
-    { token: "number", foreground: "fbbf24" },
-    { token: "type", foreground: "818cf8" },
-    { token: "variable", foreground: "93c5fd" },
-  ],
-  colors: {
-    "editor.background": "#161a26",
-    "editor.foreground": "#e2e4ed",
-    "editor.lineHighlightBackground": "#1c2030",
-    "editor.selectionBackground": "#6366f140",
-    "editorCursor.foreground": "#818cf8",
-    "editorLineNumber.foreground": "#454b60",
-    "editorLineNumber.activeForeground": "#9ba1b5",
-    "editor.inactiveSelectionBackground": "#6366f120",
-    "editorIndentGuide.background": "#252a3a",
-    "editorWidget.background": "#1a1e2e",
-    "editorWidget.border": "#252a3a",
-    "input.background": "#0c0e14",
-    "input.border": "#252a3a",
-  },
-};
-
-const APIARK_LIGHT_THEME: Monaco.editor.IStandaloneThemeData = {
+// ApiArk light theme definition
+const APIARK_THEME: Monaco.editor.IStandaloneThemeData = {
   base: "vs",
   inherit: true,
-  rules: [],
+  rules: [
+    { token: "comment", foreground: "6b7280", fontStyle: "italic" },
+    { token: "keyword", foreground: "7c3aed" },
+    { token: "string", foreground: "059669" },
+    { token: "number", foreground: "d97706" },
+    { token: "type", foreground: "4f46e5" },
+    { token: "variable", foreground: "2563eb" },
+  ],
   colors: {
     "editor.background": "#ffffff",
-    "editor.foreground": "#1a1a1a",
+    "editor.foreground": "#111827",
+    "editor.lineHighlightBackground": "#f5f6fa",
+    "editor.selectionBackground": "#6366f130",
+    "editorCursor.foreground": "#6366f1",
+    "editorLineNumber.foreground": "#9ca3af",
+    "editorLineNumber.activeForeground": "#374151",
+    "editor.inactiveSelectionBackground": "#6366f115",
+    "editorIndentGuide.background": "#e4e6ed",
+    "editorWidget.background": "#f8f9fc",
+    "editorWidget.border": "#d1d5e0",
+    "input.background": "#ffffff",
+    "input.border": "#d1d5e0",
   },
 };
 
@@ -73,31 +62,17 @@ export function CodeEditor({
   placeholder,
 }: CodeEditorProps) {
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
-  const theme = useSettingsStore((s) => s.settings.theme);
-
-  const monacoTheme = theme === "light" ? "apiark-light" : "apiark-dark";
 
   const handleMount: OnMount = useCallback((editor, monaco) => {
     editorRef.current = editor;
 
     if (!themesRegistered) {
-      monaco.editor.defineTheme("apiark-dark", APIARK_DARK_THEME);
-      monaco.editor.defineTheme("apiark-light", APIARK_LIGHT_THEME);
+      monaco.editor.defineTheme("apiark", APIARK_THEME);
       themesRegistered = true;
     }
 
-    monaco.editor.setTheme(monacoTheme);
-  }, [monacoTheme]);
-
-  // Update theme when settings change
-  useEffect(() => {
-    if (editorRef.current) {
-      const monaco = (window as unknown as { monaco?: typeof Monaco }).monaco;
-      if (monaco) {
-        monaco.editor.setTheme(monacoTheme);
-      }
-    }
-  }, [monacoTheme]);
+    monaco.editor.setTheme("apiark");
+  }, []);
 
   const showPlaceholder = placeholder && !value;
 
@@ -114,7 +89,7 @@ export function CodeEditor({
         value={value}
         onChange={(v) => onChange(v ?? "")}
         onMount={handleMount}
-        theme={monacoTheme}
+        theme="apiark"
         options={{
           minimap: { enabled: minimap },
           lineNumbers: lineNumbers ? "on" : "off",

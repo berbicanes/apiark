@@ -25,12 +25,7 @@
 
 /* High contrast mode */
 @media (prefers-contrast: more) {
-  [data-theme="dark"] {
-    --color-border: #52525b;
-    --color-text-muted: #a1a1aa;
-    --color-text-dimmed: #71717a;
-  }
-  [data-theme="light"] {
+  :root {
     --color-border: #71717a;
     --color-text-muted: #3f3f46;
     --color-text-dimmed: #52525b;
@@ -59,31 +54,8 @@
   font-size: 0.875rem;
 }
 
-/* Dark theme (default) — deep navy palette */
-[data-theme="dark"] {
-  --color-bg: #0c0e14;
-  --color-surface: #12151e;
-  --color-elevated: #1a1e2e;
-  --color-border: #252a3a;
-  --color-text-primary: #e2e4ed;
-  --color-text-secondary: #9ba1b5;
-  --color-text-muted: #6b7290;
-  --color-text-dimmed: #454b60;
-  --color-accent: #6366f1;
-  --color-accent-hover: #818cf8;
-  --color-accent-glow: rgba(99, 102, 241, 0.15);
-  --color-activity-bar: #0a0c12;
-  --color-card: #161a26;
-  --color-card-hover: #1c2030;
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-error: #f87171;
-  --color-gradient-from: #6366f1;
-  --color-gradient-to: #a855f7;
-}
-
-/* Light theme */
-[data-theme="light"] {
+/* Light theme — the only theme */
+:root {
   --color-bg: #f8f9fc;
   --color-surface: #f0f1f5;
   --color-elevated: #e4e6ed;
@@ -101,8 +73,6 @@
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
-  --color-gradient-from: #6366f1;
-  --color-gradient-to: #a855f7;
 }
 
 /* Glass effect utility */
@@ -110,7 +80,6 @@
   backdrop-filter: blur(12px) saturate(150%);
   -webkit-backdrop-filter: blur(12px) saturate(150%);
 }
-
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
