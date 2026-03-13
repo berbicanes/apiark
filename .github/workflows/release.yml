@@ -304,12 +304,10 @@ jobs:
               per_page: 100,
             });
 
-            const assetMap = {};
-            for (const a of assets) {
-              assetMap[a.name] = a.browser_download_url;
-            }
+            // Use tag-based download URLs (draft releases have broken untagged-* URLs)
+            const baseUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/releases/download/${tag}`;
 
-            // Helper to find sig content from asset URL
+            // Helper to find sig content from asset
             async function getSigContent(sigName) {
               const asset = assets.find(a => a.name === sigName);
               if (!asset) return null;
@@ -330,7 +328,7 @@ jobs:
             if (linuxTarGz && linuxSig) {
               platforms['linux-x86_64'] = {
                 signature: linuxSig,
-                url: linuxTarGz.browser_download_url,
+                url: `${baseUrl}/${linuxTarGz.name}`,
               };
             } else {
               console.log(`Linux: bundle=${linuxTarGz?.name}, sig=${linuxSig ? 'found' : 'missing'}`);
@@ -342,7 +340,7 @@ jobs:
             if (macArmTarGz && macArmSig) {
               platforms['darwin-aarch64'] = {
                 signature: macArmSig,
-                url: macArmTarGz.browser_download_url,
+                url: `${baseUrl}/${macArmTarGz.name}`,
               };
             } else {
               console.log(`macOS ARM: bundle=${macArmTarGz?.name}, sig=${macArmSig ? 'found' : 'missing'}`);
@@ -354,7 +352,7 @@ jobs:
             if (macX64TarGz && macX64Sig) {
               platforms['darwin-x86_64'] = {
                 signature: macX64Sig,
-                url: macX64TarGz.browser_download_url,
+                url: `${baseUrl}/${macX64TarGz.name}`,
               };
             } else {
               console.log(`macOS x64: bundle=${macX64TarGz?.name}, sig=${macX64Sig ? 'found' : 'missing'}`);
@@ -368,7 +366,7 @@ jobs:
             if (winBundle && winSig) {
               platforms['windows-x86_64'] = {
                 signature: winSig,
-                url: winBundle.browser_download_url,
+                url: `${baseUrl}/${winBundle.name}`,
               };
             } else {
               console.log(`Windows: nsis=${winNsis?.name}, setup=${winSetup?.name}, sig=${winSig ? 'found' : 'missing'}`);

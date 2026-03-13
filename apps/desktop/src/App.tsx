@@ -553,6 +553,7 @@ function UpdateBanner() {
   const [dismissed, setDismissed] = useState(false);
   const [installing, setInstalling] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -571,10 +572,17 @@ function UpdateBanner() {
                 await backupCurrentBinary().catch(() => {});
               } catch { /* ignore */ }
               setStatus("Downloading update...");
-              await result.downloadAndInstall((progress) => {
-                if (progress.event === "Started" && progress.data.contentLength) {
-                  setStatus(`Downloading... (${(progress.data.contentLength / 1024 / 1024).toFixed(1)} MB)`);
-                } else if (progress.event === "Finished") {
+              let totalSize = 0;
+              let downloaded = 0;
+              await result.downloadAndInstall((p) => {
+                if (p.event === "Started" && p.data.contentLength) {
+                  totalSize = p.data.contentLength;
+                  setStatus(`Downloading... (${(totalSize / 1024 / 1024).toFixed(1)} MB)`);
+                } else if (p.event === "Progress" && p.data.chunkLength) {
+                  downloaded += p.data.chunkLength;
+                  if (totalSize > 0) setProgress(Math.round((downloaded / totalSize) * 100));
+                } else if (p.event === "Finished") {
+                  setProgress(100);
                   setStatus("Download complete. Restart to apply.");
                 }
               });
@@ -587,10 +595,7 @@ function UpdateBanner() {
       }
     };
 
-    // Check on launch after a short delay to not block startup
     const timer = setTimeout(checkUpdate, 5000);
-
-    // Check every 6 hours
     const interval = setInterval(checkUpdate, 6 * 60 * 60 * 1000);
 
     return () => {
@@ -602,41 +607,85 @@ function UpdateBanner() {
 
   if (!update || dismissed) return null;
 
+  const isFinished = status?.includes("Restart");
+
   return (
-    <div className="flex items-center gap-2 bg-[var(--color-accent)]/10 px-4 py-2 text-sm text-[var(--color-accent)]">
-      <Download className="h-4 w-4 shrink-0" />
-      <span className="flex-1">
-        {status ?? `ApiArk v${update.version} is available.`}
-      </span>
-      {!installing && !status?.includes("Restart") && (
-        <button
-          onClick={async () => {
-            try {
-              await update.install();
-            } catch (e) {
-              setStatus(`Update failed: ${e}`);
-              setInstalling(false);
-            }
-          }}
-          className="rounded-md bg-[var(--color-accent)]/20 px-3 py-0.5 text-xs font-medium hover:bg-[var(--color-accent)]/30"
-        >
-          Update Now
-        </button>
-      )}
-      {status?.includes("Restart") && (
-        <span className="text-xs font-medium text-[var(--color-accent)]">
-          Please restart the app to apply the update.
-        </span>
-      )}
-      {!installing && (
-        <button
-          onClick={() => setDismissed(true)}
-          className="rounded p-0.5 hover:bg-[var(--color-accent)]/20"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      )}
-    </div>
+    <Dialog.Root open onOpenChange={(open) => { if (!open && !installing) setDismissed(true); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/60" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl focus:outline-none">
+          <div className="p-6">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--color-accent)]/15">
+                <Download className="h-5 w-5 text-[var(--color-accent)]" />
+              </div>
+              <div>
+                <Dialog.Title className="text-base font-semibold text-[var(--color-text-primary)]">
+                  Update Available
+                </Dialog.Title>
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  ApiArk v{update.version} is ready
+                </p>
+              </div>
+            </div>
+
+            {status && (
+              <div className="mb-4">
+                <p className="mb-2 text-sm text-[var(--color-text-secondary)]">{status}</p>
+                {installing && !isFinished && (
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--color-border)]">
+                    <div
+                      className="h-full rounded-full bg-[var(--color-accent)] transition-all duration-300"
+                      style={{ width: `${progress || 5}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2">
+              {!installing && (
+                <button
+                  onClick={() => setDismissed(true)}
+                  className="rounded-lg px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:bg-[var(--color-elevated)]"
+                >
+                  Later
+                </button>
+              )}
+              {!installing && !isFinished && (
+                <button
+                  onClick={async () => {
+                    try {
+                      await update.install();
+                    } catch (e) {
+                      setStatus(`Update failed: ${e}`);
+                      setInstalling(false);
+                    }
+                  }}
+                  className="rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                >
+                  Update Now
+                </button>
+              )}
+              {isFinished && (
+                <button
+                  onClick={async () => {
+                    try {
+                      const { relaunch } = await import("@tauri-apps/plugin-shell");
+                      await relaunch();
+                    } catch { /* fallback */ }
+                  }}
+                  className="rounded-lg bg-[var(--color-success)] px-4 py-2 text-sm font-medium text-white hover:opacity-90"
+                >
+                  <RefreshCw className="mr-1.5 inline h-3.5 w-3.5" />
+                  Restart Now
+                </button>
+              )}
+            </div>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
