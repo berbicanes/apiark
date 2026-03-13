@@ -1,6 +1,6 @@
 [package]
 name = "apiark"
-version = "0.2.15"
+version = "0.2.16"
 description = "Local-first API development platform"
 authors = ["ApiArk Contributors"]
 edition = "2021"
