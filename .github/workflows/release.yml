@@ -151,25 +151,24 @@ jobs:
             const archSuffix = target.includes('aarch64') ? '_aarch64' : '_x64';
             const isWindows = process.platform === 'win32';
 
-            // Use OS find command to reliably discover all files
-            let allFiles;
-            try {
-              if (isWindows) {
-                const raw = execSync(`dir /s /b "${bundleDir}"`, { encoding: 'utf-8' });
-                allFiles = raw.trim().split('\r\n').filter(Boolean);
-              } else {
-                const raw = execSync(`find "${bundleDir}" -type f`, { encoding: 'utf-8' });
-                allFiles = raw.trim().split('\n').filter(Boolean);
-              }
-            } catch (e) {
-              console.log('Failed to list bundle dir:', e.message);
-              allFiles = [];
+            // Recursively walk the bundle directory to find all files
+            const allFiles = [];
+            function walkDir(dir) {
+              try {
+                for (const entry of fs.readdirSync(dir)) {
+                  const full = path.join(dir, entry);
+                  try {
+                    if (fs.statSync(full).isDirectory()) walkDir(full);
+                    else allFiles.push(full);
+                  } catch (e) { /* skip inaccessible */ }
+                }
+              } catch (e) { /* skip inaccessible */ }
             }
+            walkDir(bundleDir);
 
-            // Filter to updater-relevant files
+            // Filter to updater-relevant files (sigs + updater bundles)
             const updaterFiles = allFiles.filter(f => {
               const name = path.basename(f);
-              if (name.startsWith('api-ark')) return false;
               if (name.endsWith('.sig')) return true;
               if (name.endsWith('.AppImage.tar.gz')) return true;
               if (name.endsWith('.app.tar.gz')) return true;
