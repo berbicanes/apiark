@@ -57,13 +57,13 @@ export function RequestPanel() {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Tab bar */}
-      <div className="flex gap-0 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+      <div className="flex gap-0 overflow-x-auto border-b border-[var(--color-border)] bg-[var(--color-surface)]">
         {TABS.map((t) => (
           <button
             key={t.id}
             data-tour={`tab-${t.id}`}
             onClick={() => setActiveTab(t.id)}
-            className={`px-4 py-2 text-sm transition-colors ${
+            className={`shrink-0 whitespace-nowrap px-4 py-2 text-sm transition-colors ${
               activeTab === t.id
                 ? "border-b-2 border-blue-500 text-[var(--color-text-primary)]"
                 : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"

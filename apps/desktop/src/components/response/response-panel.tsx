@@ -11,6 +11,8 @@ import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { readFullResponse } from "@/lib/tauri-api";
 import type { ConsoleEntry } from "@apiark/types";
 import { TimingPanel } from "./timing-panel";
+import { CodeEditor } from "@/components/ui/code-editor";
+import type { KeyValuePair } from "@apiark/types";
 
 type ResponseTab = "body" | "headers" | "cookies" | "tests" | "timing" | "console" | "code";
 
@@ -169,16 +171,28 @@ export function ResponsePanel() {
       />
 
       {/* Content */}
-      <div className="flex-1 overflow-auto p-3 animate-fade-in">
-        {activeTab === "body" && (
-          <div>
-            <ResponseBodyActions body={response.body} />
-            {response.truncated && <TruncationBanner response={response} />}
-            <pre className="whitespace-pre-wrap break-all font-mono text-sm text-[var(--color-text-primary)]">
-              {tryFormatJson(response.body)}
-            </pre>
-          </div>
-        )}
+      <div className={`flex-1 animate-fade-in ${activeTab === "body" ? "flex min-h-0 flex-col p-3 pb-0" : "overflow-auto p-3"}`}>
+        {activeTab === "body" && (() => {
+          const language = getLanguageFromHeaders(response.headers);
+          const formattedBody = tryFormatBody(response.body, language);
+          return (
+            <>
+              <ResponseBodyActions body={response.body} />
+              {response.truncated && <TruncationBanner response={response} />}
+              <div className="min-h-0 flex-1">
+                <CodeEditor
+                  value={formattedBody}
+                  onChange={() => {}}
+                  language={language}
+                  height="100%"
+                  readOnly
+                  lineNumbers={false}
+                  minimap={false}
+                />
+              </div>
+            </>
+          );
+        })()}
 
         {activeTab === "headers" && (
           <table className="w-full text-sm">
@@ -343,12 +357,12 @@ function ResponseTabs({
   ];
 
   return (
-    <div className="flex gap-0 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div className="flex gap-0 overflow-x-auto border-b border-[var(--color-border)] bg-[var(--color-surface)]">
       {tabs.map((t) => (
         <button
           key={t.id}
           onClick={() => setActiveTab(t.id)}
-          className={`px-4 py-2 text-sm transition-colors ${
+          className={`shrink-0 whitespace-nowrap px-4 py-2 text-sm transition-colors ${
             activeTab === t.id
               ? "border-b-2 border-blue-500 text-[var(--color-text-primary)]"
               : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
@@ -451,10 +465,30 @@ function TruncationBanner({ response }: { response: { truncated?: boolean; fullS
   );
 }
 
-function tryFormatJson(body: string): string {
-  try {
-    return JSON.stringify(JSON.parse(body), null, 2);
-  } catch {
-    return body;
+function tryFormatBody(body: string, language: string): string {
+  if (language === "json") {
+    try {
+      return JSON.stringify(JSON.parse(body), null, 2);
+    } catch {
+      return body;
+    }
   }
+  return body;
+}
+
+function getLanguageFromHeaders(headers: KeyValuePair[]): string {
+  const contentType = headers
+    .find((h) => h.key.toLowerCase() === "content-type")
+    ?.value?.toLowerCase()
+    .split(";")[0]
+    .trim();
+
+  if (!contentType) return "plaintext";
+  if (contentType.includes("json")) return "json";
+  if (contentType.includes("xml")) return "xml";
+  if (contentType.includes("html")) return "html";
+  if (contentType.includes("javascript")) return "javascript";
+  if (contentType.includes("css")) return "css";
+  if (contentType.includes("yaml") || contentType.includes("x-yaml")) return "yaml";
+  return "plaintext";
 }
