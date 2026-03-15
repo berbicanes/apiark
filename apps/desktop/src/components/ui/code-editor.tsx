@@ -123,6 +123,7 @@ function registerGraphQL(monaco: typeof Monaco) {
             "@default": "identifier",
           },
         }],
+        // eslint-disable-next-line no-useless-escape
         [/[{}()\[\]]/, "@brackets"],
         [/@symbols/, {
           cases: {
