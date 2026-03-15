@@ -1,28 +1,23 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import monacoEditorPlugin from "vite-plugin-monaco-editor";
 import path from "path";
 
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig(async () => ({
-  plugins: [react(), tailwindcss()],
+  plugins: [
+    react(),
+    tailwindcss(),
+    (monacoEditorPlugin as unknown as typeof monacoEditorPlugin.default).default({
+      languageWorkers: ["editorWorkerService", "json"],
+      customWorkers: [],
+    }),
+  ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-    },
-  },
-  // Optimize Monaco Editor chunking for Tauri (bundled, not CDN)
-  optimizeDeps: {
-    include: ["monaco-editor"],
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          "monaco-editor": ["monaco-editor"],
-        },
-      },
     },
   },
   clearScreen: false,
