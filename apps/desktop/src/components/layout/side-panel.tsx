@@ -3,7 +3,7 @@ import { useCollectionStore } from "@/stores/collection-store";
 import { CollectionTree } from "@/components/collection/collection-tree";
 import { EnvironmentSelector } from "@/components/environment/environment-selector";
 import { HistoryPanel } from "@/components/history/history-panel";
-import { FolderOpen, FolderPlus, Plus, Search, Trash2, X, Upload, FolderX, ChevronDown, ChevronRight, Folder } from "lucide-react";
+import { FolderOpen, FolderPlus, Plus, Search, Trash2, X, Upload, FolderX, ChevronDown, ChevronRight, Folder, Globe } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { createCollection, saveEnvironment, deleteItem as deleteItemApi } from "@/lib/tauri-api";
 import { useEnvironmentStore } from "@/stores/environment-store";
@@ -454,11 +454,38 @@ function EnvironmentsPanel({
   };
 
   if (!collectionPath) {
+    const handleOpenFolder = async () => {
+      try {
+        const { open: openDialog } = await import("@tauri-apps/plugin-dialog");
+        const selected = await openDialog({ directory: true, multiple: false });
+        if (selected) {
+          await useCollectionStore.getState().openCollection(selected as string);
+        }
+      } catch (err) {
+        import("@/stores/toast-store").then(({ useToastStore }) =>
+          useToastStore.getState().showError(`Failed to open folder: ${err}`),
+        );
+      }
+    };
+
     return (
-      <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-        <p className="text-xs text-[var(--color-text-dimmed)]">
-          Open a collection to manage environments
-        </p>
+      <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-400/10">
+          <Globe className="h-6 w-6 text-emerald-400" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-[var(--color-text-secondary)]">No collection open</p>
+          <p className="mt-0.5 text-xs text-[var(--color-text-dimmed)]">
+            Open a collection first to manage environments
+          </p>
+        </div>
+        <button
+          onClick={handleOpenFolder}
+          className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-xs font-medium text-white transition-all hover:brightness-110 active:scale-[0.98]"
+        >
+          <FolderOpen className="h-3.5 w-3.5" />
+          Open Collection
+        </button>
       </div>
     );
   }
