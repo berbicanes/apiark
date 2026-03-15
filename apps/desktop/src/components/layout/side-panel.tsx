@@ -487,17 +487,26 @@ function EnvironmentsPanel({
           </span>
           <button
             onClick={() => setNewEnvOpen(true)}
-            className="rounded p-0.5 text-[var(--color-text-dimmed)] hover:bg-[var(--color-elevated)] hover:text-[var(--color-text-secondary)]"
+            className="rounded p-1 text-[var(--color-text-dimmed)] hover:bg-[var(--color-elevated)] hover:text-[var(--color-text-secondary)]"
             title="New Environment"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
           </button>
         </div>
 
         {environments.length === 0 ? (
-          <p className="py-2 text-xs text-[var(--color-text-dimmed)]">
-            No environments yet
-          </p>
+          <div className="flex flex-col items-center gap-2 py-4">
+            <p className="text-xs text-[var(--color-text-dimmed)]">
+              No environments yet
+            </p>
+            <button
+              onClick={() => setNewEnvOpen(true)}
+              className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white transition-all hover:brightness-110 active:scale-[0.98]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Environment
+            </button>
+          </div>
         ) : (
           environments.map((env) => (
             <button
