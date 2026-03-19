@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useTabStore, useActiveTab } from "@/stores/tab-store";
 import { useEnvironmentStore } from "@/stores/environment-store";
 import type { HttpMethod, EnvironmentData } from "@apiark/types";
-import { Loader2, Send, AlertCircle, Check } from "lucide-react";
+import { Loader2, Send, AlertCircle, Check, Download } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
 import { HintTooltip } from "@/components/ui/hint-tooltip";
 import { saveEnvironment } from "@/lib/tauri-api";
@@ -208,7 +208,7 @@ function VariableEditor({
 export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) {
   const { t } = useTranslation();
   const tab = useActiveTab();
-  const { setMethod, setUrl, send } = useTabStore();
+  const { setMethod, setUrl, send, sendAndDownload } = useTabStore();
   const [resolvedVars, setResolvedVars] = useState<Record<string, string>>({});
   const [inputFocused, setInputFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -357,21 +357,34 @@ export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) 
       </div>
 
       {/* Send button */}
-      <div className="relative">
-        <button
-          ref={sendBtnRef}
-          data-tour="send-btn"
-          onClick={send}
-          disabled={tab.loading || !tab.url.trim()}
-          className="flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
-        >
-          {tab.loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-          {t("request.send")}
-        </button>
+      <div className="relative flex items-center gap-1">
+        <div className="flex rounded-lg bg-[var(--color-accent)] transition-all hover:bg-[var(--color-accent-hover)]">
+          <button
+            ref={sendBtnRef}
+            data-tour="send-btn"
+            onClick={send}
+            disabled={tab.loading || !tab.url.trim()}
+            className="flex items-center gap-2 rounded-l-lg px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
+          >
+            {tab.loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {t("request.send")}
+          </button>
+          
+          <div className="w-[1px] bg-white/20 my-1" />
+          
+          <button
+            onClick={sendAndDownload}
+            disabled={tab.loading || !tab.url.trim()}
+            className="flex items-center justify-center rounded-r-lg px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
+            title={t("request.sendAndDownload") || "Send and Download"}
+          >
+            <Download className="h-4 w-4" />
+          </button>
+        </div>
         <HintTooltip hintId="send-shortcut" message="Tip: Press Ctrl+Enter to send requests quickly" />
       </div>
     </div>

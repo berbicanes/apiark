@@ -66,45 +66,53 @@ pub async fn parse_response(
 
     let size_bytes = bytes.len() as u64;
 
-    // Check if we need to truncate
-    if bytes.len() > TRUNCATE_THRESHOLD {
-        // Save full body to temp file
-        let temp_path =
-            std::env::temp_dir().join(format!("apiark-response-{}", uuid::Uuid::new_v4()));
+    // Try to parse as UTF-8
+    let (body, temp_path_str, truncated, full_size) = match String::from_utf8(bytes.to_vec()) {
+        Ok(text) => {
+            if bytes.len() > TRUNCATE_THRESHOLD {
+                // Save full body to temp file
+                let temp_path =
+                    std::env::temp_dir().join(format!("apiark-response-{}", uuid::Uuid::new_v4()));
 
-        if let Err(e) = std::fs::write(&temp_path, &bytes) {
-            tracing::warn!("Failed to write response temp file: {e}");
-            // Fall through to return truncated body without temp path
+                if let Err(e) = std::fs::write(&temp_path, &bytes) {
+                    tracing::warn!("Failed to write response temp file: {e}");
+                }
+
+                let truncated_bytes = &bytes[..TRUNCATE_THRESHOLD];
+                let truncated_text = String::from_utf8(truncated_bytes.to_vec())
+                    .unwrap_or_else(|_| format!("<binary data: {} bytes>", size_bytes));
+
+                let temp_path_str = if temp_path.exists() {
+                    Some(temp_path.to_string_lossy().to_string())
+                } else {
+                    None
+                };
+
+                (truncated_text, temp_path_str, Some(true), Some(size_bytes))
+            } else {
+                (text, None, None, None)
+            }
         }
+        Err(_) => {
+            let temp_path = std::env::temp_dir()
+                .join(format!("apiark-response-{}.bin", uuid::Uuid::new_v4()));
+            if let Err(e) = std::fs::write(&temp_path, &bytes) {
+                tracing::warn!("Failed to write binary response temp file: {e}");
+            }
+            let temp_path_str = if temp_path.exists() {
+                Some(temp_path.to_string_lossy().to_string())
+            } else {
+                None
+            };
 
-        let truncated_bytes = &bytes[..TRUNCATE_THRESHOLD];
-        let body = String::from_utf8(truncated_bytes.to_vec())
-            .unwrap_or_else(|_| format!("<binary data: {} bytes>", size_bytes));
-
-        let temp_path_str = if temp_path.exists() {
-            Some(temp_path.to_string_lossy().to_string())
-        } else {
-            None
-        };
-
-        return Ok(ResponseData {
-            status,
-            status_text,
-            headers,
-            cookies,
-            body,
-            time_ms: elapsed_ms,
-            size_bytes,
-            truncated: Some(true),
-            full_size: Some(size_bytes),
-            temp_path: temp_path_str,
-        });
-    }
-
-    let body = String::from_utf8(bytes.to_vec()).unwrap_or_else(|_| {
-        // For binary responses, show a placeholder
-        format!("<binary data: {} bytes>", size_bytes)
-    });
+            (
+                format!("<binary data: {} bytes>", size_bytes),
+                temp_path_str,
+                None, // Not considered 'truncated' text, just non-displayable binary
+                None,
+            )
+        }
+    };
 
     Ok(ResponseData {
         status,
@@ -114,8 +122,8 @@ pub async fn parse_response(
         body,
         time_ms: elapsed_ms,
         size_bytes,
-        truncated: None,
-        full_size: None,
-        temp_path: None,
+        truncated,
+        full_size,
+        temp_path: temp_path_str,
     })
 }

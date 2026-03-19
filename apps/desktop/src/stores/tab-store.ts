@@ -64,6 +64,7 @@ interface TabState {
 
   // Actions
   send: () => Promise<void>;
+  sendAndDownload: () => Promise<void>;
   save: () => Promise<void>;
   autoSave: () => Promise<void>;
   clearAutoSaveError: () => void;
@@ -805,6 +806,37 @@ export const useTabStore = create<TabState>((set, get) => ({
       const reqLabel = tab.name || tab.url || "Request";
       const httpErr = err as HttpError;
       useConsoleStore.getState().log(reqLabel, httpErr?.message || String(err), "error");
+    }
+  },
+
+  sendAndDownload: async () => {
+    await get().send();
+    const tab = get().tabs.find((t) => t.id === get().activeTabId);
+    if (!tab || !tab.response) return;
+
+    try {
+      const { save } = await import("@tauri-apps/plugin-dialog");
+      const { copyFile, writeTextFile } = await import("@tauri-apps/plugin-fs");
+
+      const filePath = await save({
+        filters: [
+          { name: "All Files", extensions: ["*"] },
+          { name: "JSON", extensions: ["json"] },
+          { name: "XML", extensions: ["xml"] },
+          { name: "Text", extensions: ["txt"] },
+        ],
+      });
+      if (filePath) {
+        if (tab.response.tempPath) {
+          await copyFile(tab.response.tempPath, filePath);
+        } else {
+          await writeTextFile(filePath, tab.response.body);
+        }
+      }
+    } catch (err) {
+      import("@/stores/toast-store").then(({ useToastStore }) =>
+        useToastStore.getState().showError(`Failed to save response: ${err}`),
+      );
     }
   },
 

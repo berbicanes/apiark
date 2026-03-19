@@ -8,7 +8,7 @@ import { ResponseSkeleton } from "@/components/ui/skeleton";
 import { CodeGenerationPanel } from "./code-generation-panel";
 import { TestResultsPanel } from "./test-results-panel";
 import { save } from "@tauri-apps/plugin-dialog";
-import { writeTextFile } from "@tauri-apps/plugin-fs";
+import { writeTextFile, copyFile } from "@tauri-apps/plugin-fs";
 import { readFullResponse } from "@/lib/tauri-api";
 import type { ConsoleEntry } from "@apiark/types";
 import { TimingPanel } from "./timing-panel";
@@ -238,7 +238,11 @@ function ResponseBodyActions({ body }: { body: string }) {
         ],
       });
       if (filePath) {
-        await writeTextFile(filePath, body);
+        if (tab?.response?.tempPath) {
+          await copyFile(tab.response.tempPath, filePath);
+        } else {
+          await writeTextFile(filePath, body);
+        }
       }
     } catch (err) {
       import("@/stores/toast-store").then(({ useToastStore }) =>
