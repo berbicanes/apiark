@@ -1,14 +1,16 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
+  "$schema": "https://schema.tauri.app/config/2.10.3",
   "productName": "ApiArk",
   "version": "0.3.0",
   "identifier": "dev.apiark.app",
+
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build"
   },
+
   "app": {
     "windows": [
       {
@@ -20,9 +22,14 @@
       }
     ],
     "security": {
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$RESOURCE/icons/*"]
+      },
       "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ipc: tauri: https://github.com https://api.github.com https://releases.apiark.dev https://api.apiark.dev; font-src 'self' data:; frame-src 'self' blob: data:"
     }
   },
+
   "plugins": {
     "deep-link": {
       "mobile": [],
@@ -37,6 +44,7 @@
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEZBNEYzRDVFODZFMzM3NDIKUldSQ04rT0dYajFQK29pN1FNR1pNMUt6Sy8xdjFORXpZZXROb3RwVmRJUW9BbDViSWxRQkE5OUUK"
     }
   },
+
   "bundle": {
     "active": true,
     "createUpdaterArtifacts": "v1Compatible",

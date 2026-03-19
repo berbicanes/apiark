@@ -4,40 +4,39 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "core:window:default",
     "core:window:allow-close",
+    "core:window:allow-set-focus",
     "core:window:allow-set-size",
     "core:window:allow-set-title",
-    "core:window:allow-set-focus",
-    "dialog:default",
+    "core:window:default",
+    "dialog:allow-ask",
+    "dialog:allow-message",
     "dialog:allow-open",
     "dialog:allow-save",
-    "dialog:allow-message",
-    "dialog:allow-ask",
-    {
-      "identifier": "shell:allow-open",
-      "allow": [
-        { "url": "https://**" },
-        { "url": "http://**" }
-      ]
-    },
-    "notification:default",
-    "notification:allow-notify",
-    "notification:allow-is-permission-granted",
-    "notification:allow-request-permission",
-    "fs:default",
-    "fs:allow-read",
-    "fs:allow-write",
+    "dialog:default",
+    "core:window:allow-create",
+    "deep-link:default",
+    "fs:allow-copy-file",
     "fs:allow-exists",
     "fs:allow-mkdir",
+    "fs:allow-read",
     "fs:allow-remove",
     "fs:allow-rename",
-    "fs:allow-copy-file",
     "fs:allow-stat",
-    "updater:default",
+    "fs:allow-write",
+    "fs:default",
+    "notification:allow-is-permission-granted",
+    "notification:allow-notify",
+    "notification:allow-request-permission",
+    "notification:default",
+    "opener:default",
+    "os:default",
     "updater:allow-check",
     "updater:allow-download-and-install",
-    "core:window:allow-create",
-    "deep-link:default"
+    "updater:default",
+    {
+      "identifier": "shell:allow-open",
+      "allow": [{ "url": "https://**" }, { "url": "http://**" }]
+    }
   ]
 }

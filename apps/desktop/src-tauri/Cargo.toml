@@ -17,13 +17,15 @@ path = "src/main.rs"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-shell = "2"
+tauri = { version = "2", features = ["protocol-asset", "image-png", "image-ico"] }
+tauri-plugin-deep-link = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-fs = "2"
 tauri-plugin-notification = "2"
+tauri-plugin-opener = "2"
+tauri-plugin-os = "2"
+tauri-plugin-shell = "2"
 tauri-plugin-updater = "2"
-tauri-plugin-deep-link = "2"
 reqwest = { version = "0.12", features = ["json", "cookies", "rustls-tls", "multipart", "stream"] }
 url = "2"
 tokio = { version = "1", features = ["full"] }

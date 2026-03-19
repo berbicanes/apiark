@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "ApiArk",
+    "description": "Local-first API development platform",
     "version": "ApiArk v{{version}}",
     "zenMode": "Zen Mode — Press Esc to exit",
     "crashReportPrompt": "Help improve ApiArk by sending anonymous crash reports? No request data is ever included.",
@@ -12,7 +13,57 @@
     "dismiss": "Dismiss",
     "later": "Later",
     "updateNow": "Update Now",
-    "ok": "OK"
+    "ok": "OK",
+    "menu": {
+      "about": {
+        "text": "About ApiArk",
+        "items": {
+          "check_updates": "Check for Updates",
+          "version": "Version {{version}}",
+          "preferences": "Preferences"
+        }
+      },
+      "file": {
+        "text": "File",
+        "items": {
+          "new": "New",
+          "new_window": "New Window",
+          "open": "Open…",
+          "save": "Save",
+          "save_as": "Save As…",
+          "import": "Import…",
+          "export": "Export…",
+          "close_window": "Close Window"
+        }
+      },
+      "edit": {
+        "text": "Edit"
+      },
+      "view": {
+        "text": "View",
+        "items": {
+          "zoom_in": "Zoom In",
+          "zoom_out": "Zoom Out",
+          "zoom_reset": "Reset Zoom",
+          "toggle_sidebar": "Toggle Sidebar",
+          "toggle_bottom_panel": "Toggle Bottom Panel",
+          "toggle_inspector": "Toggle Inspector",
+          "toggle_fullscreen": "Toggle Fullscreen"
+        }
+      },
+      "window": {
+        "text": "Window"
+      },
+      "help": {
+        "text": "Help",
+        "items": {
+          "bug_report": "Report an Issue…",
+          "github": "GitHub Repository",
+          "docs": "Documentation",
+          "website": "Visit Website"
+        }
+      }
+    }
   },
   "sidebar": {
     "collections": "Collections",
