@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "ApiArk",
+    "description": "Lokal-fokussierte API-Entwicklungsplattform",
     "version": "ApiArk v{{version}}",
     "zenMode": "Zen-Modus — Drücke Esc zum Beenden",
     "crashReportPrompt": "Hilf ApiArk zu verbessern, indem du anonyme Absturzberichte sendest? Es werden keine Anfragedaten übertragen.",
@@ -12,7 +13,57 @@
     "dismiss": "Verwerfen",
     "later": "Später",
     "updateNow": "Jetzt Aktualisieren",
-    "ok": "OK"
+    "ok": "OK",
+    "menu": {
+      "about": {
+        "text": "Über ApiArk",
+        "items": {
+          "check_updates": "Nach Updates suchen",
+          "version": "Version {{version}}",
+          "preferences": "Einstellungen"
+        }
+      },
+      "file": {
+        "text": "Datei",
+        "items": {
+          "new": "Neu",
+          "new_window": "Neues Fenster",
+          "open": "Öffnen…",
+          "save": "Speichern",
+          "save_as": "Speichern unter…",
+          "import": "Importieren…",
+          "export": "Exportieren…",
+          "close_window": "Fenster schließen"
+        }
+      },
+      "edit": {
+        "text": "Bearbeiten"
+      },
+      "view": {
+        "text": "Ansicht",
+        "items": {
+          "zoom_in": "Vergrößern",
+          "zoom_out": "Verkleinern",
+          "zoom_reset": "Zoom zurücksetzen",
+          "toggle_sidebar": "Seitenleiste umschalten",
+          "toggle_bottom_panel": "Unteres Panel umschalten",
+          "toggle_inspector": "Inspektor umschalten",
+          "toggle_fullscreen": "Vollbild umschalten"
+        }
+      },
+      "window": {
+        "text": "Fenster"
+      },
+      "help": {
+        "text": "Hilfe",
+        "items": {
+          "bug_report": "Problem melden…",
+          "github": "GitHub-Repository",
+          "docs": "Dokumentation",
+          "website": "Website besuchen"
+        }
+      }
+    }
   },
   "sidebar": {
     "collections": "Sammlungen",

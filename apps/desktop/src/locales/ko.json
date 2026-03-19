@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "ApiArk",
+    "description": "로컬 우선 API 개발 플랫폼",
     "version": "ApiArk v{{version}}",
     "zenMode": "Zen 모드 — Esc를 눌러 종료",
     "crashReportPrompt": "익명 충돌 보고서를 보내 ApiArk 개선에 도움을 주시겠습니까? 요청 데이터는 절대 포함되지 않습니다.",
@@ -12,7 +13,57 @@
     "dismiss": "닫기",
     "later": "나중에",
     "updateNow": "지금 업데이트",
-    "ok": "확인"
+    "ok": "확인",
+    "menu": {
+      "about": {
+        "text": "ApiArk 정보",
+        "items": {
+          "check_updates": "업데이트 확인",
+          "version": "버전 {{version}}",
+          "preferences": "설정"
+        }
+      },
+      "file": {
+        "text": "파일",
+        "items": {
+          "new": "새로 만들기",
+          "new_window": "새 창",
+          "open": "열기…",
+          "save": "저장",
+          "save_as": "다른 이름으로 저장…",
+          "import": "가져오기…",
+          "export": "내보내기…",
+          "close_window": "창 닫기"
+        }
+      },
+      "edit": {
+        "text": "편집"
+      },
+      "view": {
+        "text": "보기",
+        "items": {
+          "zoom_in": "확대",
+          "zoom_out": "축소",
+          "zoom_reset": "확대/축소 초기화",
+          "toggle_sidebar": "사이드바 전환",
+          "toggle_bottom_panel": "하단 패널 전환",
+          "toggle_inspector": "인스펙터 전환",
+          "toggle_fullscreen": "전체 화면 전환"
+        }
+      },
+      "window": {
+        "text": "창"
+      },
+      "help": {
+        "text": "도움말",
+        "items": {
+          "bug_report": "문제 보고…",
+          "github": "GitHub 저장소",
+          "docs": "문서",
+          "website": "웹사이트 방문"
+        }
+      }
+    }
   },
   "sidebar": {
     "collections": "컬렉션",

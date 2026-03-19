@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "ApiArk",
+    "description": "本地优先的 API 开发平台",
     "version": "ApiArk v{{version}}",
     "zenMode": "专注模式 — 按 Esc 退出",
     "crashReportPrompt": "通过发送匿名崩溃报告帮助改进 ApiArk？不会包含任何请求数据。",
@@ -12,7 +13,57 @@
     "dismiss": "忽略",
     "later": "稍后",
     "updateNow": "立即更新",
-    "ok": "确定"
+    "ok": "确定",
+    "menu": {
+      "about": {
+        "text": "关于 ApiArk",
+        "items": {
+          "check_updates": "检查更新",
+          "version": "版本 {{version}}",
+          "preferences": "首选项"
+        }
+      },
+      "file": {
+        "text": "文件",
+        "items": {
+          "new": "新建",
+          "new_window": "新窗口",
+          "open": "打开…",
+          "save": "保存",
+          "save_as": "另存为…",
+          "import": "导入…",
+          "export": "导出…",
+          "close_window": "关闭窗口"
+        }
+      },
+      "edit": {
+        "text": "编辑"
+      },
+      "view": {
+        "text": "视图",
+        "items": {
+          "zoom_in": "放大",
+          "zoom_out": "缩小",
+          "zoom_reset": "重置缩放",
+          "toggle_sidebar": "切换侧边栏",
+          "toggle_bottom_panel": "切换底部面板",
+          "toggle_inspector": "切换检查器",
+          "toggle_fullscreen": "切换全屏"
+        }
+      },
+      "window": {
+        "text": "窗口"
+      },
+      "help": {
+        "text": "帮助",
+        "items": {
+          "bug_report": "报告问题…",
+          "github": "GitHub 仓库",
+          "docs": "文档",
+          "website": "访问网站"
+        }
+      }
+    }
   },
   "sidebar": {
     "collections": "集合",

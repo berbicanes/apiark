@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "ApiArk",
+    "description": "منصة تطوير API محلية أولاً",
     "version": "ApiArk v{{version}}",
     "zenMode": "وضع Zen — اضغط Esc للخروج",
     "crashReportPrompt": "هل تريد المساعدة في تحسين ApiArk بإرسال تقارير أعطال مجهولة؟ لا يتم تضمين أي بيانات طلبات.",
@@ -12,7 +13,57 @@
     "dismiss": "تجاهل",
     "later": "لاحقاً",
     "updateNow": "تحديث الآن",
-    "ok": "موافق"
+    "ok": "موافق",
+    "menu": {
+      "about": {
+        "text": "حول ApiArk",
+        "items": {
+          "check_updates": "التحقق من التحديثات",
+          "version": "الإصدار {{version}}",
+          "preferences": "التفضيلات"
+        }
+      },
+      "file": {
+        "text": "ملف",
+        "items": {
+          "new": "جديد",
+          "new_window": "نافذة جديدة",
+          "open": "فتح…",
+          "save": "حفظ",
+          "save_as": "حفظ باسم…",
+          "import": "استيراد…",
+          "export": "تصدير…",
+          "close_window": "إغلاق النافذة"
+        }
+      },
+      "edit": {
+        "text": "تعديل"
+      },
+      "view": {
+        "text": "عرض",
+        "items": {
+          "zoom_in": "تكبير",
+          "zoom_out": "تصغير",
+          "zoom_reset": "إعادة تعيين الزووم",
+          "toggle_sidebar": "تبديل الشريط الجانبي",
+          "toggle_bottom_panel": "تبديل اللوحة السفلية",
+          "toggle_inspector": "تبديل المفتش",
+          "toggle_fullscreen": "تبديل ملء الشاشة"
+        }
+      },
+      "window": {
+        "text": "نافذة"
+      },
+      "help": {
+        "text": "مساعدة",
+        "items": {
+          "bug_report": "الإبلاغ عن مشكلة…",
+          "github": "مستودع GitHub",
+          "docs": "التوثيق",
+          "website": "زيارة الموقع"
+        }
+      }
+    }
   },
   "sidebar": {
     "collections": "المجموعات",

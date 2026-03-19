@@ -1,0 +1,348 @@
+{
+  "app": {
+    "name": "ApiArk",
+    "description": "Локально-ориентированная платформа для разработки API",
+    "menu": {
+      "about": {
+        "text": "О приложении ApiArk",
+        "items": {
+          "check_updates": "Проверить наличие обновлений",
+          "version": "Версия {{version}}",
+          "preferences": "Настройки"
+        }
+      },
+      "file": {
+        "text": "Файл",
+        "items": {
+          "new": "Создать",
+          "new_window": "Новое окно",
+          "open": "Открыть…",
+          "save": "Сохранить",
+          "save_as": "Сохранить как…",
+          "import": "Импорт…",
+          "export": "Экспорт…",
+          "close_window": "Закрыть окно"
+        }
+      },
+      "edit": {
+        "text": "Правка"
+      },
+      "view": {
+        "text": "Вид",
+        "items": {
+          "zoom_in": "Увеличить",
+          "zoom_out": "Уменьшить",
+          "zoom_reset": "Сбросить масштаб",
+          "toggle_sidebar": "Переключить боковую панель",
+          "toggle_bottom_panel": "Переключить нижнюю панель",
+          "toggle_inspector": "Переключить инспектор",
+          "toggle_fullscreen": "Полноэкранный режим"
+        }
+      },
+      "window": {
+        "text": "Окно"
+      },
+      "help": {
+        "text": "Справка",
+        "items": {
+          "bug_report": "Сообщить о проблеме…",
+          "github": "Репозиторий GitHub",
+          "docs": "Документация",
+          "website": "Посетить сайт"
+        }
+      }
+    }
+  },
+  "sidebar": {
+    "collections": "Коллекции",
+    "history": "История",
+    "environments": "Окружения",
+    "search": "Поиск коллекций...",
+    "noCollections": "Откройте папку или импортируйте коллекцию, чтобы начать",
+    "openFolder": "Открыть папку",
+    "importCollection": "Импортировать коллекцию",
+    "newRequest": "Новый запрос",
+    "newFolder": "Новая папка",
+    "cookieSettings": "Настройки Cookie",
+    "rename": "Переименовать",
+    "duplicate": "Дублировать",
+    "delete": "Удалить",
+    "noResults": "Совпадений не найдено"
+  },
+  "tabs": {
+    "untitled": "Запрос без названия",
+    "close": "Закрыть",
+    "closeOthers": "Закрыть другие",
+    "closeAll": "Закрыть все",
+    "noTabs": "Откройте запрос из боковой панели или нажмите {{shortcut}}, чтобы создать новый"
+  },
+  "request": {
+    "send": "Отправить",
+    "sending": "Отправка...",
+    "cancel": "Отмена",
+    "urlPlaceholder": "Введите URL или вставьте cURL",
+    "params": "Параметры",
+    "headers": "Заголовки",
+    "body": "Тело",
+    "auth": "Авторизация",
+    "scripts": "Скрипты",
+    "preRequest": "Перед запросом",
+    "postResponse": "После ответа",
+    "tests": "Тесты",
+    "assertions": "Проверки",
+    "key": "Ключ",
+    "value": "Значение",
+    "description": "Описание",
+    "enabled": "Включено",
+    "addRow": "Добавить",
+    "bulkEdit": "Массовое редактирование",
+    "pathVariables": "Переменные пути"
+  },
+  "body": {
+    "json": "JSON",
+    "xml": "XML",
+    "formData": "Form Data",
+    "urlencoded": "URL Encoded",
+    "raw": "Текст (Raw)",
+    "binary": "Двоичный код (Binary)",
+    "none": "Нет"
+  },
+  "auth": {
+    "type": "Тип авторизации",
+    "none": "Без авторизации",
+    "bearer": "Bearer Token",
+    "basic": "Basic Auth",
+    "apiKey": "API Key",
+    "oauth2": "OAuth 2.0",
+    "digest": "Digest Auth",
+    "awsV4": "AWS Signature v4",
+    "ntlm": "NTLM",
+    "jwtBearer": "JWT Bearer",
+    "token": "Токен",
+    "username": "Имя пользователя",
+    "password": "Пароль",
+    "inherited": "Наследуется от {{source}}"
+  },
+  "response": {
+    "body": "Тело",
+    "headers": "Заголовки",
+    "cookies": "Cookie",
+    "tests": "Тесты",
+    "timing": "Время",
+    "pretty": "Форматированный",
+    "raw": "Текст (Raw)",
+    "preview": "Предпросмотр",
+    "noResponse": "Отправьте запрос, чтобы увидеть ответ",
+    "copyResponse": "Копировать ответ",
+    "saveToFile": "Сохранить в файл",
+    "loadFullResponse": "Загрузить полный ответ",
+    "truncated": "Ответ сокращен ({{size}}). Показан первый 1МБ.",
+    "status": {
+      "success": "Успешно",
+      "redirect": "Перенаправление",
+      "clientError": "Ошибка клиента",
+      "serverError": "Ошибка сервера"
+    }
+  },
+  "environment": {
+    "title": "Окружения",
+    "noEnvironment": "Без окружения",
+    "create": "Создать окружение",
+    "edit": "Редактировать окружение",
+    "name": "Имя",
+    "variables": "Переменные",
+    "secrets": "Секреты",
+    "noEnvironments": "Создайте окружение для управления переменными в запросах",
+    "variableHint": "Используйте {{syntax}} для динамических значений"
+  },
+  "history": {
+    "title": "История",
+    "search": "Поиск по истории...",
+    "clear": "Очистить историю",
+    "clearConfirm": "Вы уверены, что хотите очистить всю историю?",
+    "noHistory": "Отправьте свой первый запрос, чтобы увидеть его здесь",
+    "restore": "Восстановить"
+  },
+  "settings": {
+    "title": "Настройки",
+    "general": "Общие",
+    "theme": "Тема",
+    "dark": "Темная",
+    "light": "Светлая",
+    "system": "Системная",
+    "sidebarWidth": "Ширина боковой панели",
+    "network": "Сеть",
+    "sslVerification": "Проверка SSL-сертификата",
+    "followRedirects": "Следовать перенаправлениям",
+    "timeout": "Тайм-аут запроса (мс)",
+    "proxyUrl": "Proxy URL",
+    "proxyUsername": "Имя пользователя (необязательно)",
+    "proxyPassword": "Пароль (необязательно)",
+    "certificates": "Сертификаты",
+    "caCert": "Пользовательский сертификат CA (PEM)",
+    "clientCert": "Клиентский сертификат (PEM)",
+    "clientKey": "Клиентский ключ (PEM)",
+    "pfxPassphrase": "PFX Passphrase",
+    "backup": "Резервное копирование",
+    "includeHistory": "Включить историю в экспорт",
+    "exportState": "Экспорт состояния приложения",
+    "importState": "Импорт состояния приложения",
+    "exporting": "Экспорт...",
+    "importing": "Импорт...",
+    "updates": "Обновления",
+    "updateChannel": "Канал обновлений",
+    "stable": "Стабильный",
+    "beta": "Бета",
+    "nightly": "Nightly",
+    "checkForUpdates": "Проверить обновления",
+    "upToDate": "Установлена последняя версия",
+    "updateAvailable": "Доступно обновление: {{version}}"
+  },
+  "runner": {
+    "title": "Запуск коллекции",
+    "run": "Запустить",
+    "stop": "Остановить",
+    "iterations": "Итерации",
+    "delay": "Задержка (мс)",
+    "dataFile": "Файл данных",
+    "results": "Результаты",
+    "passed": "Успешно",
+    "failed": "Ошибка",
+    "skipped": "Пропущено",
+    "duration": "Длительность"
+  },
+  "import": {
+    "title": "Импорт коллекции",
+    "selectFile": "Выбрать файл",
+    "format": "Формат",
+    "autoDetect": "Автоопределение",
+    "preview": "Предпросмотр",
+    "importing": "Импорт...",
+    "success": "Импорт завершен успешно",
+    "requestCount": "запросов: {{count}}",
+    "folderCount": "папок: {{count}}",
+    "warnings": "предупреждений: {{count}}"
+  },
+  "export": {
+    "title": "Экспорт коллекции",
+    "format": "Формат",
+    "postman": "Postman v2.1",
+    "openapi": "OpenAPI 3.0",
+    "apiark": "ApiArk YAML"
+  },
+  "commandPalette": {
+    "placeholder": "Введите команду...",
+    "noResults": "Команд не найдено"
+  },
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "close": "Закрыть",
+    "confirm": "Подтвердить",
+    "delete": "Удалить",
+    "rename": "Переименовать",
+    "create": "Создать",
+    "edit": "Редактировать",
+    "copy": "Копировать",
+    "paste": "Вставить",
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успешно",
+    "warning": "Предупреждение",
+    "retry": "Повторить",
+    "browse": "Обзор..."
+  },
+  "errors": {
+    "connectionRefused": "В соединении отказано — сервер запущен?",
+    "timeout": "Время запроса истекло",
+    "dnsFailure": "Ошибка разрешения DNS — проверьте URL",
+    "tlsError": "Ошибка TLS/SSL — проверьте настройки сертификата",
+    "networkError": "Ошибка сети",
+    "autoSaveFailed": "Автосохранение не удалось: {{reason}}",
+    "fileDeleted": "Этот файл был удален",
+    "fileChanged": "Этот файл был изменен извне",
+    "mergeConflict": "В этом файле есть конфликты слияния. Пожалуйста, разрешите их в редакторе или через Git."
+  },
+  "onboarding": {
+    "welcome": "Добро пожаловать в ApiArk",
+    "tagline": "Локально-ориентированная разработка API. Без аккаунтов. Без облаков. Полная мощь.",
+    "startScratch": "Начать с нуля",
+    "importExisting": "Импортировать коллекцию",
+    "openFolder": "Открыть папку",
+    "chooseTheme": "Выберите тему"
+  },
+  "console": {
+    "title": "Консоль",
+    "clear": "Очистить",
+    "filter": "Фильтр",
+    "all": "Все",
+    "noLogs": "Вывод консоли пуст"
+  },
+  "grpc": {
+    "title": "gRPC",
+    "loadProto": "Загрузить .proto",
+    "service": "Сервис",
+    "method": "Метод",
+    "invoke": "Вызвать",
+    "metadata": "Метаданные",
+    "requestBody": "Запрос",
+    "responseBody": "Ответ"
+  },
+  "mock": {
+    "title": "Mock-серверы",
+    "start": "Запустить сервер",
+    "stop": "Остановить",
+    "port": "Порт",
+    "running": "Запущен",
+    "stopped": "Остановлен"
+  },
+  "monitor": {
+    "title": "Мониторы",
+    "create": "Создать монитор",
+    "schedule": "Расписание",
+    "lastRun": "Последний запуск",
+    "nextRun": "Следующий запуск",
+    "enabled": "Включено",
+    "disabled": "Отключено"
+  },
+  "docs": {
+    "title": "API Документация",
+    "generate": "Сгенерировать",
+    "preview": "Предпросмотр",
+    "html": "HTML",
+    "markdown": "Markdown"
+  },
+  "diff": {
+    "title": "Сравнение ответов",
+    "snapshot": "Снимок",
+    "compare": "Сравнить"
+  },
+  "trash": {
+    "title": "Корзина",
+    "restore": "Восстановить",
+    "emptyTrash": "Очистить корзину",
+    "deletedAt": "Удалено {{date}}"
+  },
+  "migration": {
+    "title": "Обновление формата коллекции",
+    "message": "Эта коллекция использует формат v{{old}}. Текущая версия — v{{new}}.",
+    "upgrade": "Обновить",
+    "readOnly": "Открыть только для чтения",
+    "upgradeHint": "Обновление перезапишет файлы коллекции. Сначала зафиксируйте (commit) свои изменения."
+  },
+  "websocket": {
+    "connect": "Подключиться",
+    "disconnect": "Отключиться",
+    "send": "Отправить",
+    "connected": "Подключено",
+    "disconnected": "Отключено",
+    "messages": "Сообщения"
+  },
+  "sse": {
+    "connect": "Подключиться",
+    "disconnect": "Отключиться",
+    "events": "События",
+    "connected": "Подключено",
+    "disconnected": "Отключено"
+  }
+}

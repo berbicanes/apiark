@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "ApiArk",
+    "description": "Plataforma de desarrollo de API local-first",
     "version": "ApiArk v{{version}}",
     "zenMode": "Modo Zen — Presiona Esc para salir",
     "crashReportPrompt": "¿Ayudar a mejorar ApiArk enviando informes de errores anónimos? Nunca se incluyen datos de solicitudes.",
@@ -12,7 +13,57 @@
     "dismiss": "Descartar",
     "later": "Más tarde",
     "updateNow": "Actualizar Ahora",
-    "ok": "OK"
+    "ok": "OK",
+    "menu": {
+      "about": {
+        "text": "Acerca de ApiArk",
+        "items": {
+          "check_updates": "Buscar actualizaciones",
+          "version": "Versión {{version}}",
+          "preferences": "Preferencias"
+        }
+      },
+      "file": {
+        "text": "Archivo",
+        "items": {
+          "new": "Nuevo",
+          "new_window": "Nueva ventana",
+          "open": "Abrir…",
+          "save": "Guardar",
+          "save_as": "Guardar como…",
+          "import": "Importar…",
+          "export": "Exportar…",
+          "close_window": "Cerrar ventana"
+        }
+      },
+      "edit": {
+        "text": "Editar"
+      },
+      "view": {
+        "text": "Ver",
+        "items": {
+          "zoom_in": "Acercar",
+          "zoom_out": "Alejar",
+          "zoom_reset": "Restablecer zoom",
+          "toggle_sidebar": "Alternar barra lateral",
+          "toggle_bottom_panel": "Alternar panel inferior",
+          "toggle_inspector": "Alternar inspector",
+          "toggle_fullscreen": "Alternar pantalla completa"
+        }
+      },
+      "window": {
+        "text": "Ventana"
+      },
+      "help": {
+        "text": "Ayuda",
+        "items": {
+          "bug_report": "Informar de un error…",
+          "github": "Repositorio de GitHub",
+          "docs": "Documentación",
+          "website": "Visitar sitio web"
+        }
+      }
+    }
   },
   "sidebar": {
     "collections": "Colecciones",

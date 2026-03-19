@@ -1,6 +1,7 @@
 {
   "app": {
     "name": "ApiArk",
+    "description": "ローカルファーストなAPI開発プラットフォーム",
     "version": "ApiArk v{{version}}",
     "zenMode": "Zen モード — Esc で終了",
     "crashReportPrompt": "匿名のクラッシュレポートを送信して ApiArk の改善に協力しますか？リクエストデータが含まれることはありません。",
@@ -12,7 +13,57 @@
     "dismiss": "閉じる",
     "later": "あとで",
     "updateNow": "今すぐアップデート",
-    "ok": "OK"
+    "ok": "OK",
+    "menu": {
+      "about": {
+        "text": "ApiArkについて",
+        "items": {
+          "check_updates": "アップデートを確認",
+          "version": "バージョン {{version}}",
+          "preferences": "設定"
+        }
+      },
+      "file": {
+        "text": "ファイル",
+        "items": {
+          "new": "新規作成",
+          "new_window": "新規ウィンドウ",
+          "open": "開く…",
+          "save": "保存",
+          "save_as": "別名で保存…",
+          "import": "インポート…",
+          "export": "エクスポート…",
+          "close_window": "ウィンドウを閉じる"
+        }
+      },
+      "edit": {
+        "text": "編集"
+      },
+      "view": {
+        "text": "表示",
+        "items": {
+          "zoom_in": "拡大",
+          "zoom_out": "縮小",
+          "zoom_reset": "ズームをリセット",
+          "toggle_sidebar": "サイドバーの切り替え",
+          "toggle_bottom_panel": "ボトムパネルの切り替え",
+          "toggle_inspector": "インスペクターの切り替え",
+          "toggle_fullscreen": "フルスクリーンの切り替え"
+        }
+      },
+      "window": {
+        "text": "ウィンドウ"
+      },
+      "help": {
+        "text": "ヘルプ",
+        "items": {
+          "bug_report": "問題を報告…",
+          "github": "GitHubリポジトリ",
+          "docs": "ドキュメント",
+          "website": "ウェブサイトを表示"
+        }
+      }
+    }
   },
   "sidebar": {
     "collections": "コレクション",
