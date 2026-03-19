@@ -1,11 +1,12 @@
 import { forwardRef, useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useTabStore, useActiveTab } from "@/stores/tab-store";
 import { useEnvironmentStore } from "@/stores/environment-store";
-import type { HttpMethod, EnvironmentData } from "@apiark/types";
+import { useToastStore } from "@/stores/toast-store";
+import type { HttpMethod, EnvironmentData, KeyValuePair, BodyType } from "@apiark/types";
 import { Loader2, Send, AlertCircle, Check } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
 import { HintTooltip } from "@/components/ui/hint-tooltip";
-import { saveEnvironment } from "@/lib/tauri-api";
+import { saveEnvironment, parseCurlCommand } from "@/lib/tauri-api";
 
 const METHODS: HttpMethod[] = [
   "GET",
@@ -36,6 +37,13 @@ const METHOD_BG: Record<HttpMethod, string> = {
   HEAD: "bg-cyan-500/10",
   OPTIONS: "bg-gray-500/10",
 };
+
+let kvCounter = 0;
+const kvId = () => `kv_${Date.now()}_${++kvCounter}_${Math.random().toString(36).slice(2, 9)}`;
+
+function isCurlCommand(text: string): boolean {
+  return /^curl\s+/i.test(text.trim());
+}
 
 /** Extract all {{variableName}} references from a tab's fields */
 function extractVariableRefs(tab: {
@@ -128,11 +136,10 @@ function VariableEditor({
       <Popover.Trigger asChild>
         <button
           type="button"
-          className={`inline rounded px-0.5 font-mono transition-colors ${
-            isUnresolved
-              ? "text-[var(--color-warning)] bg-[var(--color-warning)]/10 hover:bg-[var(--color-warning)]/20"
-              : "text-[var(--color-accent)] bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/20"
-          }`}
+          className={`inline rounded px-0.5 font-mono transition-colors ${isUnresolved
+            ? "text-[var(--color-warning)] bg-[var(--color-warning)]/10 hover:bg-[var(--color-warning)]/20"
+            : "text-[var(--color-accent)] bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/20"
+            }`}
           title={
             isUnresolved
               ? `Click to set value for ${varName}`
@@ -205,9 +212,11 @@ function VariableEditor({
 
 export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) {
   const tab = useActiveTab();
-  const { setMethod, setUrl, send } = useTabStore();
+  const { setMethod, setUrl, setHeaders, setBody, setAuth, send } = useTabStore();
+  const addToast = useToastStore((s) => s.addToast);
   const [resolvedVars, setResolvedVars] = useState<Record<string, string>>({});
   const [inputFocused, setInputFocused] = useState(false);
+  const [importingCurl, setImportingCurl] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Merge forwarded ref with local ref
@@ -287,6 +296,61 @@ export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) 
     }
   };
 
+  const handlePaste = async (e: React.ClipboardEvent) => {
+    const pastedText = e.clipboardData.getData("text");
+
+    if (isCurlCommand(pastedText)) {
+      e.preventDefault();
+      setImportingCurl(true);
+
+      try {
+        const parsed = await parseCurlCommand(pastedText.trim());
+
+        setMethod(parsed.method as HttpMethod);
+        setUrl(parsed.url);
+
+        const headers: KeyValuePair[] = Object.entries(parsed.headers).map(
+          ([key, value]) => ({ id: kvId(), key, value, enabled: true }),
+        );
+        if (headers.length > 0) {
+          setHeaders([...headers, { id: kvId(), key: "", value: "", enabled: true }]);
+        } else {
+          setHeaders([{ id: kvId(), key: "", value: "", enabled: true }]);
+        }
+
+        if (parsed.body) {
+          setBody({
+            type: (parsed.bodyType as BodyType) ?? "raw",
+            content: parsed.body,
+            formData: [],
+          });
+        }
+
+        if (parsed.authBasic) {
+          setAuth({
+            type: "basic",
+            username: parsed.authBasic[0],
+            password: parsed.authBasic[1],
+          });
+        } else {
+          setAuth({ type: "none" });
+        }
+
+        addToast({
+          type: "success",
+          message: "cURL command imported successfully",
+        });
+      } catch (err) {
+        addToast({
+          type: "error",
+          message: typeof err === "string" ? err : "Failed to parse cURL command",
+        });
+      } finally {
+        setImportingCurl(false);
+      }
+    }
+  };
+
   return (
     <div data-tour="url-bar" className="flex items-center gap-3 bg-[var(--color-card)] px-4 py-3">
       {/* Method selector — show static GQL badge for GraphQL tabs */}
@@ -316,14 +380,14 @@ export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) 
           value={tab.url}
           onChange={(e) => setUrl(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           onFocus={() => setInputFocused(true)}
           onBlur={() => setInputFocused(false)}
-          placeholder="Enter request URL..."
-          className={`w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-4 py-2 text-sm outline-none transition-all focus:border-[var(--color-accent)]/50 focus:ring-2 focus:ring-[var(--color-accent)]/20 ${
-            hasVariablesInUrl && !inputFocused
-              ? "text-transparent caret-[var(--color-text-primary)]"
-              : "text-[var(--color-text-primary)]"
-          } placeholder-[var(--color-text-dimmed)]`}
+          placeholder={importingCurl ? "Importing cURL..." : "Enter request URL or paste cURL command..."}
+          className={`w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-4 py-2 text-sm outline-none transition-all focus:border-[var(--color-accent)]/50 focus:ring-2 focus:ring-[var(--color-accent)]/20 ${hasVariablesInUrl && !inputFocused
+            ? "text-transparent caret-[var(--color-text-primary)]"
+            : "text-[var(--color-text-primary)]"
+            } placeholder-[var(--color-text-dimmed)]`}
         />
         {/* Colored overlay — visible when input is NOT focused and URL has variables */}
         {hasVariablesInUrl && !inputFocused && (
@@ -359,7 +423,7 @@ export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) 
           ref={sendBtnRef}
           data-tour="send-btn"
           onClick={send}
-          disabled={tab.loading || !tab.url.trim()}
+          disabled={tab.loading || !tab.url.trim() || importingCurl}
           className="flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
         >
           {tab.loading ? (
