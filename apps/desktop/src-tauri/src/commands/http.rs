@@ -52,6 +52,7 @@ pub struct ScriptedResponseData {
 pub async fn send_request(
     state: State<'_, AppState>,
     oauth_store: State<'_, OAuthTokenStore>,
+    cookie_jar: State<'_, crate::http::cookies::CookieJarManager>,
     params: SendRequestParams,
     variables: Option<HashMap<String, String>>,
     collection_path: Option<String>,
@@ -60,6 +61,8 @@ pub async fn send_request(
     let vars = variables.unwrap_or_default();
     let mut interpolated = interpolate_params(&params, &vars);
     resolve_oauth_token(&mut interpolated, &oauth_store)?;
+
+    inject_cookies(&mut interpolated, &cookie_jar, &collection_path);
 
     tracing::info!(method = ?interpolated.method, url = %interpolated.url, "Sending request");
 
@@ -113,6 +116,10 @@ pub async fn send_request(
         }
     }
 
+    if let Ok(ref response) = result {
+        save_response_cookies(response, &interpolated.url, &cookie_jar, &collection_path);
+    }
+
     record_history(
         &state,
         &interpolated,
@@ -133,6 +140,7 @@ pub async fn send_request(
 pub async fn send_request_with_scripts(
     state: State<'_, AppState>,
     oauth_store: State<'_, OAuthTokenStore>,
+    cookie_jar: State<'_, crate::http::cookies::CookieJarManager>,
     params: SendRequestParams,
     variables: Option<HashMap<String, String>>,
     collection_path: Option<String>,
@@ -197,6 +205,8 @@ pub async fn send_request_with_scripts(
         }
     }
 
+    inject_cookies(&mut interpolated, &cookie_jar, &collection_path);
+
     tracing::info!(method = ?interpolated.method, url = %interpolated.url, "Sending request (scripted)");
 
     // 2. Send the HTTP request
@@ -204,6 +214,8 @@ pub async fn send_request_with_scripts(
         let http_error: HttpError = e.into();
         serde_json::to_string(&http_error).unwrap_or(http_error.message)
     })?;
+
+    save_response_cookies(&response, &interpolated.url, &cookie_jar, &collection_path);
 
     // Record history
     record_history(
@@ -640,5 +652,73 @@ fn redact_value(value: &mut serde_json::Value, keys: &[&str]) {
             }
         }
         _ => {}
+    }
+}
+
+// ── Cookie Management Helpers ──
+
+fn inject_cookies(
+    interpolated: &mut SendRequestParams,
+    cookie_jar: &crate::http::cookies::CookieJarManager,
+    collection_path: &Option<String>,
+) {
+    if let Some(col_path) = collection_path {
+        if let Ok(url) = url::Url::parse(&interpolated.url) {
+            if let Some(domain) = url.host_str() {
+                if let Ok(jar_cookies) = cookie_jar.get_cookies(col_path) {
+                    let mut req_cookies = interpolated.cookies.clone().unwrap_or_default();
+                    let req_path = url.path();
+                    let req_path = if req_path.is_empty() { "/" } else { req_path };
+                    
+                     for c in jar_cookies {
+                         // domain match: exact or sub-domain
+                         let normalized_c_domain = c.domain.trim_start_matches('.');
+                         let domain_match = domain == normalized_c_domain || domain.ends_with(&format!(".{}", normalized_c_domain));
+                         // path match
+                         let c_path = if c.path.is_empty() { "/" } else { &c.path };
+                         let path_match = req_path.starts_with(c_path);
+                         
+                         if domain_match && path_match && !req_cookies.contains_key(&c.name) {
+                             req_cookies.insert(c.name.clone(), c.value.clone());
+                         }
+                     }
+                    if !req_cookies.is_empty() {
+                        interpolated.cookies = Some(req_cookies);
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn save_response_cookies(
+    response: &ResponseData,
+    interpolated_url: &str,
+    cookie_jar: &crate::http::cookies::CookieJarManager,
+    collection_path: &Option<String>,
+) {
+    if let Some(col_path) = collection_path {
+        if !response.cookies.is_empty() {
+            let fallback_domain = url::Url::parse(interpolated_url)
+                .ok()
+                .and_then(|u| u.host_str().map(|s| s.to_string()))
+                .unwrap_or_default();
+                
+            let new_cookies: Vec<crate::http::cookies::CookieEntry> = response.cookies.iter().map(|c| {
+                crate::http::cookies::CookieEntry {
+                    name: c.name.clone(),
+                    value: c.value.clone(),
+                    domain: c.domain.clone().unwrap_or_else(|| fallback_domain.clone()),
+                    path: c.path.clone().unwrap_or_else(|| "/".to_string()),
+                    expires: c.expires.clone(),
+                    http_only: c.http_only,
+                    secure: c.secure,
+                    same_site: None,
+                }
+            }).collect();
+            
+            let _ = cookie_jar.store_cookies(col_path, new_cookies);
+            let _ = cookie_jar.save_to_disk(col_path);
+        }
     }
 }
