@@ -342,7 +342,7 @@ These files live in `~/.apiark/` and are not part of collections:
 | `settings.json` | JSON | App preferences (theme, proxy, timeouts, certificates) |
 | `state.json` | JSON | Open tabs, window positions |
 | `data.db` | SQLite | Request history |
-| `license.key` | JWT | Pro/Team license (if purchased) |
+| `license.key` | JWT | License key (reserved for future use) |
 | `logs/` | Text | Daily rotating log files |
 | `crash-reports/` | JSON | Local crash reports |
 | `trash/` | YAML | Soft-deleted requests/folders |

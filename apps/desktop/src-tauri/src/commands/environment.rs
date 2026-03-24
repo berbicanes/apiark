@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::Path;
 
-use crate::models::environment::EnvironmentFile;
+use crate::models::environment::{EnvironmentFile, EnvironmentScope};
 use crate::storage::environment;
 
 /// Load variables from the collection root .env file only (no environment).
@@ -19,8 +19,19 @@ pub async fn load_environments(collection_path: String) -> Result<Vec<Environmen
 }
 
 #[tauri::command]
-pub async fn save_environment(collection_path: String, env: EnvironmentFile) -> Result<(), String> {
+pub async fn save_environment(
+    collection_path: String,
+    env: EnvironmentFile,
+    scope: Option<String>,
+) -> Result<(), String> {
     let path = Path::new(&collection_path);
+    let mut env = env;
+    if let Some(ref s) = scope {
+        env.scope = match s.as_str() {
+            "personal" => EnvironmentScope::Personal,
+            _ => EnvironmentScope::Shared,
+        };
+    }
     tracing::debug!(path = %collection_path, name = %env.name, "Saving environment");
     environment::save_environment(path, &env)
 }

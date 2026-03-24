@@ -210,7 +210,14 @@
     "passwordGrant": "Password",
     "addTo": "Add To",
     "addToHeader": "Header",
-    "addToQuery": "Query Param"
+    "addToQuery": "Query Param",
+    "saml": "SAML",
+    "idpUrl": "IdP SSO URL",
+    "entityId": "Service Provider Entity ID",
+    "assertionConsumerUrl": "Assertion Consumer Service URL",
+    "certificate": "IdP Certificate (PEM)",
+    "nameIdFormat": "NameID Format",
+    "samlToken": "SAML Assertion Token"
   },
   "response": {
     "body": "Body",
@@ -548,8 +555,8 @@
   },
   "ai": {
     "title": "AI Assistant",
-    "comingSoon": "Coming Soon",
-    "comingSoonDesc": "AI-powered request generation, test creation, and natural language API exploration are on the way."
+    "comingSoon": "AI Assistant",
+    "comingSoonDesc": "Generate API requests from natural language and auto-generate tests from responses. Configure your AI provider in Settings."
   },
   "cookies": {
     "title": "Cookie Jar",
@@ -593,5 +600,8 @@
     "title": "Confirm Delete",
     "request": "Delete \"{{name}}\"?",
     "collection": "Delete collection \"{{name}}\"? This will move the entire collection to trash."
+  },
+  "audit": {
+    "title": "Audit Logs"
   }
 }

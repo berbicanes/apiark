@@ -80,6 +80,7 @@ pub async fn create_request(
         name,
         method,
         url,
+        protocol: None,
         description: None,
         headers: Default::default(),
         auth: None,

@@ -210,7 +210,14 @@
     "passwordGrant": "비밀번호",
     "addTo": "추가 위치",
     "addToHeader": "헤더",
-    "addToQuery": "쿼리 매개변수"
+    "addToQuery": "쿼리 매개변수",
+    "saml": "SAML",
+    "idpUrl": "IdP SSO URL",
+    "entityId": "SP 엔티티 ID",
+    "assertionConsumerUrl": "어설션 소비자 서비스 URL",
+    "certificate": "IdP 인증서 (PEM)",
+    "nameIdFormat": "NameID 형식",
+    "samlToken": "SAML 어설션 토큰"
   },
   "response": {
     "body": "본문",
@@ -548,8 +555,8 @@
   },
   "ai": {
     "title": "AI 어시스턴트",
-    "comingSoon": "곧 출시 예정",
-    "comingSoonDesc": "AI 기반 요청 생성, 테스트 작성, 자연어 API 탐색이 곧 제공될 예정입니다."
+    "comingSoon": "AI Assistant",
+    "comingSoonDesc": "Generate API requests from natural language and auto-generate tests from responses. Configure your AI provider in Settings."
   },
   "cookies": {
     "title": "쿠키 저장소",
@@ -593,5 +600,8 @@
     "title": "삭제 확인",
     "request": "\"{{name}}\"을(를) 삭제하시겠습니까?",
     "collection": "컬렉션 \"{{name}}\"을(를) 삭제하시겠습니까? 전체 컬렉션이 휴지통으로 이동됩니다."
+  },
+  "audit": {
+    "title": "감사 로그"
   }
 }

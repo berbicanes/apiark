@@ -136,6 +136,118 @@ jobs:
           args: --target ${{ matrix.target }}
           updaterJsonPreferNsis: true
 
+      - name: Build MSIX package
+        if: matrix.label == 'windows-x86_64'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $version = '${{ needs.create-release.outputs.tag }}'.TrimStart('v')
+          $target = '${{ matrix.target }}'
+          $binaryDir = "apps\desktop\src-tauri\target\${target}\release"
+          $msixDir = "msix-staging"
+          $binary = "${binaryDir}\apiark.exe"
+
+          Write-Output "Looking for binary at: $binary"
+          if (-not (Test-Path $binary)) {
+            Write-Output "Binary not found at expected path, searching..."
+            $found = Get-ChildItem -Path "apps\desktop\src-tauri\target" -Filter "apiark.exe" -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -like "*release*" } | Select-Object -First 1
+            if ($found) {
+              $binary = $found.FullName
+              Write-Output "Found binary at: $binary"
+            } else {
+              Write-Error "Could not find apiark.exe"
+              exit 1
+            }
+          }
+
+          New-Item -ItemType Directory -Force -Path $msixDir
+          New-Item -ItemType Directory -Force -Path "${msixDir}\Assets"
+          Copy-Item $binary "${msixDir}\apiark.exe"
+
+          # Generate PNG assets from icon
+          Add-Type -AssemblyName System.Drawing
+          $iconPath = Resolve-Path "apps\desktop\src-tauri\icons\icon.png"
+          foreach ($size in @(44, 150)) {
+            $img = [System.Drawing.Image]::FromFile($iconPath.Path)
+            $bmp = New-Object System.Drawing.Bitmap($size, $size)
+            $g = [System.Drawing.Graphics]::FromImage($bmp)
+            $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+            $g.DrawImage($img, 0, 0, $size, $size)
+            $bmp.Save("${msixDir}\Assets\Square${size}x${size}Logo.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            $g.Dispose(); $bmp.Dispose(); $img.Dispose()
+          }
+
+          # Write AppxManifest.xml
+          $manifest = @"
+          <?xml version="1.0" encoding="utf-8"?>
+          <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+                   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+                   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities">
+            <Identity Name="berbicanes.ApiArk" Version="${version}.0" Publisher="CN=04976806-CCFC-4659-844E-36E0AF5D0C70" ProcessorArchitecture="x64" />
+            <Properties>
+              <DisplayName>ApiArk</DisplayName>
+              <PublisherDisplayName>berbicanes</PublisherDisplayName>
+              <Description>Local-first API development platform</Description>
+              <Logo>Assets\Square150x150Logo.png</Logo>
+            </Properties>
+            <Resources>
+              <Resource Language="en-us" />
+            </Resources>
+            <Dependencies>
+              <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22621.0" />
+            </Dependencies>
+            <Capabilities>
+              <Capability Name="internetClient" />
+              <rescap:Capability Name="runFullTrust" />
+            </Capabilities>
+            <Applications>
+              <Application Id="ApiArk" Executable="apiark.exe" EntryPoint="Windows.FullTrustApplication">
+                <uap:VisualElements DisplayName="ApiArk" Description="Local-first API development platform"
+                  Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" BackgroundColor="transparent" />
+              </Application>
+            </Applications>
+          </Package>
+          "@
+          $manifest | Out-File -Encoding utf8NoBOM "${msixDir}\AppxManifest.xml"
+
+          # Find MakeAppx.exe
+          $makeappx = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\10.*\x64\makeappx.exe" -ErrorAction SilentlyContinue | Sort-Object { $_.DirectoryName } -Descending | Select-Object -First 1
+          if (-not $makeappx) {
+            Write-Error "MakeAppx.exe not found in Windows SDK"
+            exit 1
+          }
+          Write-Output "Using MakeAppx: $($makeappx.FullName)"
+
+          $outputMsix = "ApiArk_${version}_x64.msix"
+          & $makeappx.FullName pack /d $msixDir /p $outputMsix /nv
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Output "Created: $outputMsix ($($(Get-Item $outputMsix).Length / 1MB) MB)"
+
+      - name: Upload MSIX to release
+        if: matrix.label == 'windows-x86_64'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          script: |
+            const fs = require('fs');
+            const tag = '${{ needs.create-release.outputs.tag }}';
+            const version = tag.replace(/^v/, '');
+            const name = `ApiArk_${version}_x64.msix`;
+            if (fs.existsSync(name)) {
+              await github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: ${{ needs.create-release.outputs.release_id }},
+                name,
+                data: fs.readFileSync(name),
+              });
+              console.log(`Uploaded ${name}`);
+            } else {
+              console.log('MSIX not found, skipping upload');
+            }
+
       - name: Upload all bundle artifacts
         if: always()
         uses: actions/github-script@v7

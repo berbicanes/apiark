@@ -4,10 +4,12 @@ import { useTabStore } from "@/stores/tab-store";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { KeyValueEditor } from "@/components/request/key-value-editor";
 import { Send, Plug, Unplug, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight } from "lucide-react";
+import { Breadcrumb } from "@/components/layout/breadcrumb";
+import { UrlBar } from "@/components/request/url-bar";
 
 export function WebSocketView() {
   const tab = useActiveTab();
-  const { setUrl, setHeaders } = useTabStore();
+  const { setHeaders } = useTabStore();
   const [messageInput, setMessageInput] = useState("");
   const [autoScroll, setAutoScroll] = useState(true);
   const [showHeaders, setShowHeaders] = useState(false);
@@ -45,53 +47,47 @@ export function WebSocketView() {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {/* URL Bar */}
-      <div className="flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
-        <span className="rounded bg-cyan-500/20 px-2 py-0.5 text-xs font-bold text-cyan-400">
-          WS
-        </span>
-        <input
-          type="text"
-          value={tab.url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="ws://localhost:8080"
-          className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none"
-          disabled={status === "connected"}
-        />
-        <div className="flex items-center gap-1">
-          <span
-            className={`h-2 w-2 rounded-full ${
+      <Breadcrumb />
+      <UrlBar
+        urlDisabled={status === "connected"}
+        extraActions={
+          <div className="flex items-center gap-1">
+            <span
+              className={`h-2 w-2 rounded-full ${
+                status === "connected"
+                  ? "bg-green-500"
+                  : status === "connecting"
+                    ? "bg-yellow-500 animate-pulse"
+                    : "bg-gray-500"
+              }`}
+            />
+            <span className="text-xs text-[var(--color-text-muted)] capitalize">{status}</span>
+          </div>
+        }
+        sendButton={
+          <button
+            onClick={handleConnect}
+            disabled={status === "connecting" || !tab.url.trim()}
+            className={`flex items-center gap-1.5 rounded-lg px-5 py-2 text-sm font-semibold text-white disabled:opacity-50 ${
               status === "connected"
-                ? "bg-green-500"
-                : status === "connecting"
-                  ? "bg-yellow-500 animate-pulse"
-                  : "bg-gray-500"
+                ? "bg-red-600 hover:bg-red-700"
+                : "bg-green-600 hover:bg-green-700"
             }`}
-          />
-          <span className="text-xs text-[var(--color-text-muted)] capitalize">{status}</span>
-        </div>
-        <button
-          onClick={handleConnect}
-          disabled={status === "connecting" || !tab.url.trim()}
-          className={`flex items-center gap-1.5 rounded px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50 ${
-            status === "connected"
-              ? "bg-red-600 hover:bg-red-700"
-              : "bg-green-600 hover:bg-green-700"
-          }`}
-        >
-          {status === "connected" ? (
-            <>
-              <Unplug className="h-3.5 w-3.5" />
-              Disconnect
-            </>
-          ) : (
-            <>
-              <Plug className="h-3.5 w-3.5" />
-              {status === "connecting" ? "Connecting..." : "Connect"}
-            </>
-          )}
-        </button>
-      </div>
+          >
+            {status === "connected" ? (
+              <>
+                <Unplug className="h-4 w-4" />
+                Disconnect
+              </>
+            ) : (
+              <>
+                <Plug className="h-4 w-4" />
+                {status === "connecting" ? "Connecting..." : "Connect"}
+              </>
+            )}
+          </button>
+        }
+      />
 
       {/* Headers (collapsible) */}
       <div className="border-b border-[var(--color-border)]">

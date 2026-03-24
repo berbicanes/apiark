@@ -71,8 +71,8 @@ const statsComparison = [
     color: "#06b6d4",
   },
   {
-    label: "Team Price",
-    apiark: "$0",
+    label: "Price",
+    apiark: "Free forever",
     postman: "$19/user/mo",
     icon: DollarSign,
     improvement: "Free forever",

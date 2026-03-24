@@ -8,24 +8,12 @@ By downloading, installing, or using ApiArk, you agree to these terms. If you do
 
 ## 2. License
 
-### Open Source Core
-
-The core ApiArk application is licensed under the MIT License. You may use, modify, and distribute it freely under those terms. See the `LICENSE` file in the repository.
-
-### Commercial Features
-
-Pro and Team features require a valid commercial license. Commercial licenses are:
-- Per-seat (one license per user)
-- Time-limited (annual or monthly subscription)
-- Non-transferable without written consent
+ApiArk is licensed under the MIT License. You may use, modify, and distribute it freely under those terms. All features are free. See the `LICENSE` file in the repository.
 
 ## 3. Use Restrictions
 
 You agree not to:
-- Reverse engineer the license validation mechanism to bypass feature gating
-- Distribute modified versions that remove or circumvent licensing
 - Use ApiArk to conduct attacks against systems you do not own or have authorization to test
-- Redistribute Pro/Team license keys
 
 ## 4. Data and Privacy
 
@@ -41,15 +29,13 @@ In no event shall ApiArk contributors be liable for any indirect, incidental, sp
 
 ## 7. Support
 
-- **Free tier**: Community support via GitHub Issues and Discussions
-- **Pro tier**: Priority email support
-- **Team tier**: Dedicated support channel, SLA available
+Community support is available via GitHub Issues and Discussions. All features are free for everyone.
 
 ## 8. Termination
 
 You may stop using ApiArk at any time. Your data remains on your machine in standard formats (YAML, SQLite, JSON). See our No Lock-In Pledge.
 
-We may terminate a commercial license if you breach these terms. Upon termination, Pro/Team features revert to free-tier behavior. Your data is never deleted or locked.
+Your data is never deleted or locked.
 
 ## 9. Changes
 

@@ -18,7 +18,7 @@ const defaultSettings: AppSettings = {
   verifySsl: true,
   followRedirects: true,
   timeoutMs: 30000,
-  sidebarWidth: 256,
+  sidebarWidth: 400,
   onboardingComplete: false,
   crashReportsEnabled: null,
   caCertPath: null,

@@ -1,4 +1,5 @@
 mod collection;
+mod import_export;
 mod interpolation;
 mod models;
 mod reporter;
@@ -162,20 +163,33 @@ async fn main() -> anyhow::Result<()> {
             output,
             format,
         } => {
-            // Import is a complex operation that shares logic with the desktop app.
-            // For now, provide a helpful message pointing to the desktop app.
+            let file_path = PathBuf::from(&file);
+            if !file_path.exists() {
+                eprintln!("{} File not found: {file}", "Error:".red().bold());
+                std::process::exit(1);
+            }
+
             let fmt = format.as_deref().unwrap_or("auto");
-            let out = output.as_deref().unwrap_or("./");
-            println!("{} {}", "Import:".bold(), file);
+            let out_dir = PathBuf::from(output.as_deref().unwrap_or("./"));
+            std::fs::create_dir_all(&out_dir)
+                .map_err(|e| anyhow::anyhow!("Failed to create output directory: {e}"))?;
+
+            println!("{} {}", "Importing:".bold(), file);
             println!("  Format: {fmt}");
-            println!("  Output: {out}");
-            println!();
+
+            let detected_format = if fmt == "auto" {
+                import_export::detect_format(&file_path)?
+            } else {
+                fmt.to_string()
+            };
+
+            println!("  Detected: {detected_format}");
+
+            let count = import_export::import_collection(&file_path, &out_dir, &detected_format)?;
             println!(
                 "{}",
-                "Import from CLI is not yet implemented. Use the desktop app to import collections."
-                    .yellow()
+                format!("Imported {count} requests to {}", out_dir.display()).green()
             );
-            println!("Supported formats: postman, insomnia, bruno, openapi");
         }
 
         Commands::Export {
@@ -183,17 +197,25 @@ async fn main() -> anyhow::Result<()> {
             format,
             output,
         } => {
-            let out = output.as_deref().unwrap_or("-");
-            println!("{} {}", "Export:".bold(), collection);
+            let collection_path = PathBuf::from(&collection)
+                .canonicalize()
+                .map_err(|e| anyhow::anyhow!("Collection not found: {collection}: {e}"))?;
+
+            println!("{} {}", "Exporting:".bold(), collection);
             println!("  Format: {format}");
-            println!("  Output: {out}");
-            println!();
-            println!(
-                "{}",
-                "Export from CLI is not yet implemented. Use the desktop app to export collections."
-                    .yellow()
-            );
-            println!("Supported formats: postman, openapi");
+
+            let result = import_export::export_collection(&collection_path, &format)?;
+
+            match output {
+                Some(ref path) => {
+                    std::fs::write(path, &result)
+                        .map_err(|e| anyhow::anyhow!("Failed to write output: {e}"))?;
+                    println!("{}", format!("Exported to {path}").green());
+                }
+                None => {
+                    println!("{result}");
+                }
+            }
         }
     }
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, useMemo, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { useConsoleStore, type ConsoleLogEntry } from "@/stores/console-store";
 import { Terminal, Trash2, ChevronDown, Filter } from "lucide-react";
@@ -10,8 +10,10 @@ export function ConsoleBottomBar() {
   const listRef = useRef<HTMLDivElement>(null);
   const [resizing, setResizing] = useState(false);
 
-  const filtered =
-    filter === "all" ? entries : entries.filter((e) => e.level === filter);
+  const filtered = useMemo(
+    () => (filter === "all" ? entries : entries.filter((e) => e.level === filter)),
+    [entries, filter],
+  );
 
   // Auto-scroll to bottom on new entries
   useEffect(() => {
@@ -117,7 +119,7 @@ export function ConsoleBottomBar() {
   );
 }
 
-function ConsoleRow({ entry }: { entry: ConsoleLogEntry }) {
+const ConsoleRow = memo(function ConsoleRow({ entry }: { entry: ConsoleLogEntry }) {
   const time = new Date(entry.timestamp).toLocaleTimeString("en-US", {
     hour12: false,
     hour: "2-digit",
@@ -157,4 +159,4 @@ function ConsoleRow({ entry }: { entry: ConsoleLogEntry }) {
       </span>
     </div>
   );
-}
+});

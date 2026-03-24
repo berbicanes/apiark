@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
-use std::time::Duration;
 
 use notify::{Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
-use notify_debouncer_mini::{new_debouncer, DebouncedEvent};
 use tauri::{AppHandle, Emitter};
 
 use super::{FileChangeEvent, FileChangeType};

@@ -5,17 +5,15 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 
 use crate::http::client::HttpEngine;
+use crate::http::cookies::{CookieEntry, CookieJarManager};
 use crate::http::interpolation;
 use crate::models::auth::AuthConfig;
-use crate::models::collection::{CollectionNode, RequestFile};
-use crate::models::request::{BodyType, HttpMethod, KeyValuePair, RequestBody, SendRequestParams};
+use crate::models::collection::{CollectionDefaults, CollectionNode, RequestFile};
+use crate::models::request::{BodyType, KeyValuePair, RequestBody, SendRequestParams};
 use crate::oauth::OAuthTokenStore;
-use crate::scripting::assertions::evaluate_assertions_from_yaml;
 use crate::scripting::engine::execute_script;
-use crate::scripting::{
-    ConsoleEntry, RequestSnapshot, ResponseSnapshot, ScriptContext, ScriptPhase,
-};
-use crate::storage::collection::{load_collection_tree, read_request};
+use crate::scripting::{RequestSnapshot, ResponseSnapshot, ScriptContext, ScriptPhase};
+use crate::storage::collection::{load_collection_config, load_collection_tree, read_request};
 use crate::storage::environment;
 use crate::storage::history::HistoryDb;
 
@@ -208,6 +206,21 @@ fn interpolate_auth(auth: &AuthConfig, vars: &HashMap<String, String>) -> AuthCo
             domain: interpolation::interpolate(domain, vars),
             workstation: interpolation::interpolate(workstation, vars),
         },
+        AuthConfig::Saml {
+            idp_url,
+            entity_id,
+            assertion_consumer_url,
+            certificate,
+            name_id_format,
+            saml_token,
+        } => AuthConfig::Saml {
+            idp_url: interpolation::interpolate(idp_url, vars),
+            entity_id: interpolation::interpolate(entity_id, vars),
+            assertion_consumer_url: interpolation::interpolate(assertion_consumer_url, vars),
+            certificate: interpolation::interpolate(certificate, vars),
+            name_id_format: name_id_format.clone(),
+            saml_token: interpolation::interpolate(saml_token, vars),
+        },
     }
 }
 
@@ -233,9 +246,34 @@ async fn run_single_request(
     vars: &mut HashMap<String, String>,
     _history_db: &Arc<HistoryDb>,
     oauth_store: &OAuthTokenStore,
+    cookie_jar: &CookieJarManager,
+    collection_path: &str,
+    defaults: &CollectionDefaults,
 ) -> RequestRunResult {
     let params = request_file_to_params(file);
     let mut interpolated = interpolate_params(&params, vars);
+
+    // Inject stored cookies from the jar
+    if defaults.send_cookies {
+        if let Ok(jar_cookies) = cookie_jar.get_cookies(collection_path) {
+            if !jar_cookies.is_empty() {
+                let request_domain = url::Url::parse(&interpolated.url)
+                    .ok()
+                    .and_then(|u| u.host_str().map(|h| h.to_string()));
+                let cookies_map = interpolated.cookies.get_or_insert_with(HashMap::new);
+                for cookie in &jar_cookies {
+                    if let Some(ref req_domain) = request_domain {
+                        let cookie_domain = cookie.domain.trim_start_matches('.');
+                        if req_domain.ends_with(cookie_domain) || req_domain == cookie_domain {
+                            cookies_map
+                                .entry(cookie.name.clone())
+                                .or_insert_with(|| cookie.value.clone());
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // Resolve OAuth token if applicable
     if let Some(AuthConfig::Oauth2 {
@@ -292,6 +330,28 @@ async fn run_single_request(
             };
         }
     };
+
+    // Store response cookies in the jar
+    if defaults.store_cookies && !response.cookies.is_empty() {
+        let entries: Vec<CookieEntry> = response
+            .cookies
+            .iter()
+            .map(|c| CookieEntry {
+                name: c.name.clone(),
+                value: c.value.clone(),
+                domain: c.domain.clone().unwrap_or_default(),
+                path: c.path.clone().unwrap_or_else(|| "/".to_string()),
+                expires: c.expires.clone(),
+                http_only: c.http_only,
+                secure: c.secure,
+                same_site: None,
+            })
+            .collect();
+        let _ = cookie_jar.store_cookies(collection_path, entries);
+        if defaults.persist_cookies {
+            let _ = cookie_jar.save_to_disk(collection_path);
+        }
+    }
 
     let mut test_count = 0usize;
     let mut test_passed = 0usize;
@@ -418,9 +478,20 @@ pub async fn run_collection(
     config: RunConfig,
     history_db: Arc<HistoryDb>,
     oauth_store: &OAuthTokenStore,
+    cookie_jar: &CookieJarManager,
 ) -> Result<RunSummary, String> {
     let collection_path = Path::new(&config.collection_path);
     let tree = load_collection_tree(collection_path)?;
+
+    // Load collection defaults for cookie settings
+    let defaults = load_collection_config(collection_path)
+        .map(|c| c.defaults)
+        .unwrap_or_default();
+
+    // Load persisted cookies if enabled
+    if defaults.send_cookies {
+        let _ = cookie_jar.load_from_disk(&config.collection_path);
+    }
 
     // If a specific folder is targeted, find it
     let request_paths = if let Some(ref folder_path) = config.folder_path {
@@ -528,7 +599,16 @@ pub async fn run_collection(
                 }
             };
 
-            let result = run_single_request(&file, &mut vars, &history_db, oauth_store).await;
+            let result = run_single_request(
+                &file,
+                &mut vars,
+                &history_db,
+                oauth_store,
+                cookie_jar,
+                &config.collection_path,
+                &defaults,
+            )
+            .await;
 
             // Emit progress event
             let _ = app.emit(

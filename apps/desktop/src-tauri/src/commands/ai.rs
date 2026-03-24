@@ -81,7 +81,7 @@ Only respond with the JSON object, no other text."#;
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
-        return Err(format!("AI API returned {status}: {body}"));
+        return Err(ai_error_message(status.as_u16(), &body));
     }
 
     let body: serde_json::Value = response
@@ -173,7 +173,7 @@ Only respond with the JSON object, no other text."#;
     if !response.status().is_success() {
         let status = response.status();
         let body = response.text().await.unwrap_or_default();
-        return Err(format!("AI API returned {status}: {body}"));
+        return Err(ai_error_message(status.as_u16(), &body));
     }
 
     let body: serde_json::Value = response
@@ -200,4 +200,15 @@ Only respond with the JSON object, no other text."#;
         .map_err(|e| format!("Failed to parse generated tests: {e}\nRaw: {json_str}"))?;
 
     Ok(generated)
+}
+
+/// Produce a user-friendly error message for common AI API failures.
+fn ai_error_message(status: u16, body: &str) -> String {
+    match status {
+        401 => "Authentication failed. Please check your API key in Settings → AI.".to_string(),
+        403 => "Access denied. Your API key may be invalid, expired, or lack permission for the selected model. Please verify your API key and model in Settings → AI.".to_string(),
+        404 => "AI endpoint not found. Please verify the endpoint URL in Settings → AI.".to_string(),
+        429 => "Rate limit exceeded. Please wait a moment and try again.".to_string(),
+        _ => format!("AI API returned {status}: {body}"),
+    }
 }

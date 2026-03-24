@@ -19,12 +19,9 @@ ApiArk contributors are not data controllers for your API data. All collections,
 | Request History | Locally only | SQLite at ~/.apiark/data.db |
 | Settings | Locally only | JSON at ~/.apiark/settings.json |
 | Crash Reports (opt-in) | Locally stored; optionally transmitted | ~/.apiark/crash-reports/ |
-| License Key (Pro/Team) | Validated against our server | ~/.apiark/license.key |
-
 ### Lawful Basis
 
 - **Crash reports**: Consent (opt-in, default off)
-- **License validation**: Legitimate interest / contractual obligation (Pro/Team users)
 - **All other data**: Not applicable (no data leaves the machine)
 
 ## GDPR Rights
@@ -81,7 +78,7 @@ No user data is transferred internationally. License validation server is hosted
 
 ## Breach Notification
 
-In the unlikely event of a security breach affecting our license validation infrastructure, we will notify affected users within 72 hours via email (for Pro/Team users) and via our GitHub repository.
+In the unlikely event of a security breach, we will notify affected users within 72 hours via our GitHub repository.
 
 ## Contact
 

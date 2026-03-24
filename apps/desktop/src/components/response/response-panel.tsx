@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useActiveTab, useTabStore } from "@/stores/tab-store";
 import { AlertCircle, ClipboardCopy, Download, Check, ArrowLeftRight, BookmarkPlus } from "lucide-react";
@@ -36,13 +36,20 @@ export function ResponsePanel() {
   const tab = useActiveTab();
   const [activeTab, setActiveTab] = useState<ResponseTab>("body");
 
+  const testResults = tab?.testResults ?? [];
+  const assertionResults = tab?.assertionResults ?? [];
+
+  const failedCount = useMemo(
+    () => (testResults.filter((t) => !t.passed).length) +
+      (assertionResults.filter((a) => !a.passed).length),
+    [testResults, assertionResults],
+  );
+
   if (!tab) return null;
 
-  const { response, error, loading, testResults, assertionResults, consoleOutput } = tab;
+  const { response, error, loading, consoleOutput } = tab;
 
   const hasTestResults = testResults.length > 0 || assertionResults.length > 0;
-  const failedCount = (testResults?.filter((t) => !t.passed).length ?? 0) +
-    (assertionResults?.filter((a) => !a.passed).length ?? 0);
 
   // Loading state — skeleton shimmer
   if (loading) {
@@ -137,7 +144,7 @@ export function ResponsePanel() {
           const formattedBody = tryFormatBody(response.body, language);
           return (
             <>
-              <ResponseBodyActions body={response.body} />
+              <ResponseBodyActions body={formattedBody} />
               {response.truncated && <TruncationBanner response={response} />}
               <div className="min-h-0 flex-1">
                 <CodeEditor

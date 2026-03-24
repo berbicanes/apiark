@@ -80,7 +80,9 @@ fn scan_directory(dir: &Path) -> Result<Vec<CollectionNode>, String> {
                         .file_stem()
                         .map(|s| s.to_string_lossy().to_string())
                         .unwrap_or_default();
-                    let is_gql = meta.is_graphql();
+                    let detected = meta.detect_protocol();
+                    let is_gql = detected == Some("graphql");
+                    let protocol = detected.map(|s| s.to_string());
                     requests.push((
                         order_map.get(&stem).copied().unwrap_or(usize::MAX),
                         CollectionNode::Request {
@@ -88,6 +90,7 @@ fn scan_directory(dir: &Path) -> Result<Vec<CollectionNode>, String> {
                             is_graphql: is_gql,
                             method: meta.method,
                             path: path.to_string_lossy().to_string(),
+                            protocol,
                         },
                     ));
                 }
@@ -273,6 +276,21 @@ pub fn rename_item(path: &Path, new_name: &str) -> Result<PathBuf, String> {
         if let Ok(mut request) = read_request(&new_path) {
             request.name = new_name.to_string();
             let _ = write_request(&new_path, &request);
+        }
+    }
+
+    // If it's a collection directory, update the name in .apiark/apiark.yaml
+    if new_path.is_dir() {
+        let config_path = new_path.join(".apiark").join("apiark.yaml");
+        if config_path.exists() {
+            if let Ok(content) = fs::read_to_string(&config_path) {
+                if let Ok(mut config) = serde_yaml::from_str::<CollectionConfig>(&content) {
+                    config.name = new_name.to_string();
+                    if let Ok(yaml) = serde_yaml::to_string(&config) {
+                        let _ = fs::write(&config_path, yaml);
+                    }
+                }
+            }
         }
     }
 

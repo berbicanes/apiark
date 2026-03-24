@@ -57,7 +57,7 @@ export function CommandPalette({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const { tabs, newTab, newGraphQLTab, newWebSocketTab, newSSETab, newGrpcTab, setActiveTab } = useTabStore();
+  const { tabs, newTab, newGraphQLTab, newWebSocketTab, newSSETab, newGrpcTab, newMqttTab, newSocketIoTab, setActiveTab } = useTabStore();
   const { collections } = useCollectionStore();
   const { environments, setActiveEnvironment } = useEnvironmentStore();
   const { openTab } = useTabStore();
@@ -101,6 +101,20 @@ export function CommandPalette({
       category: t("commandPalette.general"),
       icon: Zap,
       action: () => { newGrpcTab(); onOpenChange(false); },
+    });
+    cmds.push({
+      id: "new-mqtt",
+      label: "New MQTT Connection",
+      category: t("commandPalette.general"),
+      icon: Radio,
+      action: () => { newMqttTab(); onOpenChange(false); },
+    });
+    cmds.push({
+      id: "new-socketio",
+      label: "New Socket.IO Connection",
+      category: t("commandPalette.general"),
+      icon: Zap,
+      action: () => { newSocketIoTab(); onOpenChange(false); },
     });
     cmds.push({
       id: "open-settings",
@@ -285,7 +299,7 @@ export function CommandPalette({
     }
 
     return cmds;
-  }, [tabs, collections, environments, newTab, newGraphQLTab, newWebSocketTab, newSSETab, setActiveTab, setActiveEnvironment, openTab, onOpenChange, onOpenSettings, onOpenCurlImport, onOpenRunner, t]);
+  }, [tabs, collections, environments, newTab, newGraphQLTab, newWebSocketTab, newSSETab, newGrpcTab, newMqttTab, newSocketIoTab, setActiveTab, setActiveEnvironment, openTab, onOpenChange, onOpenSettings, onOpenCurlImport, onOpenRunner, t]);
 
   // Filter commands by query (fuzzy match)
   const filtered = useMemo(() => {

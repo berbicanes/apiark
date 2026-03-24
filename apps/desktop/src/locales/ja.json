@@ -210,7 +210,14 @@
     "passwordGrant": "パスワード",
     "addTo": "追加先",
     "addToHeader": "ヘッダー",
-    "addToQuery": "クエリパラメータ"
+    "addToQuery": "クエリパラメータ",
+    "saml": "SAML",
+    "idpUrl": "IdP SSO URL",
+    "entityId": "SPエンティティID",
+    "assertionConsumerUrl": "アサーションコンシューマサービスURL",
+    "certificate": "IdP証明書 (PEM)",
+    "nameIdFormat": "NameIDフォーマット",
+    "samlToken": "SAMLアサーショントークン"
   },
   "response": {
     "body": "ボディ",
@@ -548,8 +555,8 @@
   },
   "ai": {
     "title": "AI アシスタント",
-    "comingSoon": "近日公開",
-    "comingSoonDesc": "AI によるリクエスト生成、テスト作成、自然言語での API 探索が近日登場予定です。"
+    "comingSoon": "AI Assistant",
+    "comingSoonDesc": "Generate API requests from natural language and auto-generate tests from responses. Configure your AI provider in Settings."
   },
   "cookies": {
     "title": "Cookie ジャー",
@@ -593,5 +600,8 @@
     "title": "削除の確認",
     "request": "\"{{name}}\" を削除しますか？",
     "collection": "コレクション \"{{name}}\" を削除しますか？コレクション全体がゴミ箱に移動されます。"
+  },
+  "audit": {
+    "title": "監査ログ"
   }
 }

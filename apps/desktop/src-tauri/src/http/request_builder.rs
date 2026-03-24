@@ -270,6 +270,14 @@ fn apply_auth(
             let negotiate = auth_handlers::generate_ntlm_negotiate(domain, workstation);
             builder = builder.header("Authorization", format!("NTLM {negotiate}"));
         }
+        Some(AuthConfig::Saml { saml_token, .. }) => {
+            // SAML for API testing: the user obtains a SAML assertion/token from the IdP
+            // externally (e.g. via browser SSO flow) and provides it here. We send it
+            // as a Bearer token in the Authorization header.
+            if !saml_token.is_empty() {
+                builder = builder.header("Authorization", format!("Bearer {saml_token}"));
+            }
+        }
         Some(AuthConfig::None) | None => {}
     }
     builder

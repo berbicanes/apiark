@@ -264,7 +264,7 @@ apiark/
 ├── packages/
 │   ├── types/             # أنواع TypeScript المشتركة
 │   └── importer/          # مستوردو المجموعات
-└── CLAUDE.md              # المخطط الكامل للمنتج والهندسة
+└── docs/                  # Documentation
 ```
 
 ### التقنيات المستخدمة
@@ -275,7 +275,7 @@ apiark/
 
 ## المساهمة
 
-المساهمات مرحب بها! اقرأ وثيقة [CLAUDE.md](../../CLAUDE.md) لتفاصيل البنية والاتفاقيات.
+Contributions are welcome! Check out the [GitHub Issues](https://github.com/berbicanes/apiark/issues) for open tasks and feature requests.
 
 <a href="https://github.com/berbicanes/apiark/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=berbicanes/apiark" alt="المساهمون" />

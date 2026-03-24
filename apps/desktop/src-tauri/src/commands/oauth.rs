@@ -15,6 +15,7 @@ pub async fn oauth_start_flow(
         let app = app.clone();
         tauri::async_runtime::spawn(async move {
             use tauri_plugin_shell::ShellExt;
+            #[allow(deprecated)]
             if let Err(e) = app
                 .shell()
                 .open(&url, None::<tauri_plugin_shell::open::Program>)

@@ -14,6 +14,7 @@ export function PluginManagerDialog({ open, onOpenChange }: PluginManagerDialogP
   const { t } = useTranslation();
   const [plugins, setPlugins] = useState<PluginInfo[]>([]);
   const [loading, setLoading] = useState(false);
+  const [uninstallTarget, setUninstallTarget] = useState<string | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -35,9 +36,14 @@ export function PluginManagerDialog({ open, onOpenChange }: PluginManagerDialogP
     refresh();
   };
 
-  const handleUninstall = async (name: string) => {
-    if (!confirm(`Uninstall plugin "${name}"?`)) return;
-    await uninstallPlugin(name);
+  const handleUninstall = (name: string) => {
+    setUninstallTarget(name);
+  };
+
+  const confirmUninstall = async () => {
+    if (!uninstallTarget) return;
+    await uninstallPlugin(uninstallTarget);
+    setUninstallTarget(null);
     refresh();
   };
 
@@ -51,7 +57,9 @@ export function PluginManagerDialog({ open, onOpenChange }: PluginManagerDialogP
       await installPlugin(path);
       refresh();
     } catch (e) {
-      alert(`Install failed: ${e}`);
+      import("@/stores/toast-store").then(({ useToastStore }) =>
+        useToastStore.getState().showError(`Install failed: ${e}`),
+      );
     }
   };
 
@@ -152,6 +160,35 @@ export function PluginManagerDialog({ open, onOpenChange }: PluginManagerDialogP
           </div>
         </Dialog.Content>
       </Dialog.Portal>
+
+      {/* Uninstall confirmation */}
+      <Dialog.Root open={!!uninstallTarget} onOpenChange={(v) => { if (!v) setUninstallTarget(null); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[60] w-80 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] p-5 shadow-2xl">
+            <Dialog.Title className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">
+              Uninstall Plugin
+            </Dialog.Title>
+            <p className="mb-5 text-sm text-[var(--color-text-secondary)]">
+              Uninstall plugin &ldquo;{uninstallTarget}&rdquo;?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setUninstallTarget(null)}
+                className="rounded-lg px-4 py-1.5 text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmUninstall}
+                className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Uninstall
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </Dialog.Root>
   );
 }

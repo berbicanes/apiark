@@ -98,6 +98,7 @@ fn write_items(items: &[ImportItem], parent_dir: &Path) -> Result<(), String> {
                     name: name.clone(),
                     method: parse_method(method),
                     url: url.clone(),
+                    protocol: None,
                     description: description.clone(),
                     headers: headers.clone(),
                     auth: convert_auth(auth),

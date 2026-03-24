@@ -257,7 +257,7 @@ apiark/
 ├── packages/
 │   ├── types/             # 共享 TypeScript 类型
 │   └── importer/          # 集合导入器
-└── CLAUDE.md              # 完整的产品与工程蓝图
+└── docs/                  # Documentation
 ```
 
 ### 技术栈
@@ -268,7 +268,7 @@ apiark/
 
 ## 贡献
 
-欢迎贡献！请阅读 [CLAUDE.md](../../CLAUDE.md) 了解架构细节和开发规范。
+Contributions are welcome! Check out the [GitHub Issues](https://github.com/berbicanes/apiark/issues) for open tasks and feature requests.
 
 <a href="https://github.com/berbicanes/apiark/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=berbicanes/apiark" alt="贡献者" />

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::RwLock;
 
 use serde::{Deserialize, Serialize};
 
@@ -20,19 +19,19 @@ pub struct CookieEntry {
 /// Per-collection cookie jar. Stores cookies in memory with optional persistence.
 pub struct CookieJarManager {
     /// Map of collection_path -> list of cookies
-    jars: Mutex<HashMap<String, Vec<CookieEntry>>>,
+    jars: RwLock<HashMap<String, Vec<CookieEntry>>>,
 }
 
 impl CookieJarManager {
     pub fn new() -> Self {
         Self {
-            jars: Mutex::new(HashMap::new()),
+            jars: RwLock::new(HashMap::new()),
         }
     }
 
     /// Get all cookies for a collection.
     pub fn get_cookies(&self, collection_path: &str) -> Result<Vec<CookieEntry>, String> {
-        let jars = self.jars.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let jars = self.jars.read().map_err(|e| format!("Lock error: {e}"))?;
         Ok(jars.get(collection_path).cloned().unwrap_or_default())
     }
 
@@ -42,7 +41,7 @@ impl CookieJarManager {
         collection_path: &str,
         cookies: Vec<CookieEntry>,
     ) -> Result<(), String> {
-        let mut jars = self.jars.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut jars = self.jars.write().map_err(|e| format!("Lock error: {e}"))?;
         let jar = jars.entry(collection_path.to_string()).or_default();
 
         for new_cookie in cookies {
@@ -68,7 +67,7 @@ impl CookieJarManager {
         name: &str,
         domain: &str,
     ) -> Result<(), String> {
-        let mut jars = self.jars.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut jars = self.jars.write().map_err(|e| format!("Lock error: {e}"))?;
         if let Some(jar) = jars.get_mut(collection_path) {
             jar.retain(|c| !(c.name == name && c.domain == domain));
         }
@@ -77,14 +76,14 @@ impl CookieJarManager {
 
     /// Clear all cookies for a collection.
     pub fn clear_jar(&self, collection_path: &str) -> Result<(), String> {
-        let mut jars = self.jars.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut jars = self.jars.write().map_err(|e| format!("Lock error: {e}"))?;
         jars.remove(collection_path);
         Ok(())
     }
 
     /// Save cookie jar to disk for persistence.
     pub fn save_to_disk(&self, collection_path: &str) -> Result<(), String> {
-        let jars = self.jars.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let jars = self.jars.read().map_err(|e| format!("Lock error: {e}"))?;
         let cookies = jars.get(collection_path).cloned().unwrap_or_default();
 
         let cookies_dir = dirs::home_dir()
@@ -127,7 +126,7 @@ impl CookieJarManager {
         let cookies: Vec<CookieEntry> =
             serde_json::from_str(&json).map_err(|e| format!("Failed to parse cookies: {e}"))?;
 
-        let mut jars = self.jars.lock().map_err(|e| format!("Lock error: {e}"))?;
+        let mut jars = self.jars.write().map_err(|e| format!("Lock error: {e}"))?;
         jars.insert(collection_path.to_string(), cookies);
 
         Ok(())

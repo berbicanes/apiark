@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// This module provides helper commands for Socket.IO-specific operations.
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SocketIoConnectParams {

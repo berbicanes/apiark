@@ -1,0 +1,32 @@
+{
+    "version": "0.3.2",
+    "description": "Local-first API development platform",
+    "homepage": "https://github.com/berbicanes/apiark",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/berbicanes/apiark/releases/download/v0.3.2/ApiArk_0.3.2_x64-setup.exe#/dl.7z",
+            "hash": ""
+        }
+    },
+    "installer": {
+        "script": [
+            "Start-Process \"$dir\\ApiArk_0.3.2_x64-setup.exe\" -ArgumentList '/S','/D=$dir' -Wait"
+        ]
+    },
+    "uninstaller": {
+        "script": [
+            "Start-Process \"$dir\\uninstall.exe\" -ArgumentList '/S' -Wait"
+        ]
+    },
+    "checkver": {
+        "github": "https://github.com/berbicanes/apiark"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/berbicanes/apiark/releases/download/v$version/ApiArk_$version_x64-setup.exe#/dl.7z"
+            }
+        }
+    }
+}

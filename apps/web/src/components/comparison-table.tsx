@@ -183,8 +183,8 @@ const rows: ComparisonRow[] = [
     hoppscotch: text("MIT"),
   },
   {
-    feature: "Team Price",
-    apiark: text("$8/user/mo"),
+    feature: "Price",
+    apiark: text("Free forever"),
     postman: text("$19/user/mo"),
     bruno: text("$6/user/mo"),
     insomnia: text("$12/user/mo"),

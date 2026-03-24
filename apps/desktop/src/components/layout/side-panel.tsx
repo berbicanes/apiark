@@ -4,13 +4,17 @@ import { useCollectionStore } from "@/stores/collection-store";
 import { CollectionTree } from "@/components/collection/collection-tree";
 import { EnvironmentSelector } from "@/components/environment/environment-selector";
 import { HistoryPanel } from "@/components/history/history-panel";
-import { FolderOpen, FolderPlus, Plus, Search, Trash2, X, Upload, FolderX, ChevronDown, ChevronRight, Folder, Globe } from "lucide-react";
+import { FolderOpen, FolderPlus, Plus, Search, Trash2, X, Upload, FolderX, ChevronDown, ChevronRight, Folder, Globe, Pencil, Settings } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
-import { createCollection, saveEnvironment, deleteItem as deleteItemApi } from "@/lib/tauri-api";
+import { createCollection, saveEnvironment } from "@/lib/tauri-api";
 import { useEnvironmentStore } from "@/stores/environment-store";
+import { useSettingsStore } from "@/stores/settings-store";
 import type { EnvironmentData, CollectionNode } from "@apiark/types";
 import * as Dialog from "@radix-ui/react-dialog";
 import type { ActivityView } from "./activity-bar";
+import { ProxySidePanel as ProxySidePanelView } from "@/components/proxy/proxy-panel";
+import { GitPanel as GitPanelView } from "@/components/git/git-panel";
+import { AuditPanel } from "@/components/audit/audit-panel";
 
 interface SidePanelProps {
   activeView: ActivityView;
@@ -37,10 +41,18 @@ export function SidePanel({
     mock: t("mock.title"),
     monitor: t("monitor.title"),
     docs: t("docs.title"),
+    proxy: "Proxy Capture",
+    git: "Git",
+    audit: t("audit.title"),
   };
 
+  const sidebarWidth = useSettingsStore((s) => s.settings.sidebarWidth);
+
   return (
-    <div className="flex w-64 shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]">
+    <div
+      className="flex shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]"
+      style={{ width: `${sidebarWidth}px` }}
+    >
       {/* Panel header */}
       <div className="flex h-11 shrink-0 items-center px-4">
         <span className="text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
@@ -56,6 +68,9 @@ export function SidePanel({
         {activeView === "mock" && <ToolPanel description={t("mock.createDesc")} actionLabel={t("mock.newMockServer")} onAction={onOpenMock} />}
         {activeView === "monitor" && <ToolPanel description={t("monitor.createDesc")} actionLabel={t("monitor.newMonitor")} onAction={onOpenMonitor} />}
         {activeView === "docs" && <ToolPanel description={t("docs.generateDesc")} actionLabel={t("docs.generateDocs")} onAction={onOpenDocs} />}
+        {activeView === "proxy" && <ProxySidePanelView />}
+        {activeView === "git" && <GitPanelView />}
+        {activeView === "audit" && <AuditPanel />}
       </div>
     </div>
   );
@@ -67,6 +82,8 @@ function CollectionsPanel({ onOpenImport }: { onOpenImport?: () => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [newCollectionOpen, setNewCollectionOpen] = useState(false);
   const [collectionMenu, setCollectionMenu] = useState<{ x: number; y: number; path: string; name: string } | null>(null);
+  const [deleteCollectionTarget, setDeleteCollectionTarget] = useState<{ path: string; name: string } | null>(null);
+  const [defaultsPath, setDefaultsPath] = useState<string | null>(null);
 
   const handleOpenFolder = async () => {
     try {
@@ -151,6 +168,8 @@ function CollectionsPanel({ onOpenImport }: { onOpenImport?: () => void }) {
                 e.preventDefault();
                 setCollectionMenu({ x: e.clientX, y: e.clientY, path: collection.path, name: collection.name });
               }}
+              onDelete={() => setDeleteCollectionTarget({ path: collection.path, name: collection.name })}
+              onClose={() => closeCollection(collection.path)}
             />
           ))}
           {/* Collection context menu */}
@@ -163,6 +182,16 @@ function CollectionsPanel({ onOpenImport }: { onOpenImport?: () => void }) {
               >
                 <button
                   onClick={() => {
+                    setDefaultsPath(collectionMenu.path);
+                    setCollectionMenu(null);
+                  }}
+                  className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-border)]"
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  Collection Defaults
+                </button>
+                <button
+                  onClick={() => {
                     closeCollection(collectionMenu.path);
                     setCollectionMenu(null);
                   }}
@@ -172,18 +201,9 @@ function CollectionsPanel({ onOpenImport }: { onOpenImport?: () => void }) {
                   {t("sidebar.closeCollection")}
                 </button>
                 <button
-                  onClick={async () => {
-                    const { path, name } = collectionMenu;
+                  onClick={() => {
+                    setDeleteCollectionTarget({ path: collectionMenu.path, name: collectionMenu.name });
                     setCollectionMenu(null);
-                    if (!confirm(`Delete collection "${name}"? This will move the entire collection to trash.`)) return;
-                    try {
-                      await deleteItemApi(path, name);
-                      closeCollection(path);
-                    } catch (err) {
-                      import("@/stores/toast-store").then(({ useToastStore }) =>
-                        useToastStore.getState().showError(`Failed to delete collection: ${err}`),
-                      );
-                    }
                   }}
                   className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm text-red-400 hover:bg-[var(--color-border)]"
                 >
@@ -226,7 +246,174 @@ function CollectionsPanel({ onOpenImport }: { onOpenImport?: () => void }) {
         onOpenChange={setNewCollectionOpen}
         onCreated={openCollection}
       />
+
+      {/* Delete collection confirmation */}
+      <Dialog.Root open={!!deleteCollectionTarget} onOpenChange={(v) => { if (!v) setDeleteCollectionTarget(null); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-80 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] p-5 shadow-2xl">
+            <Dialog.Title className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">
+              {t("confirmDelete.title")}
+            </Dialog.Title>
+            <p className="mb-5 text-sm text-[var(--color-text-secondary)]">
+              Delete collection &ldquo;{deleteCollectionTarget?.name}&rdquo;? This will move the entire collection to trash.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeleteCollectionTarget(null)}
+                className="rounded-lg px-4 py-1.5 text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!deleteCollectionTarget) return;
+                  const { path, name } = deleteCollectionTarget;
+                  setDeleteCollectionTarget(null);
+                  try {
+                    await useCollectionStore.getState().deleteCollection(path, name);
+                  } catch (err) {
+                    import("@/stores/toast-store").then(({ useToastStore }) =>
+                      useToastStore.getState().showError(`Failed to delete collection: ${err}`),
+                    );
+                  }
+                }}
+                className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      {/* Collection Defaults Dialog */}
+      {defaultsPath && (
+        <CollectionDefaultsDialog
+          collectionPath={defaultsPath}
+          onClose={() => setDefaultsPath(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function CollectionDefaultsDialog({
+  collectionPath,
+  onClose,
+}: {
+  collectionPath: string;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const [authType, setAuthType] = useState<string>("none");
+  const [token, setToken] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [apiKeyKey, setApiKeyKey] = useState("");
+  const [apiKeyValue, setApiKeyValue] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    import("@/lib/tauri-api").then(({ getCollectionDefaults }) => {
+      getCollectionDefaults(collectionPath).then((defaults) => {
+        if (defaults.auth) {
+          const auth = defaults.auth as Record<string, unknown>;
+          const type = (auth.type as string) ?? "none";
+          setAuthType(type);
+          if (type === "bearer") setToken((auth.token as string) ?? "");
+          if (type === "basic") {
+            setUsername((auth.username as string) ?? "");
+            setPassword((auth.password as string) ?? "");
+          }
+          if (type === "api-key") {
+            setApiKeyKey((auth.key as string) ?? "");
+            setApiKeyValue((auth.value as string) ?? "");
+          }
+        }
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    });
+  }, [collectionPath]);
+
+  const handleSave = async () => {
+    let auth: Record<string, unknown> = { type: "none" };
+    if (authType === "bearer") auth = { type: "bearer", token };
+    else if (authType === "basic") auth = { type: "basic", username, password };
+    else if (authType === "api-key") auth = { type: "api-key", key: apiKeyKey, value: apiKeyValue, addTo: "header" };
+
+    const { getCollectionDefaults, updateCollectionDefaults } = await import("@/lib/tauri-api");
+    const current = await getCollectionDefaults(collectionPath);
+    await updateCollectionDefaults(collectionPath, { ...current, auth: auth as import("@apiark/types").AuthConfig });
+    onClose();
+  };
+
+  return (
+    <Dialog.Root open onOpenChange={(v) => { if (!v) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/30" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl focus:outline-none">
+          <Dialog.Title className="text-base font-semibold text-[var(--color-text-primary)]">
+            Collection Defaults
+          </Dialog.Title>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+            Auth configured here is inherited by all requests without their own auth.
+          </p>
+
+          {loading ? (
+            <div className="py-8 text-center text-sm text-[var(--color-text-dimmed)]">Loading...</div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">
+                  {t("auth.type")}
+                </label>
+                <select
+                  value={authType}
+                  onChange={(e) => setAuthType(e.target.value)}
+                  className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] outline-none"
+                >
+                  <option value="none">{t("auth.none")}</option>
+                  <option value="bearer">{t("auth.bearer")}</option>
+                  <option value="basic">{t("auth.basic")}</option>
+                  <option value="api-key">{t("auth.apiKey")}</option>
+                </select>
+              </div>
+
+              {authType === "bearer" && (
+                <input type="text" value={token} onChange={(e) => setToken(e.target.value)} placeholder={t("auth.token")}
+                  className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
+              )}
+              {authType === "basic" && (
+                <div className="space-y-2">
+                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t("auth.username")}
+                    className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
+                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("auth.password")}
+                    className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
+                </div>
+              )}
+              {authType === "api-key" && (
+                <div className="space-y-2">
+                  <input type="text" value={apiKeyKey} onChange={(e) => setApiKeyKey(e.target.value)} placeholder="Header name"
+                    className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
+                  <input type="text" value={apiKeyValue} onChange={(e) => setApiKeyValue(e.target.value)} placeholder="Value"
+                    className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={onClose} className="rounded-lg px-4 py-1.5 text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-elevated)]">
+                  Cancel
+                </button>
+                <button onClick={handleSave} className="rounded-lg bg-[var(--color-accent)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-accent-hover)]">
+                  Save
+                </button>
+              </div>
+            </div>
+          )}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -234,13 +421,36 @@ function CollectionHeader({
   collection,
   searchQuery,
   onContextMenu,
+  onDelete,
+  onClose,
 }: {
   collection: CollectionNode;
   searchQuery: string;
   onContextMenu: (e: React.MouseEvent) => void;
+  onDelete: () => void;
+  onClose: () => void;
 }) {
-  const { expandedPaths, toggleExpand } = useCollectionStore();
+  const { expandedPaths, toggleExpand, renameItem } = useCollectionStore();
   const isExpanded = expandedPaths.has(collection.path);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+
+  const handleRename = () => {
+    setRenameValue(collection.name);
+    setRenaming(true);
+  };
+
+  const submitRename = async () => {
+    setRenaming(false);
+    if (!renameValue.trim() || renameValue === collection.name) return;
+    try {
+      await renameItem(collection.path, renameValue.trim(), collection.path);
+    } catch (err) {
+      import("@/stores/toast-store").then(({ useToastStore }) =>
+        useToastStore.getState().showError(`Failed to rename: ${err}`),
+      );
+    }
+  };
 
   return (
     <div>
@@ -259,7 +469,47 @@ function CollectionHeader({
         ) : (
           <Folder className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
         )}
-        <span className="truncate text-[var(--color-text-primary)]">{collection.name}</span>
+        {renaming ? (
+          <input
+            autoFocus
+            value={renameValue}
+            onChange={(e) => setRenameValue(e.target.value)}
+            onBlur={submitRename}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitRename();
+              if (e.key === "Escape") setRenaming(false);
+            }}
+            className="min-w-0 flex-1 rounded bg-[var(--color-elevated)] px-1 text-sm text-[var(--color-text-primary)] outline-none ring-1 ring-blue-500"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <span className="flex-1 truncate text-[var(--color-text-primary)]">{collection.name}</span>
+        )}
+        {!renaming && (
+          <span className="flex shrink-0 items-center gap-0.5 opacity-0 group-hover:opacity-100">
+            <button
+              onClick={(e) => { e.stopPropagation(); handleRename(); }}
+              className="rounded p-0.5 text-[var(--color-text-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]"
+              title="Rename"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="rounded p-0.5 text-[var(--color-text-muted)] hover:bg-red-500/20 hover:text-red-400"
+              title="Delete"
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              className="rounded p-0.5 text-[var(--color-text-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]"
+              title="Close"
+            >
+              <FolderX className="h-3 w-3" />
+            </button>
+          </span>
+        )}
       </button>
       {isExpanded && (
         <CollectionTree
@@ -594,7 +844,14 @@ function EnvironmentsPanel({
                   : "text-[var(--color-text-primary)] hover:bg-[var(--color-elevated)]"
               }`}
             >
-              <span className="truncate">{env.name}</span>
+              <div className="flex items-center gap-1.5 truncate">
+                <span className="truncate">{env.name}</span>
+                {env.scope === "personal" && (
+                  <span className="shrink-0 rounded bg-amber-500/15 px-1 py-0.5 text-[8px] font-bold text-amber-400">
+                    LOCAL
+                  </span>
+                )}
+              </div>
               <span className="shrink-0 text-[10px] text-[var(--color-text-dimmed)]">
                 {Object.keys(env.variables).length} vars
               </span>
@@ -632,12 +889,14 @@ function EnvironmentEditor({
     },
   );
 
+  const [scope, setScope] = useState<"shared" | "personal">(env.scope ?? "shared");
+
   const handleSave = () => {
     const vars: Record<string, string> = {};
     for (const v of variables) {
       if (v.key.trim()) vars[v.key.trim()] = v.value;
     }
-    onSave({ ...env, name: name.trim() || env.name, variables: vars });
+    onSave({ ...env, name: name.trim() || env.name, variables: vars, scope });
   };
 
   const updateVar = (index: number, field: "key" | "value", val: string) => {
@@ -679,6 +938,31 @@ function EnvironmentEditor({
         </button>
       </div>
 
+      {/* Scope toggle */}
+      <div className="flex items-center gap-2 rounded bg-[var(--color-elevated)] px-2 py-1.5">
+        <span className="text-[10px] text-[var(--color-text-dimmed)]">Scope:</span>
+        <button
+          onClick={() => setScope("shared")}
+          className={`rounded px-2 py-0.5 text-[10px] font-medium ${
+            scope === "shared"
+              ? "bg-blue-500/20 text-blue-400"
+              : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+          }`}
+        >
+          Shared
+        </button>
+        <button
+          onClick={() => setScope("personal")}
+          className={`rounded px-2 py-0.5 text-[10px] font-medium ${
+            scope === "personal"
+              ? "bg-amber-500/20 text-amber-400"
+              : "text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+          }`}
+        >
+          Personal
+        </button>
+      </div>
+
       {/* Variables */}
       <div className="space-y-1.5">
         <div className="flex items-center justify-between">
@@ -694,14 +978,14 @@ function EnvironmentEditor({
               value={v.key}
               onChange={(e) => updateVar(i, "key", e.target.value)}
               placeholder={t("request.key")}
-              className="w-1/2 rounded bg-[var(--color-elevated)] px-2 py-1 text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              className="min-w-0 flex-1 basis-0 rounded bg-[var(--color-elevated)] px-2 py-1 text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             />
             <input
               type="text"
               value={v.value}
               onChange={(e) => updateVar(i, "value", e.target.value)}
               placeholder={t("request.value")}
-              className="flex-1 rounded bg-[var(--color-elevated)] px-2 py-1 text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              className="min-w-0 flex-1 basis-0 rounded bg-[var(--color-elevated)] px-2 py-1 text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             />
             <button
               onClick={() => removeVar(i)}

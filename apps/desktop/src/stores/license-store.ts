@@ -15,21 +15,6 @@ interface LicenseState {
   isProFeature: (feature: string) => boolean;
 }
 
-const PRO_FEATURES = new Set([
-  "mock_servers",
-  "monitors",
-  "docs_gen",
-  "response_diff",
-  "parallel_runner",
-]);
-
-const TEAM_FEATURES = new Set([
-  "git_ui",
-  "team_env_sharing",
-  "sso_saml",
-  "audit_logs",
-]);
-
 const defaultStatus: LicenseStatus = {
   tier: "free",
   email: null,
@@ -39,7 +24,7 @@ const defaultStatus: LicenseStatus = {
   valid: true,
 };
 
-export const useLicenseStore = create<LicenseState>((set, get) => ({
+export const useLicenseStore = create<LicenseState>((set) => ({
   status: defaultStatus,
   loaded: false,
 
@@ -63,14 +48,6 @@ export const useLicenseStore = create<LicenseState>((set, get) => ({
     set({ status });
   },
 
-  isProFeature: (feature: string) => {
-    const { tier } = get().status;
-    if (PRO_FEATURES.has(feature)) {
-      return tier === "pro" || tier === "team";
-    }
-    if (TEAM_FEATURES.has(feature)) {
-      return tier === "team";
-    }
-    return true; // free features
-  },
+  // All features are free — always returns true
+  isProFeature: () => true,
 }));

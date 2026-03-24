@@ -123,6 +123,8 @@ pub fn export_collection(collection_path: &str, format: &str) -> Result<String, 
         "postman" => crate::exporter::postman::export_to_postman(path),
         "openapi" => crate::exporter::openapi::export_to_openapi(path),
         "apiark" => crate::exporter::apiark::export_to_apiark_zip(path),
+        "bruno" => crate::exporter::bruno::export_to_bruno(path),
+        "insomnia" => crate::exporter::insomnia::export_to_insomnia(path),
         _ => Err(format!("Unsupported export format: {format}")),
     }
 }
@@ -168,6 +170,7 @@ pub fn import_environment(file_path: &str, collection_path: &str) -> Result<Stri
         name: name.clone(),
         variables,
         secrets: Vec::new(),
+        scope: Default::default(),
     };
 
     crate::storage::environment::save_environment(Path::new(collection_path), &env)?;

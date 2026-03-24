@@ -7,9 +7,11 @@ import type {
   HttpError,
   ResponseData,
   Tab,
+  TabProtocol,
   TabSnapshot,
   RequestFile,
   GraphQLState,
+  GrpcState,
 } from "@apiark/types";
 import {
   sendRequest,
@@ -42,6 +44,8 @@ interface TabState {
   newWebSocketTab: () => void;
   newSSETab: () => void;
   newGrpcTab: () => void;
+  newMqttTab: () => void;
+  newSocketIoTab: () => void;
 
   // GraphQL mutations
   setGraphQLQuery: (query: string) => void;
@@ -324,9 +328,11 @@ function requestFileToTab(
     }
   }
 
-  // Detect GraphQL: JSON body with a "query" field
-  const isGraphQL = file.body?.type === "json" && file.body.content &&
-    (() => { try { return "query" in JSON.parse(file.body!.content!); } catch { return false; } })();
+  // Detect GraphQL: explicit protocol field or JSON body with a "query" field
+  const isGraphQL = file.protocol === "graphql" || (
+    file.body?.type === "json" && file.body.content &&
+    (() => { try { return "query" in JSON.parse(file.body!.content!); } catch { return false; } })()
+  );
   const graphqlState: GraphQLState | null = isGraphQL
     ? (() => {
         try {
@@ -341,15 +347,34 @@ function requestFileToTab(
       })()
     : null;
 
+  // Determine protocol from explicit field or heuristic
+  const protocol: TabProtocol = file.protocol === "websocket" ? "websocket"
+    : file.protocol === "sse" ? "sse"
+    : file.protocol === "grpc" ? "grpc"
+    : isGraphQL ? "graphql"
+    : "http";
+
+  // Initialize gRPC state if needed
+  const grpcState: GrpcState | null = protocol === "grpc" ? {
+    services: [],
+    selectedService: null,
+    selectedMethod: null,
+    requestJson: "{}",
+    metadata: [emptyKvRow()],
+    loading: false,
+    response: null,
+    error: null,
+  } : null;
+
   return {
     id: generateTabId(),
     name: file.name,
     filePath,
     collectionPath,
     isDirty: false,
-    protocol: isGraphQL ? "graphql" : "http",
+    protocol,
     graphql: graphqlState,
-    grpc: null,
+    grpc: grpcState,
     method: file.method,
     url: file.url,
     headers,
@@ -410,6 +435,7 @@ function tabToRequestFile(tab: Tab): RequestFile {
     name: tab.name,
     method: tab.protocol === "graphql" ? "POST" : tab.method,
     url: tab.url, // URL already contains query params (synced)
+    protocol: tab.protocol !== "http" ? tab.protocol : undefined,
     headers,
     params,
     auth: tab.auth.type !== "none" ? tab.auth : undefined,
@@ -498,6 +524,24 @@ export const useTabStore = create<TabState>((set, get) => ({
         loading: false,
         error: null,
       },
+    });
+    set((state) => ({ tabs: [...state.tabs, tab], activeTabId: tab.id }));
+  },
+
+  newMqttTab: () => {
+    const tab = createEmptyTab({
+      name: "Untitled MQTT",
+      protocol: "mqtt",
+      url: "localhost",
+    });
+    set((state) => ({ tabs: [...state.tabs, tab], activeTabId: tab.id }));
+  },
+
+  newSocketIoTab: () => {
+    const tab = createEmptyTab({
+      name: "Untitled Socket.IO",
+      protocol: "socketio",
+      url: "http://localhost:3000",
     });
     set((state) => ({ tabs: [...state.tabs, tab], activeTabId: tab.id }));
   },
@@ -1095,6 +1139,7 @@ export const useTabStore = create<TabState>((set, get) => ({
 
 // Selectors
 export const useActiveTab = () => {
-  const { tabs, activeTabId } = useTabStore();
-  return tabs.find((t) => t.id === activeTabId) ?? null;
+  return useTabStore((state) =>
+    state.tabs.find((t) => t.id === state.activeTabId) ?? null
+  );
 };

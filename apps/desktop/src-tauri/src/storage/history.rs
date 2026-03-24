@@ -75,6 +75,8 @@ impl HistoryDb {
                 request_json TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS idx_history_timestamp ON history(timestamp DESC);
+            CREATE INDEX IF NOT EXISTS idx_history_url ON history(url);
+            CREATE INDEX IF NOT EXISTS idx_history_method ON history(method);
 
             CREATE TABLE IF NOT EXISTS monitor_results (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

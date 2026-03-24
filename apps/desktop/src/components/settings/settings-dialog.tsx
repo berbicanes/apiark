@@ -563,6 +563,7 @@ function BackupSection() {
   const { t } = useTranslation();
   const [status, setStatus] = useState<string | null>(null);
   const [includeHistory, setIncludeHistory] = useState(true);
+  const [importConfirm, setImportConfirm] = useState<string | null>(null);
 
   const handleExport = async () => {
     const path = await saveFileDialog({
@@ -586,12 +587,15 @@ function BackupSection() {
       filters: [{ name: "ZIP Archive", extensions: ["zip"] }],
     });
     if (!path) return;
+    setImportConfirm(path);
+  };
 
-    if (!confirm("This will merge settings and replace history. Continue?")) return;
-
+  const confirmImport = async () => {
+    if (!importConfirm) return;
+    setImportConfirm(null);
     try {
       setStatus(t("settings.importing"));
-      const result = await importAppState(path);
+      const result = await importAppState(importConfirm);
       const parts = [...result.filesRestored];
       if (result.historyEntries) parts.push(`history (${result.historyEntries})`);
       setStatus(`Restored: ${parts.join(", ")}. Restart app to apply.`);
@@ -646,6 +650,35 @@ function BackupSection() {
       {status && (
         <p className="mt-2 text-xs text-[var(--color-text-muted)]">{status}</p>
       )}
+
+      {/* Import confirmation dialog */}
+      <Dialog.Root open={!!importConfirm} onOpenChange={(v) => { if (!v) setImportConfirm(null); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-[60] bg-black/50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-[60] w-80 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] p-5 shadow-2xl">
+            <Dialog.Title className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">
+              {t("settings.importState")}
+            </Dialog.Title>
+            <p className="mb-5 text-sm text-[var(--color-text-secondary)]">
+              This will merge settings and replace history. Continue?
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setImportConfirm(null)}
+                className="rounded-lg px-4 py-1.5 text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmImport}
+                className="rounded-lg bg-[var(--color-accent)] px-4 py-1.5 text-sm font-medium text-white hover:bg-[var(--color-accent-hover)]"
+              >
+                Import
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </section>
   );
 }

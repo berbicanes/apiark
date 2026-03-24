@@ -1,11 +1,18 @@
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 use regex::Regex;
+
+static INTERPOLATION_RE: OnceLock<Regex> = OnceLock::new();
+
+fn interpolation_regex() -> &'static Regex {
+    INTERPOLATION_RE.get_or_init(|| Regex::new(r"\{\{([^}]+)\}\}").unwrap())
+}
 
 /// Interpolate `{{variable}}` references in a string.
 /// Resolves user variables first, then dynamic variables like `{{$uuid}}`.
 pub fn interpolate(input: &str, variables: &HashMap<String, String>) -> String {
-    let re = Regex::new(r"\{\{([^}]+)\}\}").unwrap();
+    let re = interpolation_regex();
     re.replace_all(input, |caps: &regex::Captures| {
         let var_name = caps[1].trim();
         // Check user variables first

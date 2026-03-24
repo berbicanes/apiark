@@ -259,5 +259,9 @@ fn export_auth(auth: &AuthConfig) -> Option<Value> {
                 {"key": "password", "value": password, "type": "string"}
             ]
         })),
+        AuthConfig::Saml { .. } => {
+            // SAML has no direct Postman equivalent
+            None
+        }
     }
 }

@@ -245,8 +245,9 @@ export async function loadRootDotenv(
 export async function saveEnvironment(
   collectionPath: string,
   env: EnvironmentData,
+  scope?: "shared" | "personal",
 ): Promise<void> {
-  await invoke<void>("save_environment", { collectionPath, env });
+  await invoke<void>("save_environment", { collectionPath, env, scope: scope ?? env.scope ?? null });
 }
 
 // ── History ──
@@ -399,6 +400,53 @@ export async function grpcCallUnary(
   try {
     return await invoke<import("@apiark/types").GrpcResponse>("grpc_call_unary", {
       connectionId, address, serviceName, methodName, requestJson, metadata,
+    });
+  } catch (err) {
+    handleTauriError(err);
+  }
+}
+
+export async function grpcCallServerStream(
+  connectionId: string,
+  address: string,
+  serviceName: string,
+  methodName: string,
+  requestJson: string,
+  metadata: import("@apiark/types").GrpcMetadataEntry[],
+): Promise<void> {
+  return await invoke<void>("grpc_call_server_stream", {
+    connectionId, address, serviceName, methodName, requestJson, metadata,
+  });
+}
+
+export async function grpcCallClientStream(
+  connectionId: string,
+  address: string,
+  serviceName: string,
+  methodName: string,
+  messagesJson: string[],
+  metadata: import("@apiark/types").GrpcMetadataEntry[],
+): Promise<import("@apiark/types").GrpcResponse> {
+  try {
+    return await invoke<import("@apiark/types").GrpcResponse>("grpc_call_client_stream", {
+      connectionId, address, serviceName, methodName, messagesJson, metadata,
+    });
+  } catch (err) {
+    handleTauriError(err);
+  }
+}
+
+export async function grpcCallBidiStream(
+  connectionId: string,
+  address: string,
+  serviceName: string,
+  methodName: string,
+  messagesJson: string[],
+  metadata: import("@apiark/types").GrpcMetadataEntry[],
+): Promise<import("@apiark/types").GrpcResponse> {
+  try {
+    return await invoke<import("@apiark/types").GrpcResponse>("grpc_call_bidi_stream", {
+      connectionId, address, serviceName, methodName, messagesJson, metadata,
     });
   } catch (err) {
     handleTauriError(err);
@@ -561,7 +609,7 @@ export async function updateSettings(
 // ── License ──
 
 export interface LicenseStatus {
-  tier: "free" | "pro" | "team";
+  tier: "free";
   email: string | null;
   expiresAt: string | null;
   seats: number | null;
@@ -770,4 +818,86 @@ export async function clearBackups(): Promise<void> {
 
 export async function getInstallType(): Promise<string> {
   return await invoke<string>("get_install_type", {});
+}
+
+// ── Git ──
+
+export interface GitChange {
+  path: string;
+  status: string;
+  staged: boolean;
+}
+
+export interface GitStatus {
+  isRepo: boolean;
+  branch: string;
+  isClean: boolean;
+  ahead: number;
+  behind: number;
+  changes: GitChange[];
+}
+
+export interface GitLogEntry {
+  hash: string;
+  message: string;
+  author: string;
+  date: string;
+}
+
+export async function gitStatus(collectionPath: string): Promise<GitStatus> {
+  return await invoke<GitStatus>("git_status", { collectionPath });
+}
+
+export async function gitStage(collectionPath: string, paths: string[]): Promise<void> {
+  return await invoke<void>("git_stage", { collectionPath, paths });
+}
+
+export async function gitUnstage(collectionPath: string, paths: string[]): Promise<void> {
+  return await invoke<void>("git_unstage", { collectionPath, paths });
+}
+
+export async function gitCommit(collectionPath: string, message: string): Promise<string> {
+  return await invoke<string>("git_commit", { collectionPath, message });
+}
+
+export async function gitPush(collectionPath: string): Promise<string> {
+  return await invoke<string>("git_push", { collectionPath });
+}
+
+export async function gitPull(collectionPath: string): Promise<string> {
+  return await invoke<string>("git_pull", { collectionPath });
+}
+
+export async function gitDiff(collectionPath: string, filePath?: string): Promise<string> {
+  return await invoke<string>("git_diff", { collectionPath, filePath: filePath ?? null });
+}
+
+export async function gitLog(collectionPath: string, limit?: number): Promise<GitLogEntry[]> {
+  return await invoke<GitLogEntry[]>("git_log", { collectionPath, limit: limit ?? 50 });
+}
+
+export async function gitInit(collectionPath: string): Promise<string> {
+  return await invoke<string>("git_init", { collectionPath });
+}
+
+// ── Audit Logs ──
+
+export interface AuditEntry {
+  id: number;
+  action: string;
+  target: string;
+  detail: string;
+  timestamp: string;
+}
+
+export async function getAuditLogs(limit?: number, offset?: number): Promise<AuditEntry[]> {
+  return await invoke<AuditEntry[]>("audit_get_logs", { limit: limit ?? 100, offset: offset ?? 0 });
+}
+
+export async function clearAuditLogs(): Promise<void> {
+  return await invoke<void>("audit_clear", {});
+}
+
+export async function logAuditAction(action: string, target: string, detail?: string): Promise<void> {
+  return await invoke<void>("audit_log_action", { action, target, detail: detail ?? null });
 }

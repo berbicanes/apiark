@@ -39,6 +39,7 @@ pub enum PluginHook {
 }
 
 impl PluginHook {
+    #[allow(dead_code)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
             "preRequest" => Some(Self::PreRequest),

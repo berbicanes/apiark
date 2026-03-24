@@ -257,7 +257,7 @@ apiark/
 ├── packages/
 │   ├── types/             # 共有 TypeScript 型定義
 │   └── importer/          # コレクションインポーター
-└── CLAUDE.md              # 製品・エンジニアリング設計書
+└── docs/                  # Documentation
 ```
 
 ### 技術スタック
@@ -268,7 +268,7 @@ apiark/
 
 ## コントリビュート
 
-コントリビュートを歓迎します！アーキテクチャの詳細と規約については [CLAUDE.md](../../CLAUDE.md) をお読みください。
+Contributions are welcome! Check out the [GitHub Issues](https://github.com/berbicanes/apiark/issues) for open tasks and feature requests.
 
 <a href="https://github.com/berbicanes/apiark/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=berbicanes/apiark" alt="コントリビューター" />

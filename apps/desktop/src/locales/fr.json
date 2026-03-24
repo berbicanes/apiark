@@ -210,7 +210,14 @@
     "passwordGrant": "Mot de passe",
     "addTo": "Ajouter À",
     "addToHeader": "En-tête",
-    "addToQuery": "Paramètre de Requête"
+    "addToQuery": "Paramètre de Requête",
+    "saml": "SAML",
+    "idpUrl": "URL SSO de l'IdP",
+    "entityId": "ID d'Entité du SP",
+    "assertionConsumerUrl": "URL du Service Consommateur d'Assertions",
+    "certificate": "Certificat de l'IdP (PEM)",
+    "nameIdFormat": "Format NameID",
+    "samlToken": "Jeton d'Assertion SAML"
   },
   "response": {
     "body": "Corps",
@@ -548,8 +555,8 @@
   },
   "ai": {
     "title": "Assistant IA",
-    "comingSoon": "Bientôt Disponible",
-    "comingSoonDesc": "La génération de requêtes, la création de tests et l'exploration d'API en langage naturel assistées par IA arrivent bientôt."
+    "comingSoon": "AI Assistant",
+    "comingSoonDesc": "Generate API requests from natural language and auto-generate tests from responses. Configure your AI provider in Settings."
   },
   "cookies": {
     "title": "Boîte à Cookies",
@@ -593,5 +600,8 @@
     "title": "Confirmer la Suppression",
     "request": "Supprimer \"{{name}}\" ?",
     "collection": "Supprimer la collection \"{{name}}\" ? Cela déplacera toute la collection dans la corbeille."
+  },
+  "audit": {
+    "title": "Journal d'Audit"
   }
 }

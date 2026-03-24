@@ -39,13 +39,9 @@ Crash reports **never** contain:
 
 Crash reports are stored locally at `~/.apiark/crash-reports/` as JSON files. You can inspect and delete them at any time.
 
-### License Validation (Pro/Team Only)
+### Network Connections
 
-If you activate a Pro or Team license, the app sends:
-- Your license key
-- App version
-
-This is used solely to verify license validity. No usage data, collection information, or request data is included.
+ApiArk makes no network calls by default. The only external connections are API requests you explicitly send, OAuth flows you initiate, and update checks against our release server.
 
 ## What We Don't Collect
 

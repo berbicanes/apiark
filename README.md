@@ -125,20 +125,20 @@
 <summary><strong>Package managers</strong></summary>
 
 ```bash
-# Homebrew (macOS/Linux) — coming soon
+# Homebrew (macOS)
+brew tap berbicanes/apiark
 brew install --cask apiark
 
-# Chocolatey (Windows) — coming soon
-choco install apiark
+# Scoop (Windows)
+scoop bucket add apiark https://github.com/berbicanes/apiark
+scoop install apiark
 
-# Snap (Linux) — coming soon
-sudo snap install apiark
-
-# AUR (Arch Linux) — coming soon
-yay -S apiark-bin
+# APT (Debian/Ubuntu)
+curl -fsSL https://berbicanes.github.io/apiark-apt/install.sh | sudo bash
+sudo apt install apiark
 ```
 
-Interested in maintaining a package? [Open an issue](https://github.com/berbicanes/apiark/issues/new) and we'll work with you.
+Also available on the [Microsoft Store](https://apps.microsoft.com/search?query=ApiArk).
 </details>
 
 <details>
@@ -260,8 +260,6 @@ apiark import postman-export.json
 
 ## Community
 
-- [Discord](https://discord.gg/apiark) — COMING SOON
-- [Twitter / X](https://x.com/apiabordes) — COMING SOON
 - [GitHub Discussions](https://github.com/berbicanes/apiark/discussions) — Ideas, Q&A, show & tell
 - [GitHub Issues](https://github.com/berbicanes/apiark/issues) — Bug reports and feature requests
 
@@ -301,7 +299,7 @@ apiark/
 ├── packages/
 │   ├── types/             # Shared TypeScript types
 │   └── importer/          # Collection importers
-└── CLAUDE.md              # Full product & engineering blueprint
+└── docs/                  # Documentation and legal
 ```
 
 ### Tech Stack
@@ -312,7 +310,7 @@ apiark/
 
 ## Contributing
 
-Contributions are welcome! Please read the [CLAUDE.md](CLAUDE.md) blueprint for architecture details and conventions.
+Contributions are welcome! Check out the [GitHub Issues](https://github.com/berbicanes/apiark/issues) for open tasks and feature requests.
 
 <a href="https://github.com/berbicanes/apiark/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=berbicanes/apiark" alt="Contributors" />

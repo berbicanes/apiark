@@ -124,8 +124,6 @@ fn deserialize_expires_in<'de, D>(deserializer: D) -> Result<Option<u64>, D::Err
 where
     D: serde::Deserializer<'de>,
 {
-    use serde::de;
-
     #[derive(Deserialize)]
     #[serde(untagged)]
     enum ExpiresIn {

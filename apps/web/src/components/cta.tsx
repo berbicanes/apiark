@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Download, ArrowRight } from "lucide-react";
 
 const trustBadges = [
-  { label: "Free Core", color: "#a78bfa" },
+  { label: "100% Free", color: "#a78bfa" },
   { label: "No Telemetry", color: "#fbbf24" },
   { label: "Privacy First", color: "#34d399" },
 ];
@@ -82,7 +82,7 @@ export default function CTA() {
           transition={{ duration: 0.3, delay: 0.2 }}
           className="mt-5 text-sm text-zinc-600 text-center"
         >
-          Free to start. No account required.
+          Free forever. No account required.
         </motion.p>
 
         {/* Trust badges */}

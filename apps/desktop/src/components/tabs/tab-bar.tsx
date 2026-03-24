@@ -34,6 +34,8 @@ function TabBadge({ tab }: { tab: Tab }) {
     websocket: { bg: "bg-cyan-500/15 text-cyan-400", label: "WS" },
     sse: { bg: "bg-orange-500/15 text-orange-400", label: "SSE" },
     grpc: { bg: "bg-emerald-500/15 text-emerald-400", label: "gRPC" },
+    mqtt: { bg: "bg-purple-500/15 text-purple-400", label: "MQTT" },
+    socketio: { bg: "bg-pink-500/15 text-pink-400", label: "SIO" },
   };
 
   if (tab.protocol !== "http") {
@@ -116,6 +118,12 @@ function SortableTab({
         {...attributes}
         {...listeners}
         onClick={onActivate}
+        onMouseDown={(e) => {
+          if (e.button === 1 && !tab.pinned) {
+            e.preventDefault();
+            onClose();
+          }
+        }}
         onContextMenu={handleContextMenu}
         className={`group relative flex shrink-0 items-center gap-2 rounded-t-lg px-4 py-2 text-[13px] transition-all ${
           isActive
@@ -181,7 +189,7 @@ function NewTabDropdown() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const { newTab, newGraphQLTab, newWebSocketTab, newSSETab, newGrpcTab } = useTabStore();
+  const { newTab, newGraphQLTab, newWebSocketTab, newSSETab, newGrpcTab, newMqttTab, newSocketIoTab } = useTabStore();
 
   useEffect(() => {
     if (!open) return;
@@ -200,6 +208,8 @@ function NewTabDropdown() {
     { label: "WebSocket", icon: Zap, action: newWebSocketTab, color: "text-cyan-400" },
     { label: "SSE", icon: Radio, action: newSSETab, color: "text-orange-400" },
     { label: "gRPC", icon: Globe, action: newGrpcTab, color: "text-emerald-400" },
+    { label: "MQTT", icon: Radio, action: newMqttTab, color: "text-purple-400" },
+    { label: "Socket.IO", icon: Zap, action: newSocketIoTab, color: "text-pink-400" },
   ];
 
   return (
@@ -314,7 +324,13 @@ export function TabBar() {
       <div className="flex items-center gap-1 pb-1.5">
         {activeTab?.isDirty && (
           <button
-            onClick={save}
+            onClick={() => {
+              if (activeTab && !activeTab.filePath) {
+                window.dispatchEvent(new CustomEvent("apiark:open-save-as"));
+              } else {
+                save();
+              }
+            }}
             className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--color-elevated)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]"
             title="Save (Ctrl+S)"
           >

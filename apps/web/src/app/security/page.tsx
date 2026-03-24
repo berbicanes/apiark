@@ -53,7 +53,7 @@ const sections = [
     title: "Network Security",
     items: [
       "ApiArk makes no network calls by default — zero telemetry, zero analytics.",
-      "License validation (Pro/Team only) sends license key + app version, nothing else.",
+      "No license validation calls — all features are free, no keys required.",
       "Update checks are non-blocking and silently skipped if offline.",
       "Proxy capture mode binds to 127.0.0.1 only — not accessible from the network.",
     ],

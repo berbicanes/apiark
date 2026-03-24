@@ -2,18 +2,34 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
-use crate::models::environment::EnvironmentFile;
+use crate::models::environment::{EnvironmentFile, EnvironmentScope};
 
-/// Load all environments from a collection's .apiark/environments/ directory.
+/// Load all environments from both shared and personal directories.
 pub fn load_environments(collection_path: &Path) -> Result<Vec<EnvironmentFile>, String> {
-    let env_dir = collection_path.join(".apiark").join("environments");
-    if !env_dir.exists() {
-        return Ok(Vec::new());
+    let mut envs = Vec::new();
+
+    // Load shared environments (.apiark/environments/)
+    let shared_dir = collection_path.join(".apiark").join("environments");
+    load_envs_from_dir(&shared_dir, EnvironmentScope::Shared, &mut envs)?;
+
+    // Load personal environments (.apiark/environments.local/)
+    let personal_dir = collection_path.join(".apiark").join("environments.local");
+    load_envs_from_dir(&personal_dir, EnvironmentScope::Personal, &mut envs)?;
+
+    envs.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(envs)
+}
+
+fn load_envs_from_dir(
+    dir: &Path,
+    scope: EnvironmentScope,
+    envs: &mut Vec<EnvironmentFile>,
+) -> Result<(), String> {
+    if !dir.exists() {
+        return Ok(());
     }
 
-    let mut envs = Vec::new();
-    let entries =
-        fs::read_dir(&env_dir).map_err(|e| format!("Failed to read environments dir: {e}"))?;
+    let entries = fs::read_dir(dir).map_err(|e| format!("Failed to read environments dir: {e}"))?;
 
     for entry in entries {
         let entry = entry.map_err(|e| format!("Failed to read dir entry: {e}"))?;
@@ -21,14 +37,13 @@ pub fn load_environments(collection_path: &Path) -> Result<Vec<EnvironmentFile>,
         if path.extension().is_some_and(|e| e == "yaml" || e == "yml") {
             let content = fs::read_to_string(&path)
                 .map_err(|e| format!("Failed to read {}: {e}", path.display()))?;
-            let env: EnvironmentFile = serde_yaml::from_str(&content)
+            let mut env: EnvironmentFile = serde_yaml::from_str(&content)
                 .map_err(|e| format!("Invalid environment YAML {}: {e}", path.display()))?;
+            env.scope = scope.clone();
             envs.push(env);
         }
     }
-
-    envs.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(envs)
+    Ok(())
 }
 
 /// Parse a .env file into a HashMap.
@@ -111,10 +126,22 @@ pub fn get_resolved_variables(
     Ok(variables)
 }
 
-/// Save an environment file to disk.
+/// Save an environment file to disk. Saves to shared or personal directory based on scope.
 pub fn save_environment(collection_path: &Path, env: &EnvironmentFile) -> Result<(), String> {
-    let env_dir = collection_path.join(".apiark").join("environments");
+    let subdir = match env.scope {
+        EnvironmentScope::Personal => "environments.local",
+        EnvironmentScope::Shared => "environments",
+    };
+    let env_dir = collection_path.join(".apiark").join(subdir);
     fs::create_dir_all(&env_dir).map_err(|e| format!("Failed to create environments dir: {e}"))?;
+
+    // Ensure .gitignore exists in personal dir
+    if matches!(env.scope, EnvironmentScope::Personal) {
+        let gitignore = env_dir.join(".gitignore");
+        if !gitignore.exists() {
+            let _ = fs::write(&gitignore, "*\n!.gitignore\n");
+        }
+    }
 
     let filename = env.name.to_lowercase().replace(' ', "-");
     let file_path = env_dir.join(format!("{filename}.yaml"));

@@ -5,6 +5,8 @@ const FORMAT_INFO: Record<ExportFormat, { ext: string; filterName: string; filte
   postman: { ext: "postman_collection.json", filterName: "JSON", filterExt: ["json"] },
   openapi: { ext: "openapi.json", filterName: "JSON", filterExt: ["json"] },
   apiark: { ext: "apiark.zip", filterName: "ZIP Archive", filterExt: ["zip"] },
+  bruno: { ext: "bruno", filterName: "Directory", filterExt: ["*"] },
+  insomnia: { ext: "insomnia.json", filterName: "JSON", filterExt: ["json"] },
 };
 
 /**
@@ -30,6 +32,10 @@ export async function exportCollectionToFile(
 
   if (format === "apiark") {
     // result is the path to the generated zip file — copy it to the user's chosen location
+    const { copyFile } = await import("@tauri-apps/plugin-fs");
+    await copyFile(result, filePath);
+  } else if (format === "bruno") {
+    // result is the path to the generated directory — copy it
     const { copyFile } = await import("@tauri-apps/plugin-fs");
     await copyFile(result, filePath);
   } else {

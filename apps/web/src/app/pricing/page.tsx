@@ -40,7 +40,7 @@ const faqs = [
   {
     question: "How do you sustain the project?",
     answer:
-      "ApiArk is open source (MIT) and community-driven. We may offer optional support plans or hosted services in the future, but the desktop app and all its features will always be free.",
+      "ApiArk is open source (MIT) and community-driven. We sustain the project through community contributions and sponsorships. Every feature is and will always be free.",
   },
   {
     question: "Can I use ApiArk offline?",
@@ -55,7 +55,7 @@ const faqs = [
   {
     question: "Will there ever be paid features?",
     answer:
-      "We have no plans to gate any features behind a paywall. If we ever introduce paid offerings, they will be for optional hosted services or enterprise support — never for core functionality.",
+      "No. ApiArk is and will always be 100% free. Every feature, every protocol, every tool — no paywalls, no tiers, no upsells. Ever.",
   },
 ];
 

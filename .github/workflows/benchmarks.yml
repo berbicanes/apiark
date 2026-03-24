@@ -1,0 +1,63 @@
+name: Benchmarks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/desktop/src-tauri -> target
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf libssl-dev
+
+      - name: Run benchmarks
+        working-directory: apps/desktop/src-tauri
+        run: |
+          cargo bench \
+            --bench interpolation \
+            --bench collection_loading \
+            --bench curl_parsing \
+            --bench scripting \
+            --bench assertions \
+            -- --output-format bencher | tee output.txt
+
+      - name: Clean working tree before branch switch
+        run: git checkout -- .
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: ApiArk Benchmarks
+          tool: cargo
+          output-file-path: apps/desktop/src-tauri/output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Only push results to gh-pages on main branch commits
+          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          # Alert if performance degrades by more than 10%
+          alert-threshold: "110%"
+          # Post a comment on the commit or PR when threshold is exceeded
+          comment-on-alert: true
+          # Do not fail the workflow on regression (set to true to enforce)
+          fail-on-alert: false
+          # On PRs, compare against the stored baseline and comment with results
+          comment-always: ${{ github.event_name == 'pull_request' }}
+          # Store benchmark data in the gh-pages branch
+          gh-pages-branch: gh-pages
+          benchmark-data-dir-path: dev/bench

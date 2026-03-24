@@ -210,7 +210,14 @@
     "passwordGrant": "Senha",
     "addTo": "Adicionar A",
     "addToHeader": "Cabeçalho",
-    "addToQuery": "Parâmetro de Consulta"
+    "addToQuery": "Parâmetro de Consulta",
+    "saml": "SAML",
+    "idpUrl": "URL SSO do IdP",
+    "entityId": "ID da Entidade do SP",
+    "assertionConsumerUrl": "URL do Serviço Consumidor de Asserções",
+    "certificate": "Certificado do IdP (PEM)",
+    "nameIdFormat": "Formato NameID",
+    "samlToken": "Token de Asserção SAML"
   },
   "response": {
     "body": "Corpo",
@@ -548,8 +555,8 @@
   },
   "ai": {
     "title": "Assistente IA",
-    "comingSoon": "Em Breve",
-    "comingSoonDesc": "Geração de requisições, criação de testes e exploração de API com linguagem natural assistidas por IA estão a caminho."
+    "comingSoon": "AI Assistant",
+    "comingSoonDesc": "Generate API requests from natural language and auto-generate tests from responses. Configure your AI provider in Settings."
   },
   "cookies": {
     "title": "Pote de Cookies",
@@ -593,5 +600,8 @@
     "title": "Confirmar Exclusão",
     "request": "Excluir \"{{name}}\"?",
     "collection": "Excluir a coleção \"{{name}}\"? Isso moverá toda a coleção para a lixeira."
+  },
+  "audit": {
+    "title": "Logs de Auditoria"
   }
 }

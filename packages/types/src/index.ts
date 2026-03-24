@@ -90,6 +90,15 @@ export type AuthConfig =
       algorithm: string;
       payload: string;
       headerPrefix: string;
+    }
+  | {
+      type: "saml";
+      idpUrl: string;
+      entityId: string;
+      assertionConsumerUrl: string;
+      certificate: string;
+      nameIdFormat: string;
+      samlToken: string;
     };
 
 export interface OAuthTokenStatus {
@@ -181,6 +190,7 @@ export type CollectionNode =
       method: HttpMethod;
       path: string;
       isGraphql?: boolean;
+      protocol?: string;
     };
 
 // ── Collection Defaults ──
@@ -235,6 +245,7 @@ export interface RequestFile {
   name: string;
   method: HttpMethod;
   url: string;
+  protocol?: string;
   description?: string;
   headers: Record<string, string>;
   auth?: AuthConfig;
@@ -253,6 +264,7 @@ export interface EnvironmentData {
   name: string;
   variables: Record<string, string>;
   secrets: string[];
+  scope?: "shared" | "personal";
 }
 
 // ── History Entry (matches Rust HistoryEntry) ──
@@ -428,7 +440,7 @@ export interface ImportWarning {
 }
 
 export type ImportFormat = "postman" | "insomnia" | "bruno" | "openapi" | "hoppscotch" | "har";
-export type ExportFormat = "postman" | "openapi" | "apiark";
+export type ExportFormat = "postman" | "openapi" | "apiark" | "bruno" | "insomnia";
 
 // ── gRPC ──
 

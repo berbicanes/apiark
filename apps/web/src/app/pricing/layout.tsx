@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Pricing — ApiArk | Free Core, Pro & Team Plans",
+  title: "Pricing — ApiArk | 100% Free, Forever",
   description:
-    "ApiArk is free for individuals with unlimited collections, all protocols, scripting, and CLI. Pro and Team tiers coming soon for mock servers, monitoring, and collaboration.",
+    "ApiArk is completely free — every feature, every protocol, no limits, no account required. Open source and community-driven.",
   openGraph: {
-    title: "ApiArk Pricing — Free Core, Pro & Team",
+    title: "ApiArk Pricing — 100% Free, Forever",
     description:
-      "Free forever for core API development. Pro ($8/mo) and Team ($16/mo) coming soon.",
+      "Every feature free forever. No account, no limits, no catches. Open source (MIT).",
   },
 };
 

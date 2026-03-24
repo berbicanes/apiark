@@ -2,7 +2,7 @@
 use md5::{Digest as Md5Digest, Md5};
 
 use hmac::{Hmac, Mac};
-use sha2::{Digest as Sha256Digest, Sha256};
+use sha2::Sha256;
 
 /// Generate Digest Auth header value.
 /// Used when implementing full challenge-response Digest auth (future).

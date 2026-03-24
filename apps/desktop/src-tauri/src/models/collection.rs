@@ -18,7 +18,7 @@ fn default_version() -> u32 {
     1
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CollectionDefaults {
     pub auth: Option<AuthConfig>,
@@ -28,6 +28,17 @@ pub struct CollectionDefaults {
     pub store_cookies: bool,
     #[serde(default)]
     pub persist_cookies: bool,
+}
+
+impl Default for CollectionDefaults {
+    fn default() -> Self {
+        Self {
+            auth: None,
+            send_cookies: true,
+            store_cookies: true,
+            persist_cookies: false,
+        }
+    }
 }
 
 fn default_true() -> bool {
@@ -41,6 +52,9 @@ pub struct RequestFile {
     pub name: String,
     pub method: HttpMethod,
     pub url: String,
+    /// Protocol type: "http", "graphql", "websocket", "sse", "grpc"
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub protocol: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     #[serde(default, skip_serializing_if = "HashMap::is_empty")]
@@ -90,24 +104,41 @@ pub struct RequestMeta {
     pub name: String,
     pub method: HttpMethod,
     #[serde(default)]
+    pub protocol: Option<String>,
+    #[serde(default)]
     pub body: Option<RequestBodyFile>,
 }
 
 impl RequestMeta {
-    /// Detect GraphQL: POST with a JSON body containing a "query" field.
-    pub fn is_graphql(&self) -> bool {
-        if !matches!(self.method, HttpMethod::POST) {
-            return false;
-        }
-        if let Some(body) = &self.body {
-            if body.body_type == "json" {
-                return serde_json::from_str::<serde_json::Value>(&body.content)
-                    .ok()
-                    .and_then(|v| v.get("query").cloned())
-                    .is_some();
+    /// Detect the protocol for this request.
+    /// Uses the explicit `protocol` field if present, otherwise falls back
+    /// to heuristic detection (GraphQL = POST with JSON body containing "query").
+    pub fn detect_protocol(&self) -> Option<&str> {
+        if let Some(ref p) = self.protocol {
+            if p != "http" {
+                return Some(p.as_str());
             }
         }
-        false
+        // Legacy fallback: detect GraphQL from body
+        if matches!(self.method, HttpMethod::POST) {
+            if let Some(body) = &self.body {
+                if body.body_type == "json" {
+                    let is_gql = serde_json::from_str::<serde_json::Value>(&body.content)
+                        .ok()
+                        .and_then(|v| v.get("query").cloned())
+                        .is_some();
+                    if is_gql {
+                        return Some("graphql");
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// Detect GraphQL: POST with a JSON body containing a "query" field.
+    pub fn is_graphql(&self) -> bool {
+        self.detect_protocol() == Some("graphql")
     }
 }
 
@@ -135,6 +166,9 @@ pub enum CollectionNode {
             skip_serializing_if = "std::ops::Not::not"
         )]
         is_graphql: bool,
+        /// Protocol: "graphql", "websocket", "sse", "grpc", or absent for HTTP
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        protocol: Option<String>,
     },
 }
 

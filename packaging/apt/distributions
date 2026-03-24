@@ -1,0 +1,7 @@
+Origin: ApiArk
+Label: ApiArk
+Codename: stable
+Architectures: amd64
+Components: main
+Description: ApiArk APT repository
+SignWith: default

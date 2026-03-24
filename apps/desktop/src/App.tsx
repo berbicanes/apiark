@@ -1,19 +1,18 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { ActivityBar, type ActivityView } from "@/components/layout/activity-bar";
 import { SidePanel } from "@/components/layout/side-panel";
 import { TabBar } from "@/components/tabs/tab-bar";
 import { UrlBar } from "@/components/request/url-bar";
 import { RequestPanel } from "@/components/request/request-panel";
 import { ResponsePanel } from "@/components/response/response-panel";
-import { SettingsDialog } from "@/components/settings/settings-dialog";
-import { CurlImportDialog } from "@/components/request/curl-import-dialog";
 import { CommandPalette } from "@/components/command-palette/command-palette";
 import { GraphQLView } from "@/components/graphql/graphql-view";
 import { GrpcView } from "@/components/grpc/grpc-view";
 import { WebSocketView } from "@/components/websocket/websocket-view";
 import { SSEView } from "@/components/sse/sse-view";
-import { CollectionRunnerDialog } from "@/components/runner/collection-runner-dialog";
-import { ImportDialog } from "@/components/import/import-dialog";
+import { MqttView } from "@/components/mqtt/mqtt-view";
+import { SocketIoView } from "@/components/socketio/socketio-view";
+import { ProxyCaptureViewer } from "@/components/proxy/proxy-panel";
 import type { TabProtocol } from "@apiark/types";
 import { useTabStore, useActiveTab, initWindowStateTracker } from "@/stores/tab-store";
 import { useConsoleStore } from "@/stores/console-store";
@@ -22,10 +21,6 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useTheme } from "@/hooks/use-theme";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useFileWatcher } from "@/hooks/use-file-watcher";
-import { ResponseDiffDialog } from "@/components/response/response-diff-dialog";
-import { MockServerDialog } from "@/components/mock/mock-server-dialog";
-import { MonitorDialog } from "@/components/scheduler/monitor-dialog";
-import { DocsPreviewDialog } from "@/components/docs/docs-preview-dialog";
 import { useDocsStore } from "@/stores/docs-store";
 import { useMockStore } from "@/stores/mock-store";
 import { useMonitorStore } from "@/stores/monitor-store";
@@ -33,17 +28,27 @@ import { WelcomeScreen } from "@/components/onboarding/welcome-screen";
 import { GuidedTour } from "@/components/onboarding/guided-tour";
 import { BottomPanel } from "@/components/layout/bottom-panel";
 import { useCollectionStore } from "@/stores/collection-store";
-import { AiAssistantDialog } from "@/components/ai/ai-assistant-dialog";
 import { useShortcutsStore } from "@/stores/shortcuts-store";
 import { AlertCircle, X, RefreshCw, FileX, GitMerge, Shield, ArrowRightLeft, Download, ExternalLink } from "lucide-react";
 import { ToastContainer } from "@/components/ui/toast-container";
-import { SaveAsDialog } from "@/components/request/save-as-dialog";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useResponsive } from "@/hooks/use-responsive";
 import { useTranslation } from "react-i18next";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { StatusBar } from "@/components/layout/status-bar";
 import { PanelDivider } from "@/components/ui/panel-divider";
+
+// Lazy-load dialogs — only downloaded when first opened
+const SettingsDialog = lazy(() => import("@/components/settings/settings-dialog").then(m => ({ default: m.SettingsDialog })));
+const CurlImportDialog = lazy(() => import("@/components/request/curl-import-dialog").then(m => ({ default: m.CurlImportDialog })));
+const CollectionRunnerDialog = lazy(() => import("@/components/runner/collection-runner-dialog").then(m => ({ default: m.CollectionRunnerDialog })));
+const ImportDialog = lazy(() => import("@/components/import/import-dialog").then(m => ({ default: m.ImportDialog })));
+const ResponseDiffDialog = lazy(() => import("@/components/response/response-diff-dialog").then(m => ({ default: m.ResponseDiffDialog })));
+const MockServerDialog = lazy(() => import("@/components/mock/mock-server-dialog").then(m => ({ default: m.MockServerDialog })));
+const MonitorDialog = lazy(() => import("@/components/scheduler/monitor-dialog").then(m => ({ default: m.MonitorDialog })));
+const DocsPreviewDialog = lazy(() => import("@/components/docs/docs-preview-dialog").then(m => ({ default: m.DocsPreviewDialog })));
+const AiAssistantDialog = lazy(() => import("@/components/ai/ai-assistant-dialog").then(m => ({ default: m.AiAssistantDialog })));
+const SaveAsDialog = lazy(() => import("@/components/request/save-as-dialog").then(m => ({ default: m.SaveAsDialog })));
 
 function App() {
   const { t } = useTranslation();
@@ -121,6 +126,13 @@ function App() {
     const handler = () => setCurlImportOpen(true);
     window.addEventListener("apiark:open-curl-import", handler);
     return () => window.removeEventListener("apiark:open-curl-import", handler);
+  }, []);
+
+  // Listen for save-as event from TabBar save button
+  useEffect(() => {
+    const handler = () => setSaveAsOpen(true);
+    window.addEventListener("apiark:open-save-as", handler);
+    return () => window.removeEventListener("apiark:open-save-as", handler);
   }, []);
 
   // Toggle side panel when clicking same activity view
@@ -314,7 +326,9 @@ function App() {
           {/* Tab Bar */}
           {!zenMode && <TabBar />}
 
-          {activeTab ? (
+          {activeView === "proxy" ? (
+            <ProxyCaptureViewer />
+          ) : activeTab ? (
             <ProtocolView protocol={activeTab.protocol} urlBarRef={urlBarRef} />
           ) : (
             <EmptyState />
@@ -345,37 +359,46 @@ function App() {
         </div>
       )}
 
-      <SaveAsDialog
-        open={saveAsOpen}
-        onOpenChange={setSaveAsOpen}
-        defaultName={activeTab?.name === "Untitled Request" ? "" : activeTab?.name ?? ""}
-        onSave={async (collectionPath, dir, filename, name) => {
-          try {
-            const { createRequest } = useCollectionStore.getState();
-            const filePath = await createRequest(dir, filename, name, collectionPath);
-            // Update the active tab with the new file path and save
-            const tabStore = useTabStore.getState();
-            const tabId = tabStore.activeTabId;
-            if (tabId) {
-              useTabStore.setState((state) => ({
-                tabs: state.tabs.map((t) =>
-                  t.id === tabId
-                    ? { ...t, filePath, collectionPath, name, isDirty: true }
-                    : t,
-                ),
-              }));
-              // Now save the actual content
-              await tabStore.save();
+      <Suspense fallback={null}>
+        <SaveAsDialog
+          open={saveAsOpen}
+          onOpenChange={setSaveAsOpen}
+          defaultName={activeTab?.name === "Untitled Request" ? "" : activeTab?.name ?? ""}
+          onSave={async (collectionPath, dir, filename, name) => {
+            try {
+              const { createRequest } = useCollectionStore.getState();
+              const filePath = await createRequest(dir, filename, name, collectionPath);
+              // Update the active tab with the new file path and save
+              const tabStore = useTabStore.getState();
+              const tabId = tabStore.activeTabId;
+              if (tabId) {
+                useTabStore.setState((state) => ({
+                  tabs: state.tabs.map((t) =>
+                    t.id === tabId
+                      ? { ...t, filePath, collectionPath, name, isDirty: true }
+                      : t,
+                  ),
+                }));
+                // Now save the actual content
+                await tabStore.save();
+              }
+            } catch (err) {
+              import("@/stores/toast-store").then(({ useToastStore }) =>
+                useToastStore.getState().showError(`Failed to save: ${String(err)}`),
+              );
             }
-          } catch (err) {
-            import("@/stores/toast-store").then(({ useToastStore }) =>
-              useToastStore.getState().showError(`Failed to save: ${String(err)}`),
-            );
-          }
-        }}
-      />
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-      <CurlImportDialog open={curlImportOpen} onOpenChange={setCurlImportOpen} />
+          }}
+        />
+        <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        <CurlImportDialog open={curlImportOpen} onOpenChange={setCurlImportOpen} />
+        <CollectionRunnerDialog open={runnerOpen} onOpenChange={setRunnerOpen} />
+        <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
+        <AiAssistantDialog open={aiOpen} onOpenChange={setAiOpen} />
+        <ResponseDiffDialog />
+        <MockServerDialog />
+        <MonitorDialog />
+        <DocsDialogWrapper />
+      </Suspense>
       <CommandPalette
         open={commandPaletteOpen}
         onOpenChange={setCommandPaletteOpen}
@@ -385,13 +408,6 @@ function App() {
         onOpenImport={() => setImportOpen(true)}
         onToggleZen={() => setZenMode((p) => !p)}
       />
-      <CollectionRunnerDialog open={runnerOpen} onOpenChange={setRunnerOpen} />
-      <ImportDialog open={importOpen} onOpenChange={setImportOpen} />
-      <AiAssistantDialog open={aiOpen} onOpenChange={setAiOpen} />
-      <ResponseDiffDialog />
-      <MockServerDialog />
-      <MonitorDialog />
-      <DocsDialogWrapper />
       {showTour && <GuidedTour onComplete={() => setShowTour(false)} />}
       <MigrationDialog />
       <ToastContainer />
@@ -455,6 +471,10 @@ function ProtocolView({
       return <WebSocketView />;
     case "sse":
       return <SSEView />;
+    case "mqtt":
+      return <MqttView />;
+    case "socketio":
+      return <SocketIoView />;
     default:
       return (
         <>

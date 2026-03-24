@@ -205,7 +205,19 @@ function VariableEditor({
   );
 }
 
-export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) {
+type UrlBarProps = {
+  /** Extra buttons to render between the URL input and the Send button */
+  extraActions?: React.ReactNode;
+  /** Override the Send button entirely (used by WS/SSE for Connect/Disconnect) */
+  sendButton?: React.ReactNode;
+  /** Disable URL input (e.g. while WS is connected) */
+  urlDisabled?: boolean;
+};
+
+export const UrlBar = forwardRef<HTMLInputElement, UrlBarProps>(function UrlBar(
+  { extraActions, sendButton, urlDisabled },
+  ref,
+) {
   const { t } = useTranslation();
   const tab = useActiveTab();
   const { setMethod, setUrl, send } = useTabStore();
@@ -292,10 +304,22 @@ export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) 
 
   return (
     <div data-tour="url-bar" className="flex items-center gap-3 bg-[var(--color-card)] px-4 py-3">
-      {/* Method selector — show static GQL badge for GraphQL tabs */}
+      {/* Method selector — show static badge for non-HTTP protocols */}
       {tab.protocol === "graphql" ? (
         <span className="rounded-lg bg-violet-500/15 px-3 py-2 text-sm font-bold text-violet-400">
           GQL
+        </span>
+      ) : tab.protocol === "websocket" ? (
+        <span className="rounded-lg bg-cyan-500/15 px-3 py-2 text-sm font-bold text-cyan-400">
+          WS
+        </span>
+      ) : tab.protocol === "sse" ? (
+        <span className="rounded-lg bg-orange-500/15 px-3 py-2 text-sm font-bold text-orange-400">
+          SSE
+        </span>
+      ) : tab.protocol === "grpc" ? (
+        <span className="rounded-lg bg-green-500/15 px-3 py-2 text-sm font-bold text-green-400">
+          gRPC
         </span>
       ) : (
         <select
@@ -321,8 +345,9 @@ export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) 
           onKeyDown={handleKeyDown}
           onFocus={() => setInputFocused(true)}
           onBlur={() => setInputFocused(false)}
+          disabled={urlDisabled}
           placeholder={t("request.urlPlaceholder")}
-          className={`w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-4 py-2 text-sm outline-none transition-all focus:border-[var(--color-accent)]/50 focus:ring-2 focus:ring-[var(--color-accent)]/20 ${
+          className={`w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-4 py-2 text-sm outline-none transition-all focus:border-[var(--color-accent)]/50 focus:ring-2 focus:ring-[var(--color-accent)]/20 disabled:opacity-60 ${
             hasVariablesInUrl && !inputFocused
               ? "text-transparent caret-[var(--color-text-primary)]"
               : "text-[var(--color-text-primary)]"
@@ -356,24 +381,29 @@ export const UrlBar = forwardRef<HTMLInputElement>(function UrlBar(_props, ref) 
         )}
       </div>
 
-      {/* Send button */}
-      <div className="relative">
-        <button
-          ref={sendBtnRef}
-          data-tour="send-btn"
-          onClick={send}
-          disabled={tab.loading || !tab.url.trim()}
-          className="flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
-        >
-          {tab.loading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-          {t("request.send")}
-        </button>
-        <HintTooltip hintId="send-shortcut" message="Tip: Press Ctrl+Enter to send requests quickly" />
-      </div>
+      {/* Extra protocol-specific actions */}
+      {extraActions}
+
+      {/* Send button (or custom override for WS/SSE) */}
+      {sendButton ?? (
+        <div className="relative">
+          <button
+            ref={sendBtnRef}
+            data-tour="send-btn"
+            onClick={send}
+            disabled={tab.loading || !tab.url.trim()}
+            className="flex items-center gap-2 rounded-lg bg-[var(--color-accent)] px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98]"
+          >
+            {tab.loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+            {t("request.send")}
+          </button>
+          <HintTooltip hintId="send-shortcut" message="Tip: Press Ctrl+Enter to send requests quickly" />
+        </div>
+      )}
     </div>
   );
 });

@@ -210,7 +210,14 @@
     "passwordGrant": "كلمة المرور",
     "addTo": "إضافة إلى",
     "addToHeader": "الترويسة",
-    "addToQuery": "معامل الاستعلام"
+    "addToQuery": "معامل الاستعلام",
+    "saml": "SAML",
+    "idpUrl": "عنوان SSO لموفر الهوية",
+    "entityId": "معرف كيان مقدم الخدمة",
+    "assertionConsumerUrl": "عنوان خدمة مستهلك التأكيد",
+    "certificate": "شهادة موفر الهوية (PEM)",
+    "nameIdFormat": "تنسيق NameID",
+    "samlToken": "رمز تأكيد SAML"
   },
   "response": {
     "body": "المحتوى",
@@ -548,8 +555,8 @@
   },
   "ai": {
     "title": "مساعد AI",
-    "comingSoon": "قريباً",
-    "comingSoonDesc": "توليد الطلبات وإنشاء الاختبارات واستكشاف API باللغة الطبيعية المدعومة بالذكاء الاصطناعي قادمة قريباً."
+    "comingSoon": "AI Assistant",
+    "comingSoonDesc": "Generate API requests from natural language and auto-generate tests from responses. Configure your AI provider in Settings."
   },
   "cookies": {
     "title": "وعاء الكوكيز",
@@ -593,5 +600,8 @@
     "title": "تأكيد الحذف",
     "request": "حذف \"{{name}}\"؟",
     "collection": "حذف المجموعة \"{{name}}\"؟ سيتم نقل المجموعة بالكامل إلى سلة المحذوفات."
+  },
+  "audit": {
+    "title": "سجلات التدقيق"
   }
 }

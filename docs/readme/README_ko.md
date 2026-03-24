@@ -257,7 +257,7 @@ apiark/
 ├── packages/
 │   ├── types/             # 공유 TypeScript 타입
 │   └── importer/          # 컬렉션 임포터
-└── CLAUDE.md              # 전체 제품 및 엔지니어링 설계서
+└── docs/                  # Documentation
 ```
 
 ### 기술 스택
@@ -268,7 +268,7 @@ apiark/
 
 ## 기여하기
 
-기여를 환영합니다! 아키텍처 세부 사항과 규칙에 대해서는 [CLAUDE.md](../../CLAUDE.md)를 읽어주세요.
+Contributions are welcome! Check out the [GitHub Issues](https://github.com/berbicanes/apiark/issues) for open tasks and feature requests.
 
 <a href="https://github.com/berbicanes/apiark/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=berbicanes/apiark" alt="기여자" />

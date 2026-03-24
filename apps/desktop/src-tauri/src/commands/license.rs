@@ -3,13 +3,11 @@ use std::sync::Mutex;
 
 use serde::{Deserialize, Serialize};
 
-/// License tier — determines feature access.
+/// License tier — all features are free.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LicenseTier {
     Free,
-    Pro,
-    Team,
 }
 
 /// License status returned to the frontend.
@@ -166,18 +164,8 @@ pub async fn deactivate_license(
     Ok(free)
 }
 
-/// Check if a feature is available for the given tier.
-pub fn is_feature_available(tier: LicenseTier, feature: &str) -> bool {
-    match feature {
-        // Pro features
-        "mock_servers" | "monitors" | "docs_gen" | "response_diff" | "parallel_runner" => {
-            matches!(tier, LicenseTier::Pro | LicenseTier::Team)
-        }
-        // Team features
-        "git_ui" | "team_env_sharing" | "sso_saml" | "audit_logs" => {
-            matches!(tier, LicenseTier::Team)
-        }
-        // Everything else is free
-        _ => true,
-    }
+/// All features are available — everything is free.
+#[allow(dead_code)]
+pub fn is_feature_available(_tier: LicenseTier, _feature: &str) -> bool {
+    true
 }

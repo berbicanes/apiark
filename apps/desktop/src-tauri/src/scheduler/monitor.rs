@@ -8,6 +8,7 @@ use tokio::sync::oneshot;
 
 use tauri::Manager;
 
+use crate::http::cookies::CookieJarManager;
 use crate::oauth::OAuthTokenStore;
 use crate::runner::collection_runner;
 use crate::runner::RunConfig;
@@ -206,11 +207,13 @@ async fn run_monitor_loop(
         };
 
         let oauth_store: tauri::State<'_, OAuthTokenStore> = app.state();
+        let cookie_jar: tauri::State<'_, CookieJarManager> = app.state();
         let result = collection_runner::run_collection(
             app.clone(),
             run_config,
             history_db.clone(),
             &oauth_store,
+            &cookie_jar,
         )
         .await;
 

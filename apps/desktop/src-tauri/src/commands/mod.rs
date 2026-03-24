@@ -1,10 +1,12 @@
 pub mod ai;
+pub mod audit;
 pub mod backup;
 pub mod collection;
 pub mod cookies;
 pub mod curl;
 pub mod docs;
 pub mod environment;
+pub mod git;
 pub mod grpc;
 pub mod history;
 pub mod http;

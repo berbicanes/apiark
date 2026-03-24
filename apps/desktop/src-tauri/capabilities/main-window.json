@@ -24,6 +24,7 @@
     "fs:allow-rename",
     "fs:allow-stat",
     "fs:allow-write",
+    "fs:allow-write-text-file",
     "fs:default",
     "notification:allow-is-permission-granted",
     "notification:allow-notify",

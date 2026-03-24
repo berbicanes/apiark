@@ -210,7 +210,14 @@
     "passwordGrant": "密码",
     "addTo": "添加到",
     "addToHeader": "请求头",
-    "addToQuery": "查询参数"
+    "addToQuery": "查询参数",
+    "saml": "SAML",
+    "idpUrl": "IdP SSO URL",
+    "entityId": "服务提供者实体ID",
+    "assertionConsumerUrl": "断言消费者服务URL",
+    "certificate": "IdP证书 (PEM)",
+    "nameIdFormat": "NameID格式",
+    "samlToken": "SAML断言令牌"
   },
   "response": {
     "body": "响应体",
@@ -548,8 +555,8 @@
   },
   "ai": {
     "title": "AI 助手",
-    "comingSoon": "即将推出",
-    "comingSoonDesc": "AI 驱动的请求生成、测试创建和自然语言 API 探索即将到来。"
+    "comingSoon": "AI Assistant",
+    "comingSoonDesc": "Generate API requests from natural language and auto-generate tests from responses. Configure your AI provider in Settings."
   },
   "cookies": {
     "title": "Cookie 罐",
@@ -593,5 +600,8 @@
     "title": "确认删除",
     "request": "删除 \"{{name}}\"？",
     "collection": "删除集合 \"{{name}}\"？这将把整个集合移至回收站。"
+  },
+  "audit": {
+    "title": "审计日志"
   }
 }

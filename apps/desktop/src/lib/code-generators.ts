@@ -1,5 +1,23 @@
 import type { Tab } from "@apiark/types";
 
+/** Clean up a GraphQL JSON body: collapse \r\n and consecutive whitespace in the query string */
+function cleanGraphQLBody(body: string): string {
+  try {
+    const parsed = JSON.parse(body);
+    if (typeof parsed.query === "string") {
+      parsed.query = parsed.query
+        .replace(/\r\n/g, " ")
+        .replace(/\n/g, " ")
+        .replace(/\s{2,}/g, " ")
+        .trim();
+      return JSON.stringify(parsed, null, 2);
+    }
+  } catch {
+    // not valid JSON, return as-is
+  }
+  return body;
+}
+
 export function generateCurl(tab: Tab): string {
   const parts = [`curl -X ${tab.method}`];
   // URL already contains query params (synced from Params tab)
@@ -20,7 +38,8 @@ export function generateCurl(tab: Tab): string {
   }
 
   if (tab.body.type !== "none" && tab.body.content.trim()) {
-    const escaped = tab.body.content.replace(/'/g, "'\\''");
+    const content = tab.body.type === "json" ? cleanGraphQLBody(tab.body.content) : tab.body.content;
+    const escaped = content.replace(/'/g, "'\\''");
     parts.push(`-d '${escaped}'`);
   }
 
@@ -58,7 +77,8 @@ export function generateJsFetch(tab: Tab): string {
 
   if (hasBody) {
     if (tab.body.type === "json") {
-      options.push(`  body: JSON.stringify(${tab.body.content.trim()}),`);
+      const content = cleanGraphQLBody(tab.body.content).trim();
+      options.push(`  body: JSON.stringify(${content}),`);
     } else {
       options.push(`  body: ${JSON.stringify(tab.body.content)},`);
     }
@@ -102,7 +122,8 @@ export function generatePythonRequests(tab: Tab): string {
   const hasBody = tab.body.type !== "none" && tab.body.content.trim();
   if (hasBody) {
     if (tab.body.type === "json") {
-      lines.push(`json_data = ${tab.body.content.trim()}`);
+      const content = cleanGraphQLBody(tab.body.content).trim();
+      lines.push(`json_data = ${content}`);
     } else {
       lines.push(`data = ${JSON.stringify(tab.body.content)}`);
     }

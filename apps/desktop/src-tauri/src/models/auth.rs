@@ -79,6 +79,26 @@ pub enum AuthConfig {
         #[serde(default = "default_bearer_prefix", rename = "headerPrefix")]
         header_prefix: String,
     },
+    Saml {
+        /// Identity Provider SSO URL
+        #[serde(default, rename = "idpUrl")]
+        idp_url: String,
+        /// Service Provider Entity ID
+        #[serde(default, rename = "entityId")]
+        entity_id: String,
+        /// Assertion Consumer Service URL
+        #[serde(default, rename = "assertionConsumerUrl")]
+        assertion_consumer_url: String,
+        /// IdP X.509 certificate (PEM)
+        #[serde(default)]
+        certificate: String,
+        /// NameID format (e.g. "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress")
+        #[serde(default, rename = "nameIdFormat")]
+        name_id_format: String,
+        /// SAML assertion token (obtained externally from the IdP)
+        #[serde(default, rename = "samlToken")]
+        saml_token: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

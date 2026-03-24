@@ -1,6 +1,6 @@
 [package]
 name = "apiark"
-version = "0.3.0"
+version = "0.4.2"
 description = "Local-first API development platform"
 authors = ["ApiArk Contributors"]
 edition = "2021"
@@ -28,7 +28,7 @@ tauri-plugin-shell = "2"
 tauri-plugin-updater = "2"
 reqwest = { version = "0.12", features = ["json", "cookies", "rustls-tls", "multipart", "stream"] }
 url = "2"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "sync", "time", "io-util", "net", "fs"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
@@ -57,6 +57,7 @@ jsonwebtoken = "9"
 hex = "0.4"
 notify = { version = "7", features = ["macos_fsevent"] }
 notify-debouncer-mini = "0.5"
+bytes = "1"
 tonic = { version = "0.12", features = ["transport", "tls"] }
 prost = "0.13"
 prost-types = "0.13"

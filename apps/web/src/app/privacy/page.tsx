@@ -99,23 +99,15 @@ export default function PrivacyPolicyPage() {
             </p>
           </motion.section>
 
-          {/* License Validation */}
+          {/* No License Validation */}
           <motion.section variants={fadeIn} className="space-y-4">
             <h2 className="text-2xl font-semibold text-white">
-              License Validation (Pro/Team Only)
+              No License Validation
             </h2>
             <p className="text-zinc-400 leading-relaxed">
-              If you use a Pro or Team license, ApiArk performs an optional
-              online license check on app launch. This check sends only two
-              pieces of information: your license key and the app version.
-              Nothing else&mdash;no usage data, no collection information, no
-              request data.
-            </p>
-            <p className="text-zinc-400 leading-relaxed">
-              If the license server is unreachable, your license remains valid.
-              There is no phone-home lockout. License validation is
-              offline-first&mdash;the JWT signature is verified locally against
-              a public key embedded in the binary.
+              ApiArk is 100% free. There are no license keys, no subscription
+              checks, and no phone-home calls. Every feature works fully
+              offline without any validation.
             </p>
           </motion.section>
 
@@ -132,7 +124,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc space-y-2 pl-6 text-zinc-400">
               <li>API requests you explicitly send (your intent)</li>
               <li>OAuth flows you initiate</li>
-              <li>License validation for Pro/Team users</li>
+              <li>Update checks against our release server</li>
               <li>Update checks against our release server</li>
             </ul>
           </motion.section>

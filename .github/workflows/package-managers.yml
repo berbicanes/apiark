@@ -1,0 +1,205 @@
+name: Update Package Managers
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.3.2)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  # ── Update Scoop manifest ──────────────────────────────────────────────
+  update-scoop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download installer and compute hash
+        id: hash
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $tag = "${{ steps.version.outputs.tag }}"
+          $url = "https://github.com/${{ github.repository }}/releases/download/${tag}/ApiArk_${version}_x64-setup.exe"
+          Write-Output "Downloading $url"
+          Invoke-WebRequest -Uri $url -OutFile installer.exe -MaximumRetryCount 3
+          $hash = (Get-FileHash installer.exe -Algorithm SHA256).Hash
+          Write-Output "SHA256: $hash"
+          echo "sha256=$hash" >> $env:GITHUB_OUTPUT
+
+      - name: Update Scoop manifest
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $tag = "${{ steps.version.outputs.tag }}"
+          $hash = "${{ steps.hash.outputs.sha256 }}"
+
+          $manifest = Get-Content packaging/scoop/apiark.json | ConvertFrom-Json
+          $manifest.version = $version
+          $manifest.architecture.'64bit'.url = "https://github.com/${{ github.repository }}/releases/download/${tag}/ApiArk_${version}_x64-setup.exe#/dl.7z"
+          $manifest.architecture.'64bit'.hash = $hash
+          $manifest.autoupdate.architecture.'64bit'.url = "https://github.com/${{ github.repository }}/releases/download/v`$version/ApiArk_`$version_x64-setup.exe#/dl.7z"
+          $manifest | ConvertTo-Json -Depth 10 | Set-Content packaging/scoop/apiark.json
+
+      - name: Commit Scoop manifest
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add packaging/scoop/apiark.json
+          git diff --cached --quiet || git commit -m "chore(scoop): update manifest to ${{ steps.version.outputs.version }}"
+          git push
+
+  # ── Update Homebrew cask ───────────────────────────────────────────────
+  update-homebrew:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Download DMGs and compute hashes
+        id: hash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+
+          # ARM64
+          ARM_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/ApiArk_aarch64.dmg"
+          echo "Downloading ARM64 DMG..."
+          curl -fSL -o arm64.dmg "$ARM_URL" --retry 3
+          ARM_SHA=$(shasum -a 256 arm64.dmg | cut -d' ' -f1)
+          echo "ARM64 SHA256: $ARM_SHA"
+          echo "arm64_sha256=$ARM_SHA" >> "$GITHUB_OUTPUT"
+
+          # x64
+          X64_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/ApiArk_x64.dmg"
+          echo "Downloading x64 DMG..."
+          curl -fSL -o x64.dmg "$X64_URL" --retry 3
+          X64_SHA=$(shasum -a 256 x64.dmg | cut -d' ' -f1)
+          echo "x64 SHA256: $X64_SHA"
+          echo "x64_sha256=$X64_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Clone Homebrew tap repo
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/berbicanes/homebrew-apiark.git tap-repo
+          mkdir -p tap-repo/Casks
+
+      - name: Update Homebrew cask
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ARM_SHA="${{ steps.hash.outputs.arm64_sha256 }}"
+          X64_SHA="${{ steps.hash.outputs.x64_sha256 }}"
+
+          # Start from the template in this repo
+          cp packaging/homebrew/apiark.rb tap-repo/Casks/apiark.rb
+
+          cd tap-repo/Casks
+          sed -i '' "s/version \".*\"/version \"${VERSION}\"/" apiark.rb
+
+          # Update ARM sha256 (first occurrence after on_arm)
+          awk -v sha="$ARM_SHA" '/on_arm/,/sha256/ { if (/sha256/) { sub(/sha256 ".*"/, "sha256 \""sha"\"") } } 1' apiark.rb > tmp && mv tmp apiark.rb
+
+          # Update Intel sha256 (first occurrence after on_intel)
+          awk -v sha="$X64_SHA" '/on_intel/,/sha256/ { if (/sha256/) { sub(/sha256 ".*"/, "sha256 \""sha"\"") } } 1' apiark.rb > tmp && mv tmp apiark.rb
+
+      - name: Push to Homebrew tap
+        run: |
+          cd tap-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Update ApiArk to ${{ steps.version.outputs.version }}"
+          git push
+
+  # ── Update APT repository ──────────────────────────────────────────────
+  update-apt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Install reprepro
+        run: sudo apt-get update && sudo apt-get install -y reprepro
+
+      - name: Setup GPG key
+        run: |
+          echo "${{ secrets.APT_GPG_PRIVATE_KEY }}" | gpg --batch --import
+
+      - name: Download .deb from release
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TAG="${{ steps.version.outputs.tag }}"
+          DEB_URL="https://github.com/${{ github.repository }}/releases/download/${TAG}/api-ark_${VERSION}_amd64.deb"
+          echo "Downloading ${DEB_URL}"
+          curl -fSL -o apiark.deb "$DEB_URL" --retry 3
+
+      - name: Clone APT repository
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository_owner }}/apiark-apt.git apt-repo || {
+            mkdir -p apt-repo
+            cd apt-repo
+            git init
+            git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository_owner }}/apiark-apt.git"
+          }
+
+      - name: Update APT repo with new .deb
+        run: |
+          mkdir -p apt-repo/conf
+          cp packaging/apt/distributions apt-repo/conf/distributions
+
+          cd apt-repo
+          reprepro includedeb stable ../apiark.deb
+
+          # Export GPG public key
+          gpg --armor --export > gpg-key.asc
+          gpg --export > gpg-key.gpg
+
+      - name: Push APT repository
+        run: |
+          cd apt-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet || git commit -m "Update APT repo to ${{ steps.version.outputs.version }}"
+          git push origin HEAD:main --force

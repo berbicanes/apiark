@@ -6,18 +6,22 @@ use tauri::State;
 
 use crate::commands::history::AppState;
 use crate::http::client::HttpEngine;
+use crate::http::cookies::{CookieEntry, CookieJarManager};
 use crate::http::interpolation;
 use crate::models::auth::AuthConfig;
 use crate::models::error::HttpError;
 use crate::models::request::{KeyValuePair, SendRequestParams};
-use crate::models::response::ResponseData;
+use crate::models::response::{CookieData, ResponseData};
 use crate::oauth::OAuthTokenStore;
+use crate::plugins::js_plugin::execute_js_hook;
+use crate::plugins::manager::{PluginHook, PluginManager};
 use crate::scripting::assertions::evaluate_assertions_from_yaml;
 use crate::scripting::engine::execute_script;
 use crate::scripting::{
     AssertionResult, ConsoleEntry, RequestSnapshot, ResponseSnapshot, ScriptContext, ScriptPhase,
     TestResult,
 };
+use crate::storage::collection;
 use crate::storage::history::HistoryEntry;
 
 /// Extended response that includes scripting results
@@ -52,6 +56,8 @@ pub struct ScriptedResponseData {
 pub async fn send_request(
     state: State<'_, AppState>,
     oauth_store: State<'_, OAuthTokenStore>,
+    cookie_jar: State<'_, CookieJarManager>,
+    plugin_manager: State<'_, PluginManager>,
     params: SendRequestParams,
     variables: Option<HashMap<String, String>>,
     collection_path: Option<String>,
@@ -60,6 +66,31 @@ pub async fn send_request(
     let vars = variables.unwrap_or_default();
     let mut interpolated = interpolate_params(&params, &vars);
     resolve_oauth_token(&mut interpolated, &oauth_store)?;
+
+    // Inject stored cookies from the jar
+    let defaults = load_defaults_for_collection(collection_path.as_deref());
+    if defaults.send_cookies {
+        inject_jar_cookies(&mut interpolated, &cookie_jar, collection_path.as_deref());
+    }
+
+    // Inherit collection-level auth if request has no auth
+    if interpolated.auth.is_none() || matches!(interpolated.auth, Some(AuthConfig::None)) {
+        if let Some(ref collection_auth) = defaults.auth {
+            if !matches!(collection_auth, AuthConfig::None) {
+                interpolated.auth = Some(collection_auth.clone());
+            }
+        }
+    }
+
+    // Execute preRequest plugin hooks
+    let mut _plugin_console: Vec<ConsoleEntry> = Vec::new();
+    run_plugin_hooks(
+        &plugin_manager,
+        PluginHook::PreRequest,
+        &mut interpolated,
+        None,
+        &mut _plugin_console,
+    );
 
     tracing::info!(method = ?interpolated.method, url = %interpolated.url, "Sending request");
 
@@ -113,6 +144,18 @@ pub async fn send_request(
         }
     }
 
+    // Store response cookies in the jar
+    if defaults.store_cookies {
+        if let Ok(ref response) = result {
+            store_response_cookies(
+                &cookie_jar,
+                collection_path.as_deref(),
+                &response.cookies,
+                defaults.persist_cookies,
+            );
+        }
+    }
+
     record_history(
         &state,
         &interpolated,
@@ -133,6 +176,8 @@ pub async fn send_request(
 pub async fn send_request_with_scripts(
     state: State<'_, AppState>,
     oauth_store: State<'_, OAuthTokenStore>,
+    cookie_jar: State<'_, CookieJarManager>,
+    plugin_manager: State<'_, PluginManager>,
     params: SendRequestParams,
     variables: Option<HashMap<String, String>>,
     collection_path: Option<String>,
@@ -145,6 +190,21 @@ pub async fn send_request_with_scripts(
     let mut vars = variables.unwrap_or_default();
     let mut interpolated = interpolate_params(&params, &vars);
     resolve_oauth_token(&mut interpolated, &oauth_store)?;
+
+    // Inject stored cookies from the jar
+    let defaults = load_defaults_for_collection(collection_path.as_deref());
+    if defaults.send_cookies {
+        inject_jar_cookies(&mut interpolated, &cookie_jar, collection_path.as_deref());
+    }
+
+    // Inherit collection-level auth if request has no auth
+    if interpolated.auth.is_none() || matches!(interpolated.auth, Some(AuthConfig::None)) {
+        if let Some(ref collection_auth) = defaults.auth {
+            if !matches!(collection_auth, AuthConfig::None) {
+                interpolated.auth = Some(collection_auth.clone());
+            }
+        }
+    }
 
     let mut all_console: Vec<ConsoleEntry> = Vec::new();
     let mut all_tests: Vec<TestResult> = Vec::new();
@@ -197,6 +257,15 @@ pub async fn send_request_with_scripts(
         }
     }
 
+    // 1b. Execute preRequest plugin hooks
+    run_plugin_hooks(
+        &plugin_manager,
+        PluginHook::PreRequest,
+        &mut interpolated,
+        None,
+        &mut all_console,
+    );
+
     tracing::info!(method = ?interpolated.method, url = %interpolated.url, "Sending request (scripted)");
 
     // 2. Send the HTTP request
@@ -204,6 +273,16 @@ pub async fn send_request_with_scripts(
         let http_error: HttpError = e.into();
         serde_json::to_string(&http_error).unwrap_or(http_error.message)
     })?;
+
+    // Store response cookies in the jar
+    if defaults.store_cookies {
+        store_response_cookies(
+            &cookie_jar,
+            collection_path.as_deref(),
+            &response.cookies,
+            defaults.persist_cookies,
+        );
+    }
 
     // Record history
     record_history(
@@ -249,6 +328,15 @@ pub async fn send_request_with_scripts(
             }
         }
     }
+
+    // 3b. Execute postResponse plugin hooks
+    run_plugin_hooks(
+        &plugin_manager,
+        PluginHook::PostResponse,
+        &mut interpolated,
+        Some(&response),
+        &mut all_console,
+    );
 
     // 4. Evaluate declarative assertions (if any)
     let mut assertion_results = Vec::new();
@@ -558,6 +646,21 @@ fn interpolate_auth(auth: &AuthConfig, vars: &HashMap<String, String>) -> AuthCo
             domain: interpolation::interpolate(domain, vars),
             workstation: interpolation::interpolate(workstation, vars),
         },
+        AuthConfig::Saml {
+            idp_url,
+            entity_id,
+            assertion_consumer_url,
+            certificate,
+            name_id_format,
+            saml_token,
+        } => AuthConfig::Saml {
+            idp_url: interpolation::interpolate(idp_url, vars),
+            entity_id: interpolation::interpolate(entity_id, vars),
+            assertion_consumer_url: interpolation::interpolate(assertion_consumer_url, vars),
+            certificate: interpolation::interpolate(certificate, vars),
+            name_id_format: name_id_format.clone(),
+            saml_token: interpolation::interpolate(saml_token, vars),
+        },
     }
 }
 
@@ -591,6 +694,94 @@ fn resolve_oauth_token(
         }
     } else {
         Ok(())
+    }
+}
+
+// ── Cookie Jar Helpers ──
+
+/// Load collection defaults, falling back to default values if unavailable.
+fn load_defaults_for_collection(
+    collection_path: Option<&str>,
+) -> crate::models::collection::CollectionDefaults {
+    let Some(path) = collection_path else {
+        return crate::models::collection::CollectionDefaults::default();
+    };
+    collection::load_collection_config(std::path::Path::new(path))
+        .map(|c| c.defaults)
+        .unwrap_or_default()
+}
+
+/// Inject cookies from the jar into the request's cookie map.
+fn inject_jar_cookies(
+    params: &mut SendRequestParams,
+    cookie_jar: &CookieJarManager,
+    collection_path: Option<&str>,
+) {
+    let Some(path) = collection_path else { return };
+
+    let jar_cookies = match cookie_jar.get_cookies(path) {
+        Ok(c) => c,
+        Err(_) => return,
+    };
+
+    if jar_cookies.is_empty() {
+        return;
+    }
+
+    // Extract the request domain for matching
+    let request_domain = url::Url::parse(&params.url)
+        .ok()
+        .and_then(|u| u.host_str().map(|h| h.to_string()));
+
+    let cookies_map = params.cookies.get_or_insert_with(HashMap::new);
+
+    for cookie in &jar_cookies {
+        if let Some(ref req_domain) = request_domain {
+            let cookie_domain = cookie.domain.trim_start_matches('.');
+            if req_domain.ends_with(cookie_domain) || req_domain == cookie_domain {
+                // Don't override per-request cookie overrides
+                cookies_map
+                    .entry(cookie.name.clone())
+                    .or_insert_with(|| cookie.value.clone());
+            }
+        }
+    }
+}
+
+/// Store response cookies into the jar.
+fn store_response_cookies(
+    cookie_jar: &CookieJarManager,
+    collection_path: Option<&str>,
+    cookies: &[CookieData],
+    persist: bool,
+) {
+    let Some(path) = collection_path else { return };
+    if cookies.is_empty() {
+        return;
+    }
+
+    let entries: Vec<CookieEntry> = cookies
+        .iter()
+        .map(|c| CookieEntry {
+            name: c.name.clone(),
+            value: c.value.clone(),
+            domain: c.domain.clone().unwrap_or_default(),
+            path: c.path.clone().unwrap_or_else(|| "/".to_string()),
+            expires: c.expires.clone(),
+            http_only: c.http_only,
+            secure: c.secure,
+            same_site: None,
+        })
+        .collect();
+
+    if let Err(e) = cookie_jar.store_cookies(path, entries) {
+        tracing::warn!("Failed to store cookies: {e}");
+    }
+
+    if persist {
+        if let Err(e) = cookie_jar.save_to_disk(path) {
+            tracing::warn!("Failed to persist cookies to disk: {e}");
+        }
     }
 }
 
@@ -640,5 +831,92 @@ fn redact_value(value: &mut serde_json::Value, keys: &[&str]) {
             }
         }
         _ => {}
+    }
+}
+
+/// Execute all enabled plugins for a given hook.
+fn run_plugin_hooks(
+    plugin_manager: &PluginManager,
+    hook: PluginHook,
+    params: &mut SendRequestParams,
+    response: Option<&ResponseData>,
+    console: &mut Vec<ConsoleEntry>,
+) {
+    let plugins = plugin_manager.get_plugins_for_hook(hook);
+    if plugins.is_empty() {
+        return;
+    }
+
+    let hook_name = match hook {
+        PluginHook::PreRequest => "preRequest",
+        PluginHook::PostResponse => "postResponse",
+        PluginHook::OnStart => "onStart",
+        PluginHook::OnCollectionOpen => "onCollectionOpen",
+        PluginHook::AuthProvider => "authProvider",
+    };
+
+    // Build context JSON for plugins
+    let context = serde_json::json!({
+        "request": {
+            "method": format!("{:?}", params.method),
+            "url": params.url,
+            "headers": params.headers.iter().map(|h| (&h.key, &h.value)).collect::<HashMap<_, _>>(),
+            "body": params.body.as_ref().map(|b| &b.content),
+        },
+        "response": response.map(|r| serde_json::json!({
+            "status": r.status,
+            "statusText": r.status_text,
+            "body": r.body,
+            "timeMs": r.time_ms,
+        })),
+    });
+
+    let context_str = context.to_string();
+
+    for plugin in &plugins {
+        let plugin_dir = std::path::Path::new(&plugin.path);
+        match execute_js_hook(plugin_dir, &plugin.manifest.entry, hook_name, &context_str) {
+            Ok(result) => {
+                // Try to apply mutations from preRequest hooks
+                if hook == PluginHook::PreRequest {
+                    if let Ok(parsed) = serde_json::from_str::<serde_json::Value>(&result) {
+                        if let Some(req) = parsed.get("request") {
+                            if let Some(url) = req.get("url").and_then(|v| v.as_str()) {
+                                params.url = url.to_string();
+                            }
+                            if let Some(headers) = req.get("headers").and_then(|v| v.as_object()) {
+                                params.headers = headers
+                                    .iter()
+                                    .map(|(k, v)| {
+                                        KeyValuePair::new(
+                                            k.clone(),
+                                            v.as_str().unwrap_or("").to_string(),
+                                            true,
+                                        )
+                                    })
+                                    .collect();
+                            }
+                        }
+                    }
+                }
+
+                console.push(ConsoleEntry {
+                    level: "info".to_string(),
+                    message: format!(
+                        "[plugin:{}] {} hook executed",
+                        plugin.manifest.name, hook_name
+                    ),
+                });
+            }
+            Err(e) => {
+                console.push(ConsoleEntry {
+                    level: "error".to_string(),
+                    message: format!(
+                        "[plugin:{}] {} hook failed: {}",
+                        plugin.manifest.name, hook_name, e
+                    ),
+                });
+            }
+        }
     }
 }

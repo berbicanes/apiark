@@ -1,5 +1,6 @@
 pub mod client;
 pub mod proto_parser;
+#[allow(dead_code, unused_imports, unused_variables)]
 pub mod reflection;
 
 use serde::{Deserialize, Serialize};
@@ -39,15 +40,6 @@ pub struct GrpcResponse {
     pub body: String,
     pub time_ms: u64,
     pub metadata: Vec<GrpcMetadata>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GrpcStreamMessage {
-    pub connection_id: String,
-    pub direction: String, // "sent" or "received"
-    pub body: String,
-    pub timestamp: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

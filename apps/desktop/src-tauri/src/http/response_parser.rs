@@ -33,19 +33,33 @@ pub async fn parse_response(
         })
         .collect();
 
-    // Collect cookies
-    let cookies: Vec<CookieData> = response
+    // Collect cookies from response.cookies() (parsed Set-Cookie headers)
+    let mut cookies: Vec<CookieData> = response
         .cookies()
         .map(|c| CookieData {
             name: c.name().to_string(),
             value: c.value().to_string(),
             domain: c.domain().map(|d| d.to_string()),
             path: c.path().map(|p| p.to_string()),
-            expires: None, // reqwest cookie doesn't easily expose raw expires
+            expires: None,
             http_only: c.http_only(),
             secure: c.secure(),
         })
         .collect();
+
+    // Also parse Set-Cookie headers directly as a fallback
+    // (reqwest's .cookies() may miss cookies from redirect responses)
+    if cookies.is_empty() {
+        for value in response.headers().get_all("set-cookie").iter() {
+            if let Ok(val) = value.to_str() {
+                if let Some(cookie) = parse_set_cookie_header(val, response.url()) {
+                    if !cookies.iter().any(|c| c.name == cookie.name) {
+                        cookies.push(cookie);
+                    }
+                }
+            }
+        }
+    }
 
     // Check content-length before downloading
     if let Some(len) = response.content_length() {
@@ -118,4 +132,45 @@ pub async fn parse_response(
         full_size: None,
         temp_path: None,
     })
+}
+
+/// Parse a raw Set-Cookie header string into a CookieData.
+pub fn parse_set_cookie_header(header: &str, url: &url::Url) -> Option<CookieData> {
+    let parts: Vec<&str> = header.splitn(2, ';').collect();
+    let name_value = parts.first()?;
+    let (name, value) = name_value.split_once('=')?;
+    let name = name.trim().to_string();
+    if name.is_empty() {
+        return None;
+    }
+    let value = value.trim().to_string();
+
+    let attrs = parts.get(1).unwrap_or(&"").to_lowercase();
+    let domain =
+        extract_cookie_attr(&attrs, "domain").or_else(|| url.host_str().map(|h| h.to_string()));
+    let path = extract_cookie_attr(&attrs, "path").or_else(|| Some("/".to_string()));
+    let http_only = attrs.contains("httponly");
+    let secure = attrs.contains("secure");
+
+    Some(CookieData {
+        name,
+        value,
+        domain,
+        path,
+        expires: extract_cookie_attr(&attrs, "expires"),
+        http_only,
+        secure,
+    })
+}
+
+fn extract_cookie_attr(attrs: &str, key: &str) -> Option<String> {
+    for part in attrs.split(';') {
+        let part = part.trim();
+        if let Some((k, v)) = part.split_once('=') {
+            if k.trim() == key {
+                return Some(v.trim().to_string());
+            }
+        }
+    }
+    None
 }

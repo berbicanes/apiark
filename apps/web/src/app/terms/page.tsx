@@ -63,22 +63,15 @@ export default function TermsOfServicePage() {
             </p>
           </motion.section>
 
-          {/* Commercial License */}
+          {/* Free Forever */}
           <motion.section variants={fadeIn} className="space-y-4">
             <h2 className="text-2xl font-semibold text-white">
-              Pro and Team Features
+              All Features Free
             </h2>
             <p className="text-zinc-400 leading-relaxed">
-              Pro and Team features (mock servers, scheduled testing, API
-              documentation generation, response diff, and team collaboration
-              tools) are available under a commercial license. A valid license
-              key is required to access these features.
-            </p>
-            <p className="text-zinc-400 leading-relaxed">
-              License keys are tied to your subscription and are validated
-              locally. If your license expires, Pro/Team features are disabled
-              after a 14-day grace period. The core application continues to
-              function without restriction.
+              Every feature in ApiArk is free — mock servers, scheduled testing,
+              API documentation generation, response diff, collection runner,
+              and all protocols. No tiers, no paywalls, no upsells.
             </p>
           </motion.section>
 
