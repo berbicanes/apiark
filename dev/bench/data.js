@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1774422498540,
+  "lastUpdate": 1774423731825,
   "repoUrl": "https://github.com/berbicanes/apiark",
   "entries": {
     "ApiArk Benchmarks": [
@@ -2219,6 +2219,228 @@ window.BENCHMARK_DATA = {
             "name": "scripting/modify_request",
             "value": 964505,
             "range": "± 18920",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "anes@dispatchintegration.com",
+            "name": "Anes Berbic",
+            "username": "berbicanes"
+          },
+          "committer": {
+            "email": "anes@dispatchintegration.com",
+            "name": "Anes Berbic",
+            "username": "berbicanes"
+          },
+          "distinct": true,
+          "id": "41d8b954920d8b59164f1308e85bab681ba32383",
+          "message": "chore: bump to v0.4.6",
+          "timestamp": "2026-03-25T08:16:57+01:00",
+          "tree_id": "90bb46c0ae535760dbe8423295eb7ee8b304947c",
+          "url": "https://github.com/berbicanes/apiark/commit/41d8b954920d8b59164f1308e85bab681ba32383"
+        },
+        "date": 1774423731403,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "assertions/single_status_eq",
+            "value": 950,
+            "range": "± 11",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "assertions/response_time_lt",
+            "value": 1057,
+            "range": "± 10",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "assertions/nested_body_path",
+            "value": 5274,
+            "range": "± 14",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "assertions/array_index_access",
+            "value": 4653,
+            "range": "± 31",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "assertions/regex_match",
+            "value": 130605,
+            "range": "± 389",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "assertions/multiple_assertions/5",
+            "value": 17589,
+            "range": "± 48",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "assertions/multiple_assertions/10",
+            "value": 42398,
+            "range": "± 70",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "assertions/multiple_assertions/20",
+            "value": 80453,
+            "range": "± 391",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "collection_loading/load_tree/100",
+            "value": 1937245,
+            "range": "± 6436",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "collection_loading/load_tree/500",
+            "value": 9674371,
+            "range": "± 21034",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "collection_loading/load_tree/1000",
+            "value": 19603758,
+            "range": "± 59880",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "read_request/single_yaml_parse",
+            "value": 19453,
+            "range": "± 82",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "read_request/complex_yaml_parse",
+            "value": 49591,
+            "range": "± 1332",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "curl_parsing/simple_get",
+            "value": 273,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "curl_parsing/post_with_json",
+            "value": 1066,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "curl_parsing/complex_with_auth_headers",
+            "value": 4192,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "curl_parsing/many_headers_10",
+            "value": 3160,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolation/simple_1var",
+            "value": 433,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolation/medium_5vars",
+            "value": 1426,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolation/heavy_50vars",
+            "value": 12484,
+            "range": "± 194",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolation/no_vars_passthrough",
+            "value": 102,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolation/dynamic_uuid",
+            "value": 736,
+            "range": "± 1",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolation/dynamic_timestamp",
+            "value": 399,
+            "range": "± 0",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolation/dynamic_randomString",
+            "value": 471,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolate_map/headers/5",
+            "value": 2732,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolate_map/headers/20",
+            "value": 12312,
+            "range": "± 31",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interpolate_map/headers/50",
+            "value": 30661,
+            "range": "± 1048",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scripting/empty_script_overhead",
+            "value": 890334,
+            "range": "± 7210",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scripting/env_set_single",
+            "value": 919256,
+            "range": "± 7472",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scripting/env_set_10_vars",
+            "value": 952973,
+            "range": "± 3625",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scripting/single_test_assertion",
+            "value": 980714,
+            "range": "± 3192",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scripting/multiple_tests_with_json",
+            "value": 1102806,
+            "range": "± 20690",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "scripting/modify_request",
+            "value": 936480,
+            "range": "± 7522",
             "unit": "ns/iter"
           }
         ]
