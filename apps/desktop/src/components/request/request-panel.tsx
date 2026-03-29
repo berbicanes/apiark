@@ -10,9 +10,13 @@ import { Plus, Trash2, FileUp } from "lucide-react";
 
 /** Extract :paramName path variables from a URL */
 function extractPathVariables(url: string): string[] {
-  const matches = url.match(/:([\w]+)/g);
-  if (!matches) return [];
-  return [...new Set(matches.map((m) => m.slice(1)))];
+  const variables: string[] = [];
+  const regex = /(^|[\/?#=.&\s\-,])(:[\w]+)/g;
+  let match;
+  while ((match = regex.exec(url)) !== null) {
+    variables.push(match[2].slice(1));
+  }
+  return [...new Set(variables)];
 }
 
 type Tab = "params" | "headers" | "body" | "auth" | "scripts" | "tests";
