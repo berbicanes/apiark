@@ -92,14 +92,29 @@ use tauri::Manager;
 use watcher::collection_watcher::CollectionWatcher;
 use websocket::manager::WsManager;
 
+#[cfg(target_os = "linux")]
+fn is_nvidia_kernel_module_loaded() -> bool {
+    use std::path::Path;
+    let modules = ["nvidia", "nouveau"];
+    for module in &modules {
+        let path = format!("/sys/module/{}", module);
+        if Path::new(&path).exists() {
+            return true;
+        }
+    }
+    false
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Work around WebKitGTK EGL crashes on some Linux systems (e.g. Fedora)
     // See: https://github.com/nickvdyck/webtop/issues/58, tauri #9304
     #[cfg(target_os = "linux")]
     {
-        if std::env::var("WEBKIT_DISABLE_DMABUF_RENDERER").is_err() {
-            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        if is_nvidia_kernel_module_loaded() {
+            if std::env::var("WEBKIT_DISABLE_DMABUF_RENDERER").is_err() {
+                std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+            }
         }
     }
 
