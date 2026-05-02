@@ -8,21 +8,32 @@ import { TabBadge } from "./tab-badge";
 function OpenRequestRow({
   tab,
   isActive,
+  isHighlighted,
   onActivate,
   onClose,
 }: {
   tab: Tab;
   isActive: boolean;
+  isHighlighted: boolean;
   onActivate: () => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isHighlighted) {
+      rowRef.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [isHighlighted]);
+
   return (
     <div
+      ref={rowRef}
       onClick={onActivate}
       title={tab.name}
       className={`group flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
-        isActive
+        isActive || isHighlighted
           ? "bg-[var(--color-accent-glow)] text-[var(--color-text-primary)]"
           : "text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-glow)]/50"
       }`}
@@ -50,6 +61,7 @@ export function OpenRequestsDropdown() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [highlightIndex, setHighlightIndex] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { tabs, activeTabId, setActiveTab, closeTab } = useTabStore();
@@ -61,20 +73,14 @@ export function OpenRequestsDropdown() {
         setOpen(false);
       }
     };
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
     document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
+    return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
   useEffect(() => {
     if (open) {
       setSearch("");
+      setHighlightIndex(0);
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
@@ -92,10 +98,43 @@ export function OpenRequestsDropdown() {
 
   const pinned = filtered.filter((t) => t.pinned);
   const unpinned = filtered.filter((t) => !t.pinned);
+  const ordered = [...pinned, ...unpinned];
+
+  // Clamp highlight when the underlying list shrinks (e.g. closing a tab or filtering).
+  useEffect(() => {
+    if (highlightIndex >= ordered.length) {
+      setHighlightIndex(Math.max(0, ordered.length - 1));
+    }
+  }, [ordered.length, highlightIndex]);
 
   const activate = (id: string) => {
     setActiveTab(id);
     setOpen(false);
+  };
+
+  const handlePopoverKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.nativeEvent.isComposing) return;
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+      return;
+    }
+    if (ordered.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIndex((i) => Math.min(i + 1, ordered.length - 1));
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIndex((i) => Math.max(i - 1, 0));
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const target = ordered[highlightIndex];
+      if (target) activate(target.id);
+    }
   };
 
   return (
@@ -113,13 +152,19 @@ export function OpenRequestsDropdown() {
         </span>
       </button>
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 flex w-80 flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] shadow-xl">
+        <div
+          onKeyDown={handlePopoverKeyDown}
+          className="absolute right-0 top-full z-50 mt-2 flex w-80 flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] shadow-xl"
+        >
           <div className="border-b border-[var(--color-border)] p-2">
             <input
               ref={inputRef}
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setHighlightIndex(0);
+              }}
               placeholder={t("tabs.searchOpenRequests")}
               aria-label={t("tabs.searchOpenRequests")}
               className="w-full rounded-md bg-[var(--color-surface)] px-2.5 py-1.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
@@ -132,11 +177,12 @@ export function OpenRequestsDropdown() {
               </div>
             ) : (
               <>
-                {pinned.map((tab) => (
+                {pinned.map((tab, i) => (
                   <OpenRequestRow
                     key={tab.id}
                     tab={tab}
                     isActive={tab.id === activeTabId}
+                    isHighlighted={i === highlightIndex}
                     onActivate={() => activate(tab.id)}
                     onClose={() => closeTab(tab.id)}
                   />
@@ -144,15 +190,19 @@ export function OpenRequestsDropdown() {
                 {pinned.length > 0 && unpinned.length > 0 && (
                   <div className="my-1 border-t border-[var(--color-border)]" />
                 )}
-                {unpinned.map((tab) => (
-                  <OpenRequestRow
-                    key={tab.id}
-                    tab={tab}
-                    isActive={tab.id === activeTabId}
-                    onActivate={() => activate(tab.id)}
-                    onClose={() => closeTab(tab.id)}
-                  />
-                ))}
+                {unpinned.map((tab, i) => {
+                  const overallIndex = pinned.length + i;
+                  return (
+                    <OpenRequestRow
+                      key={tab.id}
+                      tab={tab}
+                      isActive={tab.id === activeTabId}
+                      isHighlighted={overallIndex === highlightIndex}
+                      onActivate={() => activate(tab.id)}
+                      onClose={() => closeTab(tab.id)}
+                    />
+                  );
+                })}
               </>
             )}
           </div>
