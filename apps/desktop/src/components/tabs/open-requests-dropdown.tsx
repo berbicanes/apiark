@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { List } from "lucide-react";
+import { List, X } from "lucide-react";
 import type { Tab } from "@apiark/types";
 import { useTabStore } from "@/stores/tab-store";
 import { TabBadge } from "./tab-badge";
@@ -9,16 +9,19 @@ function OpenRequestRow({
   tab,
   isActive,
   onActivate,
+  onClose,
 }: {
   tab: Tab;
   isActive: boolean;
   onActivate: () => void;
+  onClose: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       onClick={onActivate}
       title={tab.name}
-      className={`flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
+      className={`group flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm ${
         isActive
           ? "bg-[var(--color-accent-glow)] text-[var(--color-text-primary)]"
           : "text-[var(--color-text-secondary)] hover:bg-[var(--color-accent-glow)]/50"
@@ -29,6 +32,16 @@ function OpenRequestRow({
       {tab.isDirty && (
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--color-accent)]" />
       )}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onClose();
+        }}
+        className="rounded p-0.5 opacity-0 transition-opacity hover:bg-[var(--color-border)] group-hover:opacity-100"
+        aria-label={`${t("tabs.close")} ${tab.name}`}
+      >
+        <X className="h-3 w-3" />
+      </button>
     </div>
   );
 }
@@ -39,7 +52,7 @@ export function OpenRequestsDropdown() {
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { tabs, activeTabId, setActiveTab } = useTabStore();
+  const { tabs, activeTabId, setActiveTab, closeTab } = useTabStore();
 
   useEffect(() => {
     if (!open) return;
@@ -59,7 +72,6 @@ export function OpenRequestsDropdown() {
     };
   }, [open]);
 
-  // Reset search and focus the input each time the popover opens.
   useEffect(() => {
     if (open) {
       setSearch("");
@@ -126,6 +138,7 @@ export function OpenRequestsDropdown() {
                     tab={tab}
                     isActive={tab.id === activeTabId}
                     onActivate={() => activate(tab.id)}
+                    onClose={() => closeTab(tab.id)}
                   />
                 ))}
                 {pinned.length > 0 && unpinned.length > 0 && (
@@ -137,6 +150,7 @@ export function OpenRequestsDropdown() {
                     tab={tab}
                     isActive={tab.id === activeTabId}
                     onActivate={() => activate(tab.id)}
+                    onClose={() => closeTab(tab.id)}
                   />
                 ))}
               </>
