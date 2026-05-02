@@ -69,7 +69,8 @@
     "duplicateTab": "Duplicar Pestaña",
     "moveToNewWindow": "Mover a Nueva Ventana",
     "httpRequest": "Solicitud HTTP",
-    "importCurl": "Importar cURL"
+    "importCurl": "Importar cURL",
+    "openRequests": "Solicitudes abiertas"
   },
   "request": {
     "send": "Enviar",

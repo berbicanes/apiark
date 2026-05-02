@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { Tab } from "@apiark/types";
 import { useTabStore } from "@/stores/tab-store";
 import { TabBadge } from "./tab-badge";
+import { OpenRequestsDropdown } from "./open-requests-dropdown";
 import { Plus, X, Globe, Zap, Radio, ChevronDown, Pin, Save, Terminal } from "lucide-react";
 import {
   DndContext,
@@ -303,6 +304,7 @@ export function TabBar() {
             {t("common.save")}
           </button>
         )}
+        <OpenRequestsDropdown />
         <NewTabDropdown />
       </div>
     </div>

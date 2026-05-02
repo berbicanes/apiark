@@ -69,7 +69,8 @@
     "duplicateTab": "Duplicate Tab",
     "moveToNewWindow": "Move to New Window",
     "httpRequest": "HTTP Request",
-    "importCurl": "Import cURL"
+    "importCurl": "Import cURL",
+    "openRequests": "Open Requests"
   },
   "request": {
     "send": "Send",
