@@ -70,7 +70,9 @@
     "moveToNewWindow": "Mover a Nueva Ventana",
     "httpRequest": "Solicitud HTTP",
     "importCurl": "Importar cURL",
-    "openRequests": "Solicitudes abiertas"
+    "openRequests": "Solicitudes abiertas",
+    "searchOpenRequests": "Buscar solicitudes abiertas…",
+    "noMatchingRequests": "No hay solicitudes coincidentes"
   },
   "request": {
     "send": "Enviar",

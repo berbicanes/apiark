@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { List } from "lucide-react";
 import type { Tab } from "@apiark/types";
@@ -36,7 +36,9 @@ function OpenRequestRow({
 export function OpenRequestsDropdown() {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { tabs, activeTabId, setActiveTab } = useTabStore();
 
   useEffect(() => {
@@ -57,8 +59,27 @@ export function OpenRequestsDropdown() {
     };
   }, [open]);
 
-  const pinned = tabs.filter((t) => t.pinned);
-  const unpinned = tabs.filter((t) => !t.pinned);
+  // Reset search and focus the input each time the popover opens.
+  useEffect(() => {
+    if (open) {
+      setSearch("");
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [open]);
+
+  const query = search.trim().toLowerCase();
+
+  const filtered = useMemo(() => {
+    if (!query) return tabs;
+    return tabs.filter((tab) =>
+      tab.name.toLowerCase().includes(query) ||
+      tab.method.toLowerCase().includes(query) ||
+      tab.url.toLowerCase().includes(query),
+    );
+  }, [tabs, query]);
+
+  const pinned = filtered.filter((t) => t.pinned);
+  const unpinned = filtered.filter((t) => !t.pinned);
 
   const activate = (id: string) => {
     setActiveTab(id);
@@ -72,6 +93,7 @@ export function OpenRequestsDropdown() {
         className="ml-1 flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--color-elevated)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)]"
         title={t("tabs.openRequests")}
         aria-label={t("tabs.openRequests")}
+        aria-expanded={open}
       >
         <List className="h-4 w-4" />
         <span className="rounded-md bg-[var(--color-surface)] px-1.5 text-[10px] tabular-nums">
@@ -80,26 +102,45 @@ export function OpenRequestsDropdown() {
       </button>
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 flex w-80 flex-col overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] shadow-xl">
+          <div className="border-b border-[var(--color-border)] p-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("tabs.searchOpenRequests")}
+              aria-label={t("tabs.searchOpenRequests")}
+              className="w-full rounded-md bg-[var(--color-surface)] px-2.5 py-1.5 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            />
+          </div>
           <div className="max-h-[60vh] overflow-y-auto p-1">
-            {pinned.map((tab) => (
-              <OpenRequestRow
-                key={tab.id}
-                tab={tab}
-                isActive={tab.id === activeTabId}
-                onActivate={() => activate(tab.id)}
-              />
-            ))}
-            {pinned.length > 0 && unpinned.length > 0 && (
-              <div className="my-1 border-t border-[var(--color-border)]" />
+            {filtered.length === 0 ? (
+              <div className="px-3 py-6 text-center text-sm text-[var(--color-text-muted)]">
+                {t("tabs.noMatchingRequests")}
+              </div>
+            ) : (
+              <>
+                {pinned.map((tab) => (
+                  <OpenRequestRow
+                    key={tab.id}
+                    tab={tab}
+                    isActive={tab.id === activeTabId}
+                    onActivate={() => activate(tab.id)}
+                  />
+                ))}
+                {pinned.length > 0 && unpinned.length > 0 && (
+                  <div className="my-1 border-t border-[var(--color-border)]" />
+                )}
+                {unpinned.map((tab) => (
+                  <OpenRequestRow
+                    key={tab.id}
+                    tab={tab}
+                    isActive={tab.id === activeTabId}
+                    onActivate={() => activate(tab.id)}
+                  />
+                ))}
+              </>
             )}
-            {unpinned.map((tab) => (
-              <OpenRequestRow
-                key={tab.id}
-                tab={tab}
-                isActive={tab.id === activeTabId}
-                onActivate={() => activate(tab.id)}
-              />
-            ))}
           </div>
         </div>
       )}
