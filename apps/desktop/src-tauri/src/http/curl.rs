@@ -237,4 +237,28 @@ mod tests {
         let result = parse_curl("curl -k https://example.com").unwrap();
         assert!(!result.verify_ssl);
     }
+
+    #[test]
+    fn test_cookie_short_flag() {
+        let result = parse_curl(
+            "curl https://example.com -b 'session=abc123; token=xyz'",
+        )
+        .unwrap();
+        assert_eq!(
+            result.headers.get("Cookie").map(String::as_str),
+            Some("session=abc123; token=xyz"),
+        );
+    }
+
+    #[test]
+    fn test_cookie_long_flag() {
+        let result = parse_curl(
+            "curl https://example.com --cookie 'session=abc123'",
+        )
+        .unwrap();
+        assert_eq!(
+            result.headers.get("Cookie").map(String::as_str),
+            Some("session=abc123"),
+        );
+    }
 }
