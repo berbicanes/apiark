@@ -64,6 +64,12 @@ pub fn parse_curl(input: &str) -> Result<ParsedCurlRequest, String> {
             "-L" | "--location" => {
                 follow_redirects = true;
             }
+            "-b" | "--cookie" => {
+                i += 1;
+                if let Some(cookie_val) = tokens.get(i) {
+                    headers.insert("Cookie".to_string(), cookie_val.clone());
+                }
+            }
             "--compressed" | "-s" | "--silent" | "-S" | "--show-error" | "-v" | "--verbose" => {
                 // Ignored flags
             }
