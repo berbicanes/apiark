@@ -14,6 +14,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
+import { Input } from "@/components/ui/input";
+import { TextArea } from "@/components/ui/textarea";
 
 export function SocketIoView() {
   const tab = useActiveTab();
@@ -79,7 +81,7 @@ export function SocketIoView() {
         <span className="rounded bg-pink-500/15 px-1.5 py-0.5 text-[10px] font-bold text-pink-400">
           SIO
         </span>
-        <input
+        <Input
           type="text"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
@@ -89,7 +91,7 @@ export function SocketIoView() {
         />
         <div className="flex items-center gap-1">
           <span className="text-xs text-[var(--color-text-dimmed)]">ns:</span>
-          <input
+          <Input
             type="text"
             value={namespace}
             onChange={(e) => setNamespace(e.target.value)}
@@ -190,7 +192,7 @@ export function SocketIoView() {
           Emit Event
         </div>
         <div className="flex items-center gap-1.5 mb-1.5">
-          <input
+          <Input
             type="text"
             value={eventName}
             onChange={(e) => setEventName(e.target.value)}
@@ -200,7 +202,7 @@ export function SocketIoView() {
           />
         </div>
         <div className="flex items-end gap-1.5">
-          <textarea
+          <TextArea
             value={eventArgs}
             onChange={(e) => setEventArgs(e.target.value)}
             placeholder='Arguments (JSON) e.g. "hello" or {"msg": "hi"} or ["a", 1]'
@@ -236,7 +238,7 @@ export function SocketIoView() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="text"
             value={listenFilter}
             onChange={(e) => setListenFilter(e.target.value)}

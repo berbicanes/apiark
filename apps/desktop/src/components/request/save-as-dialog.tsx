@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X, FolderOpen, ChevronRight, ChevronDown } from "lucide-react";
 import { useCollectionStore } from "@/stores/collection-store";
 import type { CollectionNode } from "@apiark/types";
+import { Input } from "@/components/ui/input";
 
 interface SaveAsDialogProps {
   open: boolean;
@@ -83,7 +84,7 @@ export function SaveAsDialog({
               <label className="text-xs font-medium text-[var(--color-text-secondary)]">
                 {t("request.requestName")}
               </label>
-              <input
+              <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}

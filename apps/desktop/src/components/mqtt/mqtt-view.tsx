@@ -14,6 +14,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
+import { Input } from "@/components/ui/input";
+import { TextArea } from "@/components/ui/textarea";
 
 export function MqttView() {
   const tab = useActiveTab();
@@ -106,7 +108,7 @@ export function MqttView() {
       <div className="flex items-center gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
         <span className="text-xs font-medium text-[var(--color-text-muted)]">MQTT</span>
         <div className="flex flex-1 items-center gap-1.5">
-          <input
+          <Input
             type="text"
             value={brokerUrl}
             onChange={(e) => setBrokerUrl(e.target.value)}
@@ -115,7 +117,7 @@ export function MqttView() {
             className="flex-1 rounded bg-[var(--color-elevated)] px-2.5 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
           />
           <span className="text-xs text-[var(--color-text-dimmed)]">:</span>
-          <input
+          <Input
             type="text"
             value={port}
             onChange={(e) => setPort(e.target.value)}
@@ -172,7 +174,7 @@ export function MqttView() {
           <div className="grid grid-cols-2 gap-2 px-3 pb-2">
             <div>
               <label className="text-[10px] text-[var(--color-text-dimmed)]">Client ID</label>
-              <input
+              <Input
                 type="text"
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
@@ -189,7 +191,7 @@ export function MqttView() {
               </button>
               {showAuth && (
                 <div className="flex gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
@@ -197,7 +199,7 @@ export function MqttView() {
                     disabled={status === "connected"}
                     className="flex-1 rounded bg-[var(--color-elevated)] px-2 py-1 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
                   />
-                  <input
+                  <Input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -227,7 +229,7 @@ export function MqttView() {
             Subscribe
           </div>
           <div className="flex items-center gap-1.5">
-            <input
+            <Input
               type="text"
               value={subTopic}
               onChange={(e) => setSubTopic(e.target.value)}
@@ -285,7 +287,7 @@ export function MqttView() {
             Publish
           </div>
           <div className="flex items-center gap-1.5">
-            <input
+            <Input
               type="text"
               value={pubTopic}
               onChange={(e) => setPubTopic(e.target.value)}
@@ -315,7 +317,7 @@ export function MqttView() {
             </label>
           </div>
           <div className="mt-1.5 flex items-end gap-1.5">
-            <textarea
+            <TextArea
               value={pubPayload}
               onChange={(e) => setPubPayload(e.target.value)}
               placeholder="Message payload"
@@ -350,7 +352,7 @@ export function MqttView() {
           <span className="text-purple-400">Topics: {subscriptions.length}</span>
         </div>
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="text"
             value={topicFilter}
             onChange={(e) => setTopicFilter(e.target.value)}

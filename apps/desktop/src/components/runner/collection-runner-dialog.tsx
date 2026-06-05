@@ -8,6 +8,7 @@ import { useRunnerStore } from "@/stores/runner-store";
 import { RunResultsTable } from "./run-results-table";
 import { exportAsJson, exportAsJUnit, downloadFile } from "@/lib/export-results";
 import type { RunConfig } from "@apiark/types";
+import { Input } from "@/components/ui/input";
 
 interface CollectionRunnerDialogProps {
   open: boolean;
@@ -111,7 +112,7 @@ export function CollectionRunnerDialog({
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Delay (ms)</label>
-                  <input
+                  <Input
                     type="number"
                     min={0}
                     value={delayMs}
@@ -121,7 +122,7 @@ export function CollectionRunnerDialog({
                 </div>
                 <div>
                   <label className="mb-1 block text-xs text-[var(--color-text-muted)]">Iterations</label>
-                  <input
+                  <Input
                     type="number"
                     min={1}
                     value={iterations}

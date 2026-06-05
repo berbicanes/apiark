@@ -14,6 +14,7 @@ import type { AppSettings } from "@apiark/types";
 import { open as openFileDialog, save as saveFileDialog } from "@tauri-apps/plugin-dialog";
 import { exportAppState, importAppState } from "@/lib/tauri-api";
 import { tokenSwatchGroups } from "@/styles/tokens";
+import { Input } from "@/components/ui/input";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -208,7 +209,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <label className="mb-2 block text-sm text-[var(--color-text-secondary)]">
                   {t("settings.timeout")}
                 </label>
-                <input
+                <Input
                   type="number"
                   min={0}
                   step={1000}
@@ -223,7 +224,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 <label className="mb-2 block text-sm text-[var(--color-text-secondary)]">
                   {t("settings.proxyUrl")}
                 </label>
-                <input
+                <Input
                   type="text"
                   value={settings.proxyUrl ?? ""}
                   onChange={(e) => update({ proxyUrl: e.target.value || null })}
@@ -232,14 +233,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 />
                 {settings.proxyUrl && (
                   <div className="flex gap-2">
-                    <input
+                    <Input
                       type="text"
                       value={settings.proxyUsername ?? ""}
                       onChange={(e) => update({ proxyUsername: e.target.value || null })}
                       placeholder={t("settings.proxyUsername")}
                       className="flex-1 rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
                     />
-                    <input
+                    <Input
                       type="password"
                       value={settings.proxyPassword ?? ""}
                       onChange={(e) => update({ proxyPassword: e.target.value || null })}
@@ -302,7 +303,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <label className="mb-2 block text-sm text-[var(--color-text-secondary)]">
                     {t("settings.pfxPassphrase")}
                   </label>
-                  <input
+                  <Input
                     type="password"
                     value={settings.clientCertPassphrase ?? ""}
                     onChange={(e) => update({ clientCertPassphrase: e.target.value || null })}
@@ -323,7 +324,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <label className="mb-1 block text-sm text-[var(--color-text-secondary)]">
                     API Endpoint
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={settings.aiEndpoint ?? ""}
                     onChange={(e) => update({ aiEndpoint: e.target.value.trim() || null })}
@@ -338,7 +339,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <label className="mb-1 block text-sm text-[var(--color-text-secondary)]">
                     API Key
                   </label>
-                  <input
+                  <Input
                     type="password"
                     value={settings.aiApiKey ?? ""}
                     onChange={(e) => update({ aiApiKey: e.target.value || null })}
@@ -350,7 +351,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   <label className="mb-1 block text-sm text-[var(--color-text-secondary)]">
                     Model
                   </label>
-                  <input
+                  <Input
                     type="text"
                     value={settings.aiModel ?? ""}
                     onChange={(e) => update({ aiModel: e.target.value || null })}
@@ -706,7 +707,7 @@ function FilePathInput({
 
   return (
     <div className="flex gap-2">
-      <input
+      <Input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}

@@ -12,6 +12,7 @@ import {
 import { listen } from "@tauri-apps/api/event";
 import type { MonitorResult } from "@apiark/types";
 import { Plus, Trash2, Play, Pause, X, Clock } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 const CRON_PRESETS = [
   { label: "Every minute", value: "0 * * * * *" },
@@ -152,7 +153,7 @@ export function MonitorDialog() {
           <div className="flex w-[340px] flex-col border-r border-[var(--color-border)]">
             {/* Create form */}
             <div className="space-y-2 border-b border-[var(--color-border)] p-3">
-              <input
+              <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t("monitor.create")}
@@ -179,13 +180,13 @@ export function MonitorDialog() {
                   ))}
                 </select>
               </div>
-              <input
+              <Input
                 value={environmentName}
                 onChange={(e) => setEnvironmentName(e.target.value)}
                 placeholder="Environment (optional)"
                 className="w-full rounded bg-[var(--color-elevated)] px-2 py-1.5 text-xs text-[var(--color-text-primary)] outline-none"
               />
-              <input
+              <Input
                 value={webhookUrl}
                 onChange={(e) => setWebhookUrl(e.target.value)}
                 placeholder="Webhook URL (optional)"

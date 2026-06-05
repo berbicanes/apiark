@@ -7,6 +7,7 @@ import { Search, Trash2 } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { HistorySkeleton } from "@/components/ui/skeleton";
 import { EmptyState, ClockEmptyIcon } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 
 const METHOD_COLORS: Record<string, string> = {
   GET: "text-green-500",
@@ -80,7 +81,7 @@ export function HistoryPanel() {
       <div className="mb-1 flex items-center gap-1">
         <div className="flex flex-1 items-center rounded bg-[var(--color-elevated)] px-2">
           <Search className="h-3 w-3 text-[var(--color-text-dimmed)]" />
-          <input
+          <Input
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}

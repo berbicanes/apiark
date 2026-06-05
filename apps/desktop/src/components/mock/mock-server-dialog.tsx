@@ -6,6 +6,7 @@ import { startMockServer, stopMockServer, listMockServers } from "@/lib/tauri-ap
 import { listen } from "@tauri-apps/api/event";
 import type { MockRequestLog } from "@apiark/types";
 import { Play, Square, Trash2, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export function MockServerDialog() {
   const { t } = useTranslation();
@@ -117,7 +118,7 @@ export function MockServerDialog() {
               <div className="flex gap-2">
                 <div className="flex-1">
                   <label className="block text-xs text-[var(--color-text-muted)]">{t("mock.port")}</label>
-                  <input
+                  <Input
                     type="number"
                     value={port}
                     onChange={(e) => setPort(Number(e.target.value))}
@@ -126,7 +127,7 @@ export function MockServerDialog() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs text-[var(--color-text-muted)]">{t("mock.latency")}</label>
-                  <input
+                  <Input
                     type="number"
                     value={latencyMs}
                     onChange={(e) => setLatencyMs(Number(e.target.value))}
@@ -135,7 +136,7 @@ export function MockServerDialog() {
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs text-[var(--color-text-muted)]">Error %</label>
-                  <input
+                  <Input
                     type="number"
                     min={0}
                     max={100}

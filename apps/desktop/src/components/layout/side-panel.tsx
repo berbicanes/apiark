@@ -15,6 +15,7 @@ import type { ActivityView } from "./activity-bar";
 import { ProxySidePanel as ProxySidePanelView } from "@/components/proxy/proxy-panel";
 import { GitPanel as GitPanelView } from "@/components/git/git-panel";
 import { AuditPanel } from "@/components/audit/audit-panel";
+import { Input } from "@/components/ui/input";
 
 interface SidePanelProps {
   activeView: ActivityView;
@@ -104,7 +105,7 @@ function CollectionsPanel({ onOpenImport }: { onOpenImport?: () => void }) {
       {collections.length > 0 && (
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--color-text-dimmed)]" />
-          <input
+          <Input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -381,22 +382,22 @@ function CollectionDefaultsDialog({
               </div>
 
               {authType === "bearer" && (
-                <input type="text" value={token} onChange={(e) => setToken(e.target.value)} placeholder={t("auth.token")}
+                <Input type="text" value={token} onChange={(e) => setToken(e.target.value)} placeholder={t("auth.token")}
                   className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
               )}
               {authType === "basic" && (
                 <div className="space-y-2">
-                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t("auth.username")}
+                  <Input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={t("auth.username")}
                     className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
-                  <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("auth.password")}
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("auth.password")}
                     className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
                 </div>
               )}
               {authType === "api-key" && (
                 <div className="space-y-2">
-                  <input type="text" value={apiKeyKey} onChange={(e) => setApiKeyKey(e.target.value)} placeholder="Header name"
+                  <Input type="text" value={apiKeyKey} onChange={(e) => setApiKeyKey(e.target.value)} placeholder="Header name"
                     className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
-                  <input type="text" value={apiKeyValue} onChange={(e) => setApiKeyValue(e.target.value)} placeholder="Value"
+                  <Input type="text" value={apiKeyValue} onChange={(e) => setApiKeyValue(e.target.value)} placeholder="Value"
                     className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none" />
                 </div>
               )}
@@ -470,7 +471,7 @@ function CollectionHeader({
           <Folder className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
         )}
         {renaming ? (
-          <input
+          <Input
             autoFocus
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
@@ -594,7 +595,7 @@ function NewCollectionDialog({
               <label className="text-xs font-medium text-[var(--color-text-secondary)]">
                 {t("sidebar.collectionName")}
               </label>
-              <input
+              <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -612,7 +613,7 @@ function NewCollectionDialog({
                 {t("sidebar.location")}
               </label>
               <div className="flex gap-2">
-                <input
+                <Input
                   type="text"
                   value={parentDir}
                   readOnly
@@ -924,7 +925,7 @@ function EnvironmentEditor({
         >
           <X className="h-3.5 w-3.5" />
         </button>
-        <input
+        <Input
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -973,14 +974,14 @@ function EnvironmentEditor({
 
         {variables.map((v, i) => (
           <div key={i} className="flex gap-1">
-            <input
+            <Input
               type="text"
               value={v.key}
               onChange={(e) => updateVar(i, "key", e.target.value)}
               placeholder={t("request.key")}
               className="min-w-0 flex-1 basis-0 rounded bg-[var(--color-elevated)] px-2 py-1 text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
             />
-            <input
+            <Input
               type="text"
               value={v.value}
               onChange={(e) => updateVar(i, "value", e.target.value)}
@@ -1038,7 +1039,7 @@ function NewEnvironmentDialog({
             </Dialog.Close>
           </div>
           <div className="p-4">
-            <input
+            <Input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}

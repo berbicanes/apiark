@@ -8,6 +8,8 @@ import { Upload, Send, Loader2, Trash2, ArrowDown, ArrowUp, Plus, X, Search, Che
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { UrlBar } from "@/components/request/url-bar";
 import { KeyValueEditor } from "@/components/request/key-value-editor";
+import { Input } from "@/components/ui/input";
+import { TextArea } from "@/components/ui/textarea";
 
 interface StreamMessage {
   body: string;
@@ -303,7 +305,7 @@ export function GrpcView() {
                           </button>
                         )}
                       </div>
-                      <textarea
+                      <TextArea
                         value={msg}
                         onChange={(e) => {
                           const updated = [...clientMessages];
@@ -325,7 +327,7 @@ export function GrpcView() {
                 <label className="mb-1 block text-xs font-medium text-[var(--color-text-muted)]">
                   {t("grpc.requestBody")}
                 </label>
-                <textarea
+                <TextArea
                   value={grpc.requestJson}
                   onChange={(e) => updateGrpc({ requestJson: e.target.value })}
                   className="h-full w-full resize-none rounded bg-[var(--color-elevated)] p-3 font-mono text-sm text-[var(--color-text-primary)] outline-none focus:ring-1 focus:ring-blue-500"
@@ -512,7 +514,7 @@ function MethodBrowser({
       {showFilter && (
         <div className="flex items-center gap-1.5 border-b border-[var(--color-border)] px-3 py-1.5">
           <Search className="h-3 w-3 text-[var(--color-text-dimmed)]" />
-          <input
+          <Input
             type="text"
             value={filter}
             onChange={(e) => onFilterChange(e.target.value)}

@@ -26,6 +26,7 @@ import {
 import { getCollectionDefaults, updateCollectionDefaults } from "@/lib/tauri-api";
 import * as Dialog from "@radix-ui/react-dialog";
 import { CookieJarDialog } from "@/components/collection/cookie-jar-dialog";
+import { Input } from "@/components/ui/input";
 import { exportCollectionToFile } from "@/lib/export-collection";
 import { saveFolderOrder } from "@/lib/tauri-api";
 import {
@@ -536,7 +537,7 @@ function TreeNodeRow({
               : node.method}
           </span>
           {renaming ? (
-            <input
+            <Input
               autoFocus
               value={renameValue}
               onChange={(e) => setRenameValue(e.target.value)}
@@ -635,7 +636,7 @@ function TreeNodeRow({
           <Folder className="h-3.5 w-3.5 shrink-0 text-[var(--color-text-muted)]" />
         )}
         {renaming ? (
-          <input
+          <Input
             autoFocus
             value={renameValue}
             onChange={(e) => setRenameValue(e.target.value)}
@@ -1017,7 +1018,7 @@ function InputDialog({
           <Dialog.Title className="mb-4 text-sm font-semibold text-[var(--color-text-primary)]">
             {title}
           </Dialog.Title>
-          <input
+          <Input
             ref={inputRef}
             type="text"
             value={value}

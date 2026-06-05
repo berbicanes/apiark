@@ -7,6 +7,7 @@ import { KeyValueEditor } from "@/components/request/key-value-editor";
 import { Plug, Unplug, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { UrlBar } from "@/components/request/url-bar";
+import { Input } from "@/components/ui/input";
 
 export function SSEView() {
   const { t } = useTranslation();
@@ -131,7 +132,7 @@ export function SSEView() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}

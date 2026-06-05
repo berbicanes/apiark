@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Clock,
 } from "lucide-react";
+import { TextArea } from "@/components/ui/textarea";
 
 export function GitPanel() {
   const { collections } = useCollectionStore();
@@ -254,7 +255,7 @@ export function GitPanel() {
       {/* Commit box */}
       {stagedChanges.length > 0 && (
         <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] p-2">
-          <textarea
+          <TextArea
             value={commitMessage}
             onChange={(e) => setCommitMessage(e.target.value)}
             placeholder="Commit message..."

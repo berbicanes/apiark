@@ -7,6 +7,8 @@ import { oauthStartFlow, oauthGetTokenStatus, oauthClearToken } from "@/lib/taur
 import { HintTooltip } from "@/components/ui/hint-tooltip";
 import { CodeEditor } from "@/components/ui/code-editor";
 import { Plus, Trash2, FileUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { TextArea } from "@/components/ui/textarea";
 
 /** Extract :paramName path variables from a URL */
 function extractPathVariables(url: string): string[] {
@@ -215,7 +217,7 @@ function PathVariablesEditor({
           <div className="flex items-center rounded bg-[var(--color-elevated)] px-2 py-1 text-sm font-medium text-purple-400">
             :{param}
           </div>
-          <input
+          <Input
             type="text"
             value={values[param] ?? ""}
             onChange={(e) => handleChange(param, e.target.value)}
@@ -234,7 +236,7 @@ function PathVariablesEditor({
       {/* Add row — only show when no path vars exist yet or user started typing */}
       {(pathVars.length === 0 || newVarName) && (
         <div className="grid grid-cols-[1fr_1fr_auto] items-center gap-2 px-1">
-          <input
+          <Input
             type="text"
             value={newVarName}
             onChange={(e) => setNewVarName(e.target.value)}
@@ -323,7 +325,7 @@ function FormDataEditor({
             onChange={(e) => update(index, "enabled", e.target.checked)}
             className="h-4 w-4 accent-blue-500"
           />
-          <input
+          <Input
             type="text"
             value={pair.key}
             onChange={(e) => update(index, "key", e.target.value)}
@@ -331,7 +333,7 @@ function FormDataEditor({
             className="rounded bg-[var(--color-elevated)] px-2 py-1 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-blue-500"
           />
           <div className="flex items-center gap-1">
-            <input
+            <Input
               type="text"
               value={pair.value}
               onChange={(e) => {
@@ -641,7 +643,7 @@ function AuthEditor({
 
       {/* Auth fields */}
       {auth.type === "bearer" && (
-        <input
+        <Input
           type="text"
           value={auth.token}
           onChange={(e) => onChange({ ...auth, token: e.target.value })}
@@ -652,14 +654,14 @@ function AuthEditor({
 
       {auth.type === "basic" && (
         <div className="space-y-2">
-          <input
+          <Input
             type="text"
             value={auth.username}
             onChange={(e) => onChange({ ...auth, username: e.target.value })}
             placeholder={t("auth.username")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="password"
             value={auth.password}
             onChange={(e) => onChange({ ...auth, password: e.target.value })}
@@ -671,14 +673,14 @@ function AuthEditor({
 
       {auth.type === "api-key" && (
         <div className="space-y-2">
-          <input
+          <Input
             type="text"
             value={auth.key}
             onChange={(e) => onChange({ ...auth, key: e.target.value })}
             placeholder="Key name (e.g. X-API-Key)"
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.value}
             onChange={(e) => onChange({ ...auth, value: e.target.value })}
@@ -704,14 +706,14 @@ function AuthEditor({
 
       {auth.type === "digest" && (
         <div className="space-y-2">
-          <input
+          <Input
             type="text"
             value={auth.username}
             onChange={(e) => onChange({ ...auth, username: e.target.value })}
             placeholder={t("auth.username")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="password"
             value={auth.password}
             onChange={(e) => onChange({ ...auth, password: e.target.value })}
@@ -723,35 +725,35 @@ function AuthEditor({
 
       {auth.type === "aws-v4" && (
         <div className="space-y-2">
-          <input
+          <Input
             type="text"
             value={auth.accessKey}
             onChange={(e) => onChange({ ...auth, accessKey: e.target.value })}
             placeholder={t("auth.accessKey")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="password"
             value={auth.secretKey}
             onChange={(e) => onChange({ ...auth, secretKey: e.target.value })}
             placeholder={t("auth.secretKey")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.region}
             onChange={(e) => onChange({ ...auth, region: e.target.value })}
             placeholder={t("auth.region")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.service}
             onChange={(e) => onChange({ ...auth, service: e.target.value })}
             placeholder={t("auth.service")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.sessionToken}
             onChange={(e) => onChange({ ...auth, sessionToken: e.target.value })}
@@ -777,21 +779,21 @@ function AuthEditor({
             <option value="ES256">ES256</option>
             <option value="ES384">ES384</option>
           </select>
-          <input
+          <Input
             type="password"
             value={auth.secret}
             onChange={(e) => onChange({ ...auth, secret: e.target.value })}
             placeholder={auth.algorithm.startsWith("HS") ? "HMAC Secret" : "Private Key (PEM)"}
             className={INPUT_CLASS}
           />
-          <textarea
+          <TextArea
             value={auth.payload}
             onChange={(e) => onChange({ ...auth, payload: e.target.value })}
             placeholder='{"sub": "user", "iat": 0}'
             rows={5}
             className={INPUT_CLASS + " resize-y font-mono"}
           />
-          <input
+          <Input
             type="text"
             value={auth.headerPrefix}
             onChange={(e) => onChange({ ...auth, headerPrefix: e.target.value })}
@@ -803,28 +805,28 @@ function AuthEditor({
 
       {auth.type === "ntlm" && (
         <div className="space-y-2">
-          <input
+          <Input
             type="text"
             value={auth.username}
             onChange={(e) => onChange({ ...auth, username: e.target.value })}
             placeholder={t("auth.username")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="password"
             value={auth.password}
             onChange={(e) => onChange({ ...auth, password: e.target.value })}
             placeholder={t("auth.password")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.domain}
             onChange={(e) => onChange({ ...auth, domain: e.target.value })}
             placeholder={t("auth.domain")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.workstation}
             onChange={(e) => onChange({ ...auth, workstation: e.target.value })}
@@ -836,42 +838,42 @@ function AuthEditor({
 
       {auth.type === "saml" && (
         <div className="space-y-2">
-          <input
+          <Input
             type="text"
             value={auth.idpUrl}
             onChange={(e) => onChange({ ...auth, idpUrl: e.target.value })}
             placeholder={t("auth.idpUrl")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.entityId}
             onChange={(e) => onChange({ ...auth, entityId: e.target.value })}
             placeholder={t("auth.entityId")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.assertionConsumerUrl}
             onChange={(e) => onChange({ ...auth, assertionConsumerUrl: e.target.value })}
             placeholder={t("auth.assertionConsumerUrl")}
             className={INPUT_CLASS}
           />
-          <textarea
+          <TextArea
             value={auth.certificate}
             onChange={(e) => onChange({ ...auth, certificate: e.target.value })}
             placeholder={t("auth.certificate")}
             rows={3}
             className={INPUT_CLASS + " resize-y font-mono"}
           />
-          <input
+          <Input
             type="text"
             value={auth.nameIdFormat}
             onChange={(e) => onChange({ ...auth, nameIdFormat: e.target.value })}
             placeholder={t("auth.nameIdFormat")}
             className={INPUT_CLASS}
           />
-          <input
+          <Input
             type="text"
             value={auth.samlToken}
             onChange={(e) => onChange({ ...auth, samlToken: e.target.value })}
@@ -966,7 +968,7 @@ function OAuth2Editor({
       {showAuthUrl && (
         <label className="block">
           <span className="text-xs text-[var(--color-text-secondary)]">{t("auth.authUrl")}</span>
-          <input
+          <Input
             type="text"
             value={auth.authUrl}
             onChange={(e) => onChange({ ...auth, authUrl: e.target.value })}
@@ -980,7 +982,7 @@ function OAuth2Editor({
       {showTokenUrl && (
         <label className="block">
           <span className="text-xs text-[var(--color-text-secondary)]">{t("auth.tokenUrl")}</span>
-          <input
+          <Input
             type="text"
             value={auth.tokenUrl}
             onChange={(e) => onChange({ ...auth, tokenUrl: e.target.value })}
@@ -994,7 +996,7 @@ function OAuth2Editor({
       <div className="grid grid-cols-2 gap-2">
         <label className="block">
           <span className="text-xs text-[var(--color-text-secondary)]">{t("auth.clientId")}</span>
-          <input
+          <Input
             type="text"
             value={auth.clientId}
             onChange={(e) => onChange({ ...auth, clientId: e.target.value })}
@@ -1004,7 +1006,7 @@ function OAuth2Editor({
         </label>
         <label className="block">
           <span className="text-xs text-[var(--color-text-secondary)]">{t("auth.clientSecret")}</span>
-          <input
+          <Input
             type="password"
             value={auth.clientSecret}
             onChange={(e) => onChange({ ...auth, clientSecret: e.target.value })}
@@ -1017,7 +1019,7 @@ function OAuth2Editor({
       {/* Scope */}
       <label className="block">
         <span className="text-xs text-[var(--color-text-secondary)]">{t("auth.scope")}</span>
-        <input
+        <Input
           type="text"
           value={auth.scope}
           onChange={(e) => onChange({ ...auth, scope: e.target.value })}
@@ -1031,7 +1033,7 @@ function OAuth2Editor({
         <div className="grid grid-cols-2 gap-2">
           <label className="block">
             <span className="text-xs text-[var(--color-text-secondary)]">{t("auth.username")}</span>
-            <input
+            <Input
               type="text"
               value={auth.username}
               onChange={(e) => onChange({ ...auth, username: e.target.value })}
@@ -1041,7 +1043,7 @@ function OAuth2Editor({
           </label>
           <label className="block">
             <span className="text-xs text-[var(--color-text-secondary)]">{t("auth.password")}</span>
-            <input
+            <Input
               type="password"
               value={auth.password}
               onChange={(e) => onChange({ ...auth, password: e.target.value })}
@@ -1056,7 +1058,7 @@ function OAuth2Editor({
       {showAuthUrl && (
         <label className="block">
           <span className="text-xs text-[var(--color-text-secondary)]">{t("auth.callbackUrl")}</span>
-          <input
+          <Input
             type="text"
             value={auth.callbackUrl}
             onChange={(e) => onChange({ ...auth, callbackUrl: e.target.value })}

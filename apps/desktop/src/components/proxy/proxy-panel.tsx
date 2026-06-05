@@ -25,6 +25,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 
 export function ProxySidePanel() {
   const { status, setStatus } = useProxyStore();
@@ -114,7 +115,7 @@ export function ProxySidePanel() {
 
         <div className="flex items-center gap-2">
           {!status.running && (
-            <input
+            <Input
               type="text"
               value={port}
               onChange={(e) => setPort(e.target.value)}
@@ -206,7 +207,7 @@ export function ProxySidePanel() {
         </button>
         {showSettings && (
           <div className="px-3 pb-3">
-            <input
+            <Input
               type="text"
               value={passthrough}
               onChange={(e) => setPassthrough(e.target.value)}
@@ -296,7 +297,7 @@ export function ProxyCaptureViewer() {
         <div className="flex-1" />
         <div className="flex items-center gap-1 rounded-lg bg-[var(--color-elevated)] px-2 py-0.5">
           <Search className="h-3 w-3 text-[var(--color-text-dimmed)]" />
-          <input
+          <Input
             type="text"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}

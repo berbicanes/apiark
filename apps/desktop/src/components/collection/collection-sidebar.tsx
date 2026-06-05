@@ -10,6 +10,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { createCollection } from "@/lib/tauri-api";
 import { useSettingsStore } from "@/stores/settings-store";
 import * as Dialog from "@radix-ui/react-dialog";
+import { Input } from "@/components/ui/input";
 
 type SidebarSection = "collections" | "environments" | "history";
 
@@ -99,7 +100,7 @@ export function CollectionSidebar({ onOpenSettings, collapsed, envSelectorRef, o
               {collections.length > 0 && (
                 <div className="relative mb-1 px-2">
                   <Search className="absolute left-4 top-1/2 h-3 w-3 -translate-y-1/2 text-[var(--color-text-dimmed)]" />
-                  <input
+                  <Input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -313,7 +314,7 @@ function NewCollectionDialog({
               <label className="text-xs font-medium text-[var(--color-text-secondary)]">
                 {t("sidebar.collectionName")}
               </label>
-              <input
+              <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -331,7 +332,7 @@ function NewCollectionDialog({
                 {t("sidebar.location")}
               </label>
               <div className="flex gap-2">
-                <input
+                <Input
                   type="text"
                   value={parentDir}
                   readOnly

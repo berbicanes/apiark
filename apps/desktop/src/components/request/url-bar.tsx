@@ -7,6 +7,7 @@ import { Loader2, Send, AlertCircle, Check } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
 import { HintTooltip } from "@/components/ui/hint-tooltip";
 import { saveEnvironment } from "@/lib/tauri-api";
+import { Input } from "@/components/ui/input";
 
 const METHODS: HttpMethod[] = [
   "GET",
@@ -161,7 +162,7 @@ function VariableEditor({
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <input
+              <Input
                 ref={inputRef}
                 type="text"
                 value={draft}
@@ -337,7 +338,7 @@ export const UrlBar = forwardRef<HTMLInputElement, UrlBarProps>(function UrlBar(
 
       {/* URL input with variable highlighting overlay */}
       <div className="relative flex-1">
-        <input
+        <Input
           ref={setRefs}
           type="text"
           value={tab.url}

@@ -6,6 +6,7 @@ import { KeyValueEditor } from "@/components/request/key-value-editor";
 import { Send, Plug, Unplug, Trash2, ArrowUp, ArrowDown, ChevronDown, ChevronRight } from "lucide-react";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { UrlBar } from "@/components/request/url-bar";
+import { TextArea } from "@/components/ui/textarea";
 
 export function WebSocketView() {
   const tab = useActiveTab();
@@ -122,7 +123,7 @@ export function WebSocketView() {
 
       {/* Message input */}
       <div className="flex items-end gap-2 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
-        <textarea
+        <TextArea
           value={messageInput}
           onChange={(e) => setMessageInput(e.target.value)}
           placeholder={status === "connected" ? "Type a message..." : "Connect first to send messages"}

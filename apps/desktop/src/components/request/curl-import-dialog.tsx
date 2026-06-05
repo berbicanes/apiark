@@ -4,6 +4,7 @@ import { X, Upload } from "lucide-react";
 import { parseCurlCommand } from "@/lib/tauri-api";
 import { useTabStore } from "@/stores/tab-store";
 import type { HttpMethod, KeyValuePair, BodyType } from "@apiark/types";
+import { TextArea } from "@/components/ui/textarea";
 
 let kvCounter = 0;
 const kvId = () => `kv_${Date.now()}_${++kvCounter}`;
@@ -86,7 +87,7 @@ export function CurlImportDialog({ open, onOpenChange }: CurlImportDialogProps) 
           </div>
 
           <div className="p-6">
-            <textarea
+            <TextArea
               value={curlInput}
               onChange={(e) => setCurlInput(e.target.value)}
               placeholder={'Paste your cURL command here...\n\ncurl -X POST https://api.example.com/users \\\n  -H \'Content-Type: application/json\' \\\n  -d \'{"name": "John"}\''}

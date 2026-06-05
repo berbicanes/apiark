@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import { TextArea } from "@/components/ui/textarea";
 import {
   X,
   Send,
@@ -409,7 +410,7 @@ export function AiAssistantDialog({ open, onOpenChange }: AiAssistantDialogProps
               {/* Input */}
               <div className="border-t border-[var(--color-border)] px-4 py-3">
                 <div className="flex items-end gap-2">
-                  <textarea
+                  <TextArea
                     ref={inputRef}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -417,6 +418,9 @@ export function AiAssistantDialog({ open, onOpenChange }: AiAssistantDialogProps
                     disabled={loading}
                     className="flex-1 resize-none rounded-lg bg-[var(--color-elevated)] px-3 py-2 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
                     rows={2}
+                    autoCapitalize="sentences"
+                    autoCorrect="on"
+                    spellCheck={true}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();

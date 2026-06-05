@@ -23,6 +23,7 @@ import { useMonitorStore } from "@/stores/monitor-store";
 import { useDocsStore } from "@/stores/docs-store";
 import { exportCollectionToFile } from "@/lib/export-collection";
 import type { CollectionNode, ExportFormat } from "@apiark/types";
+import { Input } from "@/components/ui/input";
 
 interface Command {
   id: string;
@@ -369,7 +370,7 @@ export function CommandPalette({
           <div className="flex items-center gap-2 border-b border-[var(--color-border)] px-4 py-3">
             <Search className="h-4 w-4 shrink-0 text-[var(--color-text-muted)]" />
             <Dialog.Title className="sr-only">Command Palette</Dialog.Title>
-            <input
+            <Input
               ref={inputRef}
               type="text"
               value={query}

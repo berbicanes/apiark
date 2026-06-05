@@ -15,6 +15,7 @@ import {
 import type { AuthConfig } from "@apiark/types";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { UrlBar } from "@/components/request/url-bar";
+import { Input } from "@/components/ui/input";
 import {
   useGraphQLSubscription,
   type GqlSubscriptionMessage,
@@ -235,7 +236,7 @@ export function GraphQLView() {
                       </span>
                     )}
                   </div>
-                  <input
+                  <Input
                     type="text"
                     value={tab.graphql.operationName}
                     onChange={(e) =>
@@ -488,7 +489,7 @@ function AuthEditorCompact({
       </select>
 
       {auth.type === "bearer" && (
-        <input
+        <Input
           type="text"
           value={auth.token}
           onChange={(e) => onChange({ ...auth, token: e.target.value })}
@@ -499,7 +500,7 @@ function AuthEditorCompact({
 
       {auth.type === "basic" && (
         <div className="space-y-2">
-          <input
+          <Input
             type="text"
             value={auth.username}
             onChange={(e) =>
@@ -508,7 +509,7 @@ function AuthEditorCompact({
             placeholder={t("auth.username")}
             className="w-full rounded bg-[var(--color-elevated)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none"
           />
-          <input
+          <Input
             type="password"
             value={auth.password}
             onChange={(e) =>
