@@ -51,6 +51,8 @@
     "openCollection": "Open Collection",
     "noEnvironmentsYet": "No environments yet",
     "newEnvironment": "New Environment",
+    "deleteEnvironment": "Delete Environment",
+    "deleteEnvironmentConfirm": "Delete environment “{{name}}”? This will move it to trash.",
     "addVariable": "Add Variable",
     "importEnvironment": "Import Environment (Postman JSON)"
   },

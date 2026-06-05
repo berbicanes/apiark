@@ -250,6 +250,18 @@ export async function saveEnvironment(
   await invoke<void>("save_environment", { collectionPath, env, scope: scope ?? env.scope ?? null });
 }
 
+export async function deleteEnvironment(
+  collectionPath: string,
+  environmentName: string,
+  scope?: "shared" | "personal",
+): Promise<string> {
+  return await invoke<string>("delete_environment", {
+    collectionPath,
+    environmentName,
+    scope: scope ?? null,
+  });
+}
+
 // ── History ──
 
 export async function getHistory(): Promise<HistoryEntry[]> {

@@ -36,6 +36,22 @@ pub async fn save_environment(
     environment::save_environment(path, &env)
 }
 
+/// Delete an environment, moving its file to trash. Returns the trash path for undo support.
+#[tauri::command]
+pub async fn delete_environment(
+    collection_path: String,
+    environment_name: String,
+    scope: Option<String>,
+) -> Result<String, String> {
+    let path = Path::new(&collection_path);
+    let scope = match scope.as_deref() {
+        Some("personal") => EnvironmentScope::Personal,
+        _ => EnvironmentScope::Shared,
+    };
+    tracing::info!(path = %collection_path, name = %environment_name, "Deleting environment (moving to trash)");
+    environment::delete_environment(path, &environment_name, &scope)
+}
+
 /// Resolve all variables for a given environment, merging:
 /// 1. Root .env variables (lowest priority)
 /// 2. Environment YAML variables

@@ -3,6 +3,7 @@ import type { EnvironmentData } from "@apiark/types";
 import {
   loadEnvironments as loadEnvironmentsApi,
   getResolvedVariables as getResolvedVariablesApi,
+  deleteEnvironment as deleteEnvironmentApi,
   loadRootDotenv,
 } from "@/lib/tauri-api";
 
@@ -14,6 +15,11 @@ interface EnvironmentState {
   runtimeOverrides: Record<string, string>;
 
   loadEnvironments: (collectionPath: string) => Promise<void>;
+  deleteEnvironment: (
+    collectionPath: string,
+    name: string,
+    scope?: "shared" | "personal",
+  ) => Promise<void>;
   setActiveEnvironment: (name: string | null) => void;
   setActiveCollectionPath: (path: string | null) => void;
   getResolvedVariables: () => Promise<Record<string, string>>;
@@ -40,6 +46,22 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
     } catch (err) {
       import("@/stores/toast-store").then(({ useToastStore }) =>
         useToastStore.getState().showError(`Failed to load environments: ${err}`),
+      );
+    }
+  },
+
+  deleteEnvironment: async (collectionPath, name, scope) => {
+    try {
+      await deleteEnvironmentApi(collectionPath, name, scope);
+      // Clear the active selection if we just deleted it; loadEnvironments will
+      // auto-select the first remaining environment.
+      if (get().activeEnvironmentName === name) {
+        set({ activeEnvironmentName: null });
+      }
+      await get().loadEnvironments(collectionPath);
+    } catch (err) {
+      import("@/stores/toast-store").then(({ useToastStore }) =>
+        useToastStore.getState().showError(`Failed to delete environment: ${err}`),
       );
     }
   },

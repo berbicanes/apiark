@@ -662,11 +662,12 @@ function EnvironmentsPanel({
   envSelectorRef?: React.RefObject<HTMLSelectElement | null>;
 }) {
   const { t } = useTranslation();
-  const { environments, activeEnvironmentName, setActiveEnvironment, loadEnvironments } =
+  const { environments, activeEnvironmentName, setActiveEnvironment, loadEnvironments, deleteEnvironment } =
     useEnvironmentStore();
   const { collections } = useCollectionStore();
   const [editingEnv, setEditingEnv] = useState<EnvironmentData | null>(null);
   const [newEnvOpen, setNewEnvOpen] = useState(false);
+  const [deletingEnv, setDeletingEnv] = useState<EnvironmentData | null>(null);
 
   const collectionPath =
     collections.find((c) => c.type === "collection")?.path ?? null;
@@ -835,27 +836,42 @@ function EnvironmentsPanel({
           </div>
         ) : (
           environments.map((env) => (
-            <button
+            <div
               key={env.name}
-              onClick={() => setEditingEnv(env)}
-              className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-xs transition-colors ${
+              className={`group flex w-full items-center justify-between rounded-md px-2 py-1.5 text-xs transition-colors ${
                 activeEnvironmentName === env.name
-                  ? "bg-[var(--color-accent)]/10 text-[var(--color-accent)]"
-                  : "text-[var(--color-text-primary)] hover:bg-[var(--color-elevated)]"
+                  ? "bg-[var(--color-accent)]/10"
+                  : "hover:bg-[var(--color-elevated)]"
               }`}
             >
-              <div className="flex items-center gap-1.5 truncate">
+              <button
+                onClick={() => setEditingEnv(env)}
+                className={`flex min-w-0 flex-1 items-center gap-1.5 truncate text-left ${
+                  activeEnvironmentName === env.name
+                    ? "text-[var(--color-accent)]"
+                    : "text-[var(--color-text-primary)]"
+                }`}
+              >
                 <span className="truncate">{env.name}</span>
                 {env.scope === "personal" && (
                   <span className="shrink-0 rounded bg-amber-500/15 px-1 py-0.5 text-[8px] font-bold text-amber-400">
                     LOCAL
                   </span>
                 )}
+              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <span className="text-[10px] text-[var(--color-text-dimmed)] group-hover:hidden">
+                  {Object.keys(env.variables).length} vars
+                </span>
+                <button
+                  onClick={() => setDeletingEnv(env)}
+                  className="hidden rounded p-0.5 text-[var(--color-text-muted)] hover:bg-red-500/20 hover:text-red-400 group-hover:block"
+                  title={t("sidebar.deleteEnvironment")}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
               </div>
-              <span className="shrink-0 text-[10px] text-[var(--color-text-dimmed)]">
-                {Object.keys(env.variables).length} vars
-              </span>
-            </button>
+            </div>
           ))
         )}
       </div>
@@ -866,6 +882,40 @@ function EnvironmentsPanel({
         onOpenChange={setNewEnvOpen}
         onCreate={handleCreateNew}
       />
+
+      {/* Delete environment confirmation */}
+      <Dialog.Root open={!!deletingEnv} onOpenChange={(v) => { if (!v) setDeletingEnv(null); }}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-80 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] p-5 shadow-2xl">
+            <Dialog.Title className="mb-2 text-sm font-semibold text-[var(--color-text-primary)]">
+              {t("confirmDelete.title")}
+            </Dialog.Title>
+            <p className="mb-5 text-sm text-[var(--color-text-secondary)]">
+              {t("sidebar.deleteEnvironmentConfirm", { name: deletingEnv?.name })}
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setDeletingEnv(null)}
+                className="rounded-lg px-4 py-1.5 text-sm text-[var(--color-text-muted)] hover:bg-[var(--color-surface)]"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={() => {
+                  if (!deletingEnv || !collectionPath) return;
+                  const target = deletingEnv;
+                  setDeletingEnv(null);
+                  deleteEnvironment(collectionPath, target.name, target.scope);
+                }}
+                className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+              >
+                {t("sidebar.deleteEnvironment")}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

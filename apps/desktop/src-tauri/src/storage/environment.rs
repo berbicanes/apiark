@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::models::environment::{EnvironmentFile, EnvironmentScope};
 
@@ -124,6 +124,48 @@ pub fn get_resolved_variables(
         }
     }
     Ok(variables)
+}
+
+/// Locate the on-disk file for an environment by its declared name within a scope directory.
+/// Filenames are derived from the name on save, but imported environments may use arbitrary
+/// filenames, so we match on the parsed `name` field rather than reconstructing the filename.
+fn find_environment_file(dir: &Path, name: &str) -> Result<PathBuf, String> {
+    if !dir.exists() {
+        return Err(format!("Environment '{name}' not found"));
+    }
+
+    let entries = fs::read_dir(dir).map_err(|e| format!("Failed to read environments dir: {e}"))?;
+    for entry in entries {
+        let entry = entry.map_err(|e| format!("Failed to read dir entry: {e}"))?;
+        let path = entry.path();
+        if path.extension().is_some_and(|e| e == "yaml" || e == "yml") {
+            let content = fs::read_to_string(&path)
+                .map_err(|e| format!("Failed to read {}: {e}", path.display()))?;
+            if let Ok(env) = serde_yaml::from_str::<EnvironmentFile>(&content) {
+                if env.name == name {
+                    return Ok(path);
+                }
+            }
+        }
+    }
+
+    Err(format!("Environment '{name}' not found"))
+}
+
+/// Delete an environment by moving its file to trash. Returns the trash directory path so the
+/// deletion can be undone, mirroring how collection items are deleted.
+pub fn delete_environment(
+    collection_path: &Path,
+    environment_name: &str,
+    scope: &EnvironmentScope,
+) -> Result<String, String> {
+    let subdir = match scope {
+        EnvironmentScope::Personal => "environments.local",
+        EnvironmentScope::Shared => "environments",
+    };
+    let env_dir = collection_path.join(".apiark").join(subdir);
+    let file_path = find_environment_file(&env_dir, environment_name)?;
+    crate::storage::collection::delete_item(&file_path, "environments")
 }
 
 /// Save an environment file to disk. Saves to shared or personal directory based on scope.
