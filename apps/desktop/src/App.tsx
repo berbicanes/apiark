@@ -36,6 +36,7 @@ import { useResponsive } from "@/hooks/use-responsive";
 import { useTranslation } from "react-i18next";
 import { Breadcrumb } from "@/components/layout/breadcrumb";
 import { StatusBar } from "@/components/layout/status-bar";
+import { TitleBar } from "@/components/layout/title-bar";
 import { PanelDivider } from "@/components/ui/panel-divider";
 
 // Lazy-load dialogs — only downloaded when first opened
@@ -273,6 +274,8 @@ function App() {
   return (
     <div className="flex h-screen flex-col bg-[var(--color-bg)] text-[var(--color-text-primary)]">
       <a href="#main-content" className="sr-skip-link">Skip to content</a>
+      {/* Custom title bar — native decorations are disabled (issue #65) */}
+      <TitleBar />
       {/* Update available banner */}
       <UpdateBanner />
 

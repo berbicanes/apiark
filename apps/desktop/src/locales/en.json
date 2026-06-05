@@ -1,4 +1,10 @@
 {
+  "titleBar": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close"
+  },
   "app": {
     "name": "ApiArk",
     "version": "ApiArk v{{version}}",
