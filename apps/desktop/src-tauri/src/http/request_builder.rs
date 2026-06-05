@@ -3,6 +3,7 @@ use std::time::Duration;
 use url::Url;
 
 use crate::http::auth_handlers;
+use crate::http::jsonc;
 use crate::models::auth::{ApiKeyLocation, AuthConfig};
 use crate::models::error::HttpEngineError;
 use crate::models::request::{BodyType, KeyValuePair, RequestBody, SendRequestParams};
@@ -296,7 +297,7 @@ fn apply_body(
     match body.body_type {
         BodyType::Json => Ok(builder
             .header("Content-Type", "application/json")
-            .body(body.content.clone())),
+            .body(jsonc::strip_json_comments(&body.content))),
         BodyType::Xml => Ok(builder
             .header("Content-Type", "application/xml")
             .body(body.content.clone())),

@@ -6,7 +6,23 @@ import { useResolvedTheme } from "@/hooks/use-theme";
 // Configure Monaco to use the local monaco-editor package instead of fetching from CDN.
 // The vite-plugin-monaco-editor handles bundling workers automatically.
 import * as monacoEditor from "monaco-editor";
+// `monaco.languages.json` is a deprecated stub in monaco 0.55's public types,
+// so the JSON language defaults are reached through the contribution module.
+// Its bundled `.d.ts` is empty, hence the local typing of the bits we use.
+import * as jsonContribution from "monaco-editor/esm/vs/language/json/monaco.contribution.js";
 loader.config({ monaco: monacoEditor });
+
+type JsonDiagnosticsOptions = {
+  allowComments?: boolean;
+  comments?: "error" | "warning" | "ignore";
+} & Record<string, unknown>;
+
+const { jsonDefaults: jsonLanguageDefaults } = jsonContribution as unknown as {
+  jsonDefaults: {
+    readonly diagnosticsOptions: JsonDiagnosticsOptions;
+    setDiagnosticsOptions(options: JsonDiagnosticsOptions): void;
+  };
+};
 
 // ApiArk light theme
 const APIARK_LIGHT: Monaco.editor.IStandaloneThemeData = {
@@ -85,6 +101,7 @@ const APIARK_BLACK: Monaco.editor.IStandaloneThemeData = {
 
 let themesRegistered = false;
 let graphqlRegistered = false;
+let jsonDiagnosticsConfigured = false;
 
 function registerThemes(monaco: typeof Monaco) {
   if (themesRegistered) return;
@@ -92,6 +109,20 @@ function registerThemes(monaco: typeof Monaco) {
   monaco.editor.defineTheme("apiark-dark", APIARK_DARK);
   monaco.editor.defineTheme("apiark-black", APIARK_BLACK);
   themesRegistered = true;
+}
+
+// JSONC comments are stripped from the body before the request is sent, so
+// they are valid input in the editor. Tell Monaco's JSON language service not
+// to flag them as errors (the red squiggle), while keeping the rest of JSON
+// validation intact.
+function configureJsonDiagnostics() {
+  if (jsonDiagnosticsConfigured) return;
+  jsonLanguageDefaults.setDiagnosticsOptions({
+    ...jsonLanguageDefaults.diagnosticsOptions,
+    allowComments: true,
+    comments: "ignore",
+  });
+  jsonDiagnosticsConfigured = true;
 }
 
 function registerGraphQL(monaco: typeof Monaco) {
@@ -189,6 +220,7 @@ export function CodeEditor({
     monacoRef.current = monaco;
     registerGraphQL(monaco);
     registerThemes(monaco);
+    configureJsonDiagnostics();
     monaco.editor.setTheme(monacoTheme);
     setContentLeft(editor.getLayoutInfo().contentLeft);
     editor.onDidLayoutChange((layout) => {

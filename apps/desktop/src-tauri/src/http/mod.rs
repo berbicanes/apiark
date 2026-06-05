@@ -4,5 +4,6 @@ pub mod cookies;
 pub mod curl;
 pub mod error_classifier;
 pub mod interpolation;
+pub mod jsonc;
 pub mod request_builder;
 pub mod response_parser;

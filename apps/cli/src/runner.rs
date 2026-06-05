@@ -6,6 +6,7 @@ use colored::Colorize;
 
 use crate::collection;
 use crate::interpolation;
+use crate::jsonc;
 use crate::models::*;
 
 /// Run a collection and return a summary.
@@ -180,7 +181,7 @@ async fn run_single_request(
             "json" => {
                 builder = builder
                     .header("Content-Type", "application/json")
-                    .body(content);
+                    .body(jsonc::strip_json_comments(&content));
             }
             "xml" => {
                 builder = builder
