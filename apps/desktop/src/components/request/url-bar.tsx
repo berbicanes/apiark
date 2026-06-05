@@ -6,6 +6,7 @@ import type { HttpMethod, EnvironmentData } from "@apiark/types";
 import { Loader2, Send, AlertCircle, Check } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
 import { HintTooltip } from "@/components/ui/hint-tooltip";
+import { HeaderEnvironmentSelector } from "@/components/environment/header-environment-selector";
 import { saveEnvironment } from "@/lib/tauri-api";
 
 const METHODS: HttpMethod[] = [
@@ -380,6 +381,10 @@ export const UrlBar = forwardRef<HTMLInputElement, UrlBarProps>(function UrlBar(
           </div>
         )}
       </div>
+
+      {/* Active environment selector — surfaced in the header so the selected
+          environment is always visible and switchable (issue #88) */}
+      <HeaderEnvironmentSelector />
 
       {/* Extra protocol-specific actions */}
       {extraActions}

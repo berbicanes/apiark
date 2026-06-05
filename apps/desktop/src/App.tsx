@@ -21,6 +21,7 @@ import { useSettingsStore } from "@/stores/settings-store";
 import { useTheme } from "@/hooks/use-theme";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useFileWatcher } from "@/hooks/use-file-watcher";
+import { useActiveCollectionEnvironments } from "@/hooks/use-active-collection-environments";
 import { useDocsStore } from "@/stores/docs-store";
 import { useMockStore } from "@/stores/mock-store";
 import { useMonitorStore } from "@/stores/monitor-store";
@@ -78,6 +79,7 @@ function App() {
 
   useTheme();
   useFileWatcher();
+  useActiveCollectionEnvironments();
   const { autoSaveError } = useAutoSave();
 
   // Init window state tracker once on mount
@@ -210,9 +212,15 @@ function App() {
         case "focusUrl":
           urlBarRef.current?.focus();
           break;
-        case "focusEnv":
-          envSelectorRef.current?.focus();
+        case "focusEnv": {
+          // Prefer the always-visible header selector; fall back to the
+          // side-panel one when no environments are loaded.
+          const headerEnv = document.getElementById(
+            "header-environment-selector",
+          ) as HTMLSelectElement | null;
+          (headerEnv ?? envSelectorRef.current)?.focus();
           break;
+        }
         case "toggleSidebar":
           setSidePanelVisible((prev) => !prev);
           break;

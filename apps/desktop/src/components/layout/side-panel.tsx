@@ -671,12 +671,8 @@ function EnvironmentsPanel({
   const collectionPath =
     collections.find((c) => c.type === "collection")?.path ?? null;
 
-  // Load environments when panel mounts with a collection
-  useEffect(() => {
-    if (collectionPath) {
-      loadEnvironments(collectionPath);
-    }
-  }, [collectionPath, loadEnvironments]);
+  // Environments are loaded by useActiveCollectionEnvironments (mounted at the
+  // App level); the explicit reloads below refresh after save/import/create.
 
   const handleSave = async (env: EnvironmentData) => {
     if (!collectionPath) return;
