@@ -21,6 +21,18 @@ vi.mock("@/stores/console-store", () => ({
   useConsoleStore: { getState: () => ({ log: vi.fn() }) },
 }));
 
+vi.mock("@/stores/collection-store", () => ({
+  useCollectionStore: {
+    getState: () => ({ openCollection: vi.fn().mockResolvedValue(undefined) }),
+  },
+}));
+
+vi.mock("@/stores/toast-store", () => ({
+  useToastStore: {
+    getState: () => ({ showWarning: vi.fn(), showError: vi.fn() }),
+  },
+}));
+
 import { useTabStore } from "@/stores/tab-store";
 
 describe("Tab Store", () => {
@@ -178,5 +190,32 @@ describe("Tab Store", () => {
     useTabStore.getState().closeAllTabs();
     expect(useTabStore.getState().tabs).toHaveLength(0);
     expect(useTabStore.getState().activeTabId).toBeNull();
+  });
+
+  it("does not duplicate tabs when restoreTabs runs twice (StrictMode double-mount)", async () => {
+    const api = await import("@/lib/tauri-api");
+    vi.mocked(api.loadPersistedState).mockResolvedValue({
+      tabs: [
+        { filePath: "/col/req1.yaml", collectionPath: "/col" },
+        { filePath: "/col/req2.yaml", collectionPath: "/col" },
+      ],
+      activeTabIndex: 0,
+      collections: [],
+    } as never);
+    vi.mocked(api.readRequestFile).mockImplementation(
+      async (filePath: string) =>
+        ({ name: filePath, method: "GET", url: "https://example.com", headers: {}, params: {} }) as never,
+    );
+
+    // StrictMode mounts the effect twice without cleanup, so restoreTabs
+    // runs concurrently. It must stay idempotent and not append duplicates.
+    await Promise.all([
+      useTabStore.getState().restoreTabs(),
+      useTabStore.getState().restoreTabs(),
+    ]);
+
+    const filePaths = useTabStore.getState().tabs.map((t) => t.filePath).sort();
+    expect(useTabStore.getState().tabs).toHaveLength(2);
+    expect(filePaths).toEqual(["/col/req1.yaml", "/col/req2.yaml"]);
   });
 });

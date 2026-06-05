@@ -1100,10 +1100,16 @@ export const useTabStore = create<TabState>((set, get) => ({
         try {
           const file = await readRequestFile(pt.filePath);
           const tab = requestFileToTab(file, pt.filePath, pt.collectionPath);
-          set((state) => ({
-            tabs: [...state.tabs, tab],
-            activeTabId: state.activeTabId ?? tab.id,
-          }));
+          set((state) => {
+            // Guard against a concurrent restore (e.g. React StrictMode mounts
+            // the effect twice). seenPaths only dedups within a single call, so
+            // also skip paths already present in the store.
+            if (state.tabs.some((t) => t.filePath === pt.filePath)) return state;
+            return {
+              tabs: [...state.tabs, tab],
+              activeTabId: state.activeTabId ?? tab.id,
+            };
+          });
           if (pt.collectionPath) collectionPaths.add(pt.collectionPath);
         } catch {
           // File may have been deleted, skip it
