@@ -346,6 +346,7 @@
     "create": "Create",
     "edit": "Edit",
     "copy": "Copy",
+    "duplicate": "Duplicate",
     "paste": "Paste",
     "loading": "Loading...",
     "error": "Error",

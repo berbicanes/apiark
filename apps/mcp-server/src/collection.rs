@@ -274,3 +274,110 @@ pub fn create_request(args: &Value) -> Result<String, String> {
 
     Ok(format!("Created request at {}", file_path.display()))
 }
+
+/// Duplicate a file or folder (copy with "(copy)" suffix)
+pub fn duplicate_item(args: &Value) -> Result<String, String> {
+    let source_path = args
+        .get("path")
+        .and_then(|p| p.as_str())
+        .ok_or("Missing 'path' argument")?;
+
+    let source = Path::new(source_path);
+    if !source.exists() {
+        return Err(format!("Item not found: {source_path}"));
+    }
+
+    let parent = source.parent().ok_or("Cannot get parent directory")?;
+
+    let base_name = if source.is_dir() {
+        source.file_name().and_then(|n| n.to_str()).unwrap_or("folder")
+    } else {
+        source.file_stem().and_then(|n| n.to_str()).unwrap_or("request")
+    };
+
+    let mut copy_name = format!("{} (copy)", base_name);
+    let mut new_path = if source.is_dir() {
+        parent.join(&copy_name)
+    } else {
+        let ext = source.extension().map(|e| e.to_string_lossy().to_string());
+        if let Some(ref ext) = ext {
+            parent.join(format!("{copy_name}.{ext}"))
+        } else {
+            parent.join(&copy_name)
+        }
+    };
+
+    let mut counter = 2;
+    while new_path.exists() {
+        copy_name = format!("{} (copy {})", base_name, counter);
+        new_path = if source.is_dir() {
+            parent.join(&copy_name)
+        } else {
+            let ext = source.extension().map(|e| e.to_string_lossy().to_string());
+            if let Some(ref ext) = ext {
+                parent.join(format!("{copy_name}.{ext}"))
+            } else {
+                parent.join(&copy_name)
+            }
+        };
+        counter += 1;
+    }
+
+    if source.is_dir() {
+        copy_dir_all(source, &new_path)?;
+
+        let config_path = new_path.join(".apiark").join("apiark.yaml");
+        if config_path.exists() {
+            if let Ok(content) = fs::read_to_string(&config_path) {
+                if let Ok(mut config) = serde_yaml::from_str::<serde_yaml::Value>(&content) {
+                    if let Some(mapping) = config.as_mapping_mut() {
+                        mapping.insert(
+                            serde_yaml::Value::String("name".into()),
+                            serde_yaml::Value::String(copy_name.clone()),
+                        );
+                        if let Ok(yaml) = serde_yaml::to_string(&config) {
+                            let _ = fs::write(&config_path, yaml);
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        fs::copy(source, &new_path)
+            .map_err(|e| format!("Failed to copy file: {e}"))?;
+
+        if let Ok(content) = fs::read_to_string(&new_path) {
+            if let Ok(mut doc) = serde_yaml::from_str::<serde_yaml::Value>(&content) {
+                if let Some(mapping) = doc.as_mapping_mut() {
+                    mapping.insert(
+                        serde_yaml::Value::String("name".into()),
+                        serde_yaml::Value::String(copy_name.clone()),
+                    );
+                    if let Ok(yaml) = serde_yaml::to_string(&doc) {
+                        let _ = fs::write(&new_path, yaml);
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(serde_json::to_string_pretty(&serde_json::json!({
+        "path": new_path.to_string_lossy(),
+        "message": format!("Duplicated to {}", new_path.display())
+    })).unwrap_or_default())
+}
+
+fn copy_dir_all(src: &Path, dst: &Path) -> Result<(), String> {
+    fs::create_dir_all(dst).map_err(|e| format!("Failed to create dir: {e}"))?;
+    for entry in fs::read_dir(src).map_err(|e| format!("Failed to read dir: {e}"))? {
+        let entry = entry.map_err(|e| format!("Dir entry error: {e}"))?;
+        let dest_path = dst.join(entry.file_name());
+        if entry.path().is_dir() {
+            copy_dir_all(&entry.path(), &dest_path)?;
+        } else {
+            fs::copy(entry.path(), &dest_path)
+                .map_err(|e| format!("Failed to copy file: {e}"))?;
+        }
+    }
+    Ok(())
+}

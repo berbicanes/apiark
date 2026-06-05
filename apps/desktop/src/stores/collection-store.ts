@@ -6,6 +6,7 @@ import {
   createFolder as createFolderApi,
   deleteItem as deleteItemApi,
   renameItem as renameItemApi,
+  duplicateItem as duplicateItemApi,
   watchCollection,
   unwatchCollection,
   restoreFromTrash,
@@ -51,6 +52,10 @@ interface CollectionState {
     path: string,
     newName: string,
     collectionPath: string,
+  ) => Promise<string>;
+  duplicateItem: (
+    path: string,
+    collectionName: string,
   ) => Promise<string>;
   undoLastAction: () => Promise<void>;
   dismissMigration: () => void;
@@ -315,6 +320,18 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
       newName,
       collectionPath,
     });
+    return newPath;
+  },
+
+  duplicateItem: async (path, collectionName) => {
+    const newPath = await duplicateItemApi(path, collectionName);
+    // Find which collection this belongs to and refresh
+    for (const c of get().collections) {
+      if (c.type === "collection" && path.startsWith(c.path)) {
+        await get().refreshCollection(c.path);
+        break;
+      }
+    }
     return newPath;
   },
 

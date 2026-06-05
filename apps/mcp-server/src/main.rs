@@ -155,6 +155,17 @@ fn handle_request(request: &Value) -> Value {
                             },
                             "required": ["collection_path", "name", "method", "url"]
                         }
+                    },
+                    {
+                        "name": "duplicate_item",
+                        "description": "Duplicate a file or folder in a collection with '(copy)' suffix",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "path": { "type": "string", "description": "Path to the file or folder to duplicate" }
+                            },
+                            "required": ["path"]
+                        }
                     }
                 ]
             }
@@ -172,6 +183,7 @@ fn handle_request(request: &Value) -> Value {
                 "send_request" => collection::send_http_request(&arguments),
                 "list_environments" => collection::list_environments(&arguments),
                 "create_request" => collection::create_request(&arguments),
+                "duplicate_item" => collection::duplicate_item(&arguments),
                 _ => Err(format!("Unknown tool: {tool_name}")),
             };
 

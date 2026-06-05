@@ -22,6 +22,7 @@ import {
   Cookie,
   X,
   FolderX,
+  Copy,
 } from "lucide-react";
 import { getCollectionDefaults, updateCollectionDefaults } from "@/lib/tauri-api";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -360,7 +361,7 @@ function TreeNodeRow({
 }) {
   const { t } = useTranslation();
   const { node, depth, collectionPath, collectionName } = flat;
-  const { expandedPaths, toggleExpand, createRequest, createFolder, deleteItem, renameItem } =
+  const { expandedPaths, toggleExpand, createRequest, createFolder, deleteItem, renameItem, duplicateItem } =
     useCollectionStore();
   const { openTab } = useTabStore();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -494,6 +495,17 @@ function TreeNodeRow({
     setRenaming(true);
   };
 
+  const handleDuplicate = async () => {
+    closeContextMenu();
+    try {
+      await duplicateItem(node.path, collectionName);
+    } catch (err) {
+      import("@/stores/toast-store").then(({ useToastStore }) =>
+        useToastStore.getState().showError(`Failed to duplicate: ${err}`),
+      );
+    }
+  };
+
   const submitRename = async () => {
     setRenaming(false);
     if (!renameValue.trim() || renameValue === node.name) return;
@@ -588,6 +600,7 @@ function TreeNodeRow({
             onClose={closeContextMenu}
             items={[
               { label: t("common.rename"), icon: Pencil, onClick: handleRename },
+              { label: t("common.duplicate"), icon: Copy, onClick: handleDuplicate },
               { label: t("common.delete"), icon: Trash2, onClick: handleDelete, danger: true },
             ]}
           />
@@ -782,6 +795,14 @@ function TreeNodeRow({
                     },
                   },
                   {
+                    label: t("common.duplicate"),
+                    icon: Copy,
+                    onClick: () => {
+                      closeContextMenu();
+                      handleDuplicate();
+                    },
+                  },
+                  {
                     label: t("sidebar.closeCollection"),
                     icon: FolderX,
                     onClick: () => {
@@ -801,6 +822,7 @@ function TreeNodeRow({
                 ]
               : [
                   { label: t("common.rename"), icon: Pencil, onClick: handleRename },
+                  { label: t("common.duplicate"), icon: Copy, onClick: handleDuplicate },
                   { label: t("common.delete"), icon: Trash2, onClick: handleDelete, danger: true },
                 ]),
           ]}
