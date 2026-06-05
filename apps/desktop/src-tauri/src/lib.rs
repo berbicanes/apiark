@@ -40,7 +40,7 @@ use commands::git::{
 use commands::greet;
 use commands::grpc::{
     grpc_call_bidi_stream, grpc_call_client_stream, grpc_call_server_stream, grpc_call_unary,
-    grpc_disconnect, grpc_load_proto,
+    grpc_disconnect, grpc_load_proto, grpc_reflect_services,
 };
 use commands::history::{
     clear_history, delete_history_entry, get_history, search_history, AppState,
@@ -320,6 +320,7 @@ pub fn run() {
             unwatch_collection,
             // gRPC commands
             grpc_load_proto,
+            grpc_reflect_services,
             grpc_call_unary,
             grpc_call_server_stream,
             grpc_call_client_stream,

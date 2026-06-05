@@ -15,6 +15,8 @@ path = "src/main.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+tonic-build = "0.12"
+protox = "0.7"
 
 [dependencies]
 tauri = { version = "2", features = [] }

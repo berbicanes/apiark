@@ -389,6 +389,10 @@ export async function grpcLoadProto(connectionId: string, protoPath: string): Pr
   return await invoke<import("@apiark/types").GrpcServiceInfo[]>("grpc_load_proto", { connectionId, protoPath });
 }
 
+export async function grpcReflectServices(connectionId: string, address: string): Promise<import("@apiark/types").GrpcServiceInfo[]> {
+  return await invoke<import("@apiark/types").GrpcServiceInfo[]>("grpc_reflect_services", { connectionId, address });
+}
+
 export async function grpcCallUnary(
   connectionId: string,
   address: string,

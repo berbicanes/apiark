@@ -75,6 +75,34 @@ pub struct RequestFile {
     pub post_response_script: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub cookies: Option<HashMap<String, String>>,
+    /// gRPC-specific state persisted so the request can be reproduced. Discovered
+    /// services are intentionally not stored (they require a live server).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grpc: Option<GrpcRequestFile>,
+}
+
+/// gRPC request state stored in YAML files
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GrpcRequestFile {
+    #[serde(default)]
+    pub selected_service: Option<String>,
+    #[serde(default)]
+    pub selected_method: Option<String>,
+    #[serde(default)]
+    pub request_json: String,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub metadata: Vec<GrpcMetadataFile>,
+}
+
+/// gRPC metadata entry stored in YAML files
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GrpcMetadataFile {
+    pub key: String,
+    pub value: String,
+    #[serde(default = "default_true")]
+    pub enabled: bool,
 }
 
 /// Body stored in YAML files

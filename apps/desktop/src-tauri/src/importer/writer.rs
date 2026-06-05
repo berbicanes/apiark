@@ -109,6 +109,7 @@ fn write_items(items: &[ImportItem], parent_dir: &Path) -> Result<(), String> {
                     pre_request_script: pre_request_script.clone(),
                     post_response_script: post_response_script.clone(),
                     cookies: None,
+                    grpc: None,
                 };
 
                 let yaml = serde_yaml::to_string(&request_file)

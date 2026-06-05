@@ -91,6 +91,7 @@ pub async fn create_request(
         pre_request_script: None,
         post_response_script: None,
         cookies: None,
+        grpc: None,
     };
     let path = collection::create_request_file(dir_path, &filename, &request)?;
     Ok(path.to_string_lossy().to_string())

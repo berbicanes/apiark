@@ -1,7 +1,7 @@
 use tauri::{AppHandle, State};
 
 use crate::grpc::client::GrpcManager;
-use crate::grpc::proto_parser;
+use crate::grpc::{proto_parser, reflection};
 use crate::grpc::{GrpcMetadata, GrpcResponse, GrpcServiceInfo};
 
 #[tauri::command]
@@ -11,6 +11,17 @@ pub async fn grpc_load_proto(
     grpc: State<'_, GrpcManager>,
 ) -> Result<Vec<GrpcServiceInfo>, String> {
     let (services, pool) = proto_parser::parse_proto_file(&proto_path)?;
+    grpc.store_pool(&connection_id, pool)?;
+    Ok(services)
+}
+
+#[tauri::command]
+pub async fn grpc_reflect_services(
+    connection_id: String,
+    address: String,
+    grpc: State<'_, GrpcManager>,
+) -> Result<Vec<GrpcServiceInfo>, String> {
+    let (services, pool) = reflection::reflect_services(grpc.inner(), &address).await?;
     grpc.store_pool(&connection_id, pool)?;
     Ok(services)
 }

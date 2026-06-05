@@ -397,6 +397,8 @@ function App() {
                 }));
                 // Now save the actual content
                 await tabStore.save();
+                // Refresh so the sidebar node reflects the saved protocol (e.g. gRPC instead of GET)
+                await useCollectionStore.getState().refreshCollection(collectionPath);
               }
             } catch (err) {
               import("@/stores/toast-store").then(({ useToastStore }) =>

@@ -354,13 +354,17 @@ function requestFileToTab(
     : isGraphQL ? "graphql"
     : "http";
 
-  // Initialize gRPC state if needed
+  // Initialize gRPC state if needed. Discovered services are ephemeral (they
+  // depend on a running server via Reflect), so they always start empty; the
+  // rest is restored from the saved file so the request can be reproduced.
   const grpcState: GrpcState | null = protocol === "grpc" ? {
     services: [],
-    selectedService: null,
-    selectedMethod: null,
-    requestJson: "{}",
-    metadata: [emptyKvRow()],
+    selectedService: file.grpc?.selectedService ?? null,
+    selectedMethod: file.grpc?.selectedMethod ?? null,
+    requestJson: file.grpc?.requestJson ?? "{}",
+    metadata: file.grpc?.metadata?.length
+      ? file.grpc.metadata.map((m) => ({ ...m, id: kvId() }))
+      : [emptyKvRow()],
     loading: false,
     response: null,
     error: null,
@@ -431,6 +435,19 @@ function tabToRequestFile(tab: Tab): RequestFile {
     body = { type: tab.body.type, content: tab.body.content };
   }
 
+  // Persist enough gRPC state to reproduce the request. Discovered services are
+  // ephemeral (they require a live server via Reflect) so they are not saved.
+  const grpc = tab.protocol === "grpc" && tab.grpc
+    ? {
+        selectedService: tab.grpc.selectedService,
+        selectedMethod: tab.grpc.selectedMethod,
+        requestJson: tab.grpc.requestJson,
+        metadata: tab.grpc.metadata
+          .filter((m) => m.key.trim())
+          .map(({ key, value, enabled }) => ({ key, value, enabled })),
+      }
+    : undefined;
+
   return {
     name: tab.name,
     method: tab.protocol === "graphql" ? "POST" : tab.method,
@@ -443,6 +460,7 @@ function tabToRequestFile(tab: Tab): RequestFile {
     preRequestScript: tab.preRequestScript || undefined,
     postResponseScript: tab.postResponseScript || undefined,
     tests: tab.testScript || undefined,
+    grpc,
   };
 }
 

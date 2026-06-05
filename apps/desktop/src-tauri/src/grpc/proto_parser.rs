@@ -3,7 +3,7 @@ use std::path::Path;
 use prost_reflect::DescriptorPool;
 use protox::Compiler;
 
-use super::{GrpcCallType, GrpcMethodInfo, GrpcServiceInfo};
+use super::{example_json_for, GrpcCallType, GrpcMethodInfo, GrpcServiceInfo};
 
 /// Parse .proto files from a path (file or directory) and return service info.
 pub fn parse_proto_file(
@@ -69,6 +69,7 @@ fn extract_services(pool: &DescriptorPool) -> Vec<GrpcServiceInfo> {
                         input_type: m.input().full_name().to_string(),
                         output_type: m.output().full_name().to_string(),
                         call_type,
+                        example_json: example_json_for(&m.input()),
                     }
                 })
                 .collect();

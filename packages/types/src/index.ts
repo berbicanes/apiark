@@ -256,6 +256,12 @@ export interface RequestFile {
   tests?: string;
   assert?: unknown;
   cookies?: Record<string, string>;
+  grpc?: {
+    selectedService: string | null;
+    selectedMethod: string | null;
+    requestJson: string;
+    metadata: Array<{ key: string; value: string; enabled: boolean }>;
+  };
 }
 
 // ── Environment ──
@@ -456,6 +462,8 @@ export interface GrpcMethodInfo {
   inputType: string;
   outputType: string;
   callType: "unary" | "serverStreaming" | "clientStreaming" | "bidiStreaming";
+  /** Example request JSON with zero-valued fields, generated from the input message descriptor. */
+  exampleJson: string;
 }
 
 export interface GrpcResponse {
