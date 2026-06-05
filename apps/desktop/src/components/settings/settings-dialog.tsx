@@ -4,6 +4,7 @@ import { X, FolderOpen, Download, Upload, RefreshCw, ExternalLink } from "lucide
 import { useTranslation } from "react-i18next";
 import { LANGUAGES } from "@/lib/i18n";
 import { useSettingsStore } from "@/stores/settings-store";
+import { SIDEBAR_MIN_WIDTH, SIDEBAR_MAX_WIDTH } from "@/lib/sidebar-width";
 import {
   useShortcutsStore,
   SHORTCUT_ACTIONS,
@@ -140,8 +141,8 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                 </label>
                 <input
                   type="range"
-                  min={180}
-                  max={400}
+                  min={SIDEBAR_MIN_WIDTH}
+                  max={SIDEBAR_MAX_WIDTH}
                   step={4}
                   value={settings.sidebarWidth}
                   onChange={(e) => update({ sidebarWidth: Number(e.target.value) })}

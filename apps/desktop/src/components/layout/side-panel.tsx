@@ -1,5 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  SIDEBAR_MIN_WIDTH,
+  SIDEBAR_MAX_WIDTH,
+  SIDEBAR_DEFAULT_WIDTH,
+  clampSidebarWidth,
+} from "@/lib/sidebar-width";
 import { useCollectionStore } from "@/stores/collection-store";
 import { CollectionTree } from "@/components/collection/collection-tree";
 import { EnvironmentSelector } from "@/components/environment/environment-selector";
@@ -47,12 +53,83 @@ export function SidePanel({
   };
 
   const sidebarWidth = useSettingsStore((s) => s.settings.sidebarWidth);
+  const updateSettings = useSettingsStore((s) => s.updateSettings);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  const handleResizeStart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const panel = panelRef.current;
+      if (!panel) return;
+
+      const startLeft = panel.getBoundingClientRect().left;
+      let finalWidth: number | null = null;
+
+      const onMouseMove = (ev: MouseEvent) => {
+        finalWidth = clampSidebarWidth(ev.clientX - startLeft);
+        // Direct DOM mutation during drag — no React re-render, instant feedback.
+        panel.style.width = `${finalWidth}px`;
+      };
+
+      const onMouseUp = () => {
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        // Only persist when an actual drag happened (skip a bare click).
+        if (finalWidth !== null) void updateSettings({ sidebarWidth: finalWidth });
+      };
+
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    },
+    [updateSettings],
+  );
+
+  const handleResizeKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const STEP = 16;
+      let next: number | null = null;
+      if (e.key === "ArrowLeft") next = sidebarWidth - STEP;
+      else if (e.key === "ArrowRight") next = sidebarWidth + STEP;
+      else if (e.key === "Home") next = SIDEBAR_MIN_WIDTH;
+      else if (e.key === "End") next = SIDEBAR_MAX_WIDTH;
+      if (next === null) return;
+      e.preventDefault();
+      void updateSettings({ sidebarWidth: clampSidebarWidth(next) });
+    },
+    [sidebarWidth, updateSettings],
+  );
 
   return (
     <div
-      className="flex shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]"
+      ref={panelRef}
+      className="relative flex shrink-0 flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)]"
       style={{ width: `${sidebarWidth}px` }}
     >
+      {/* Drag-to-resize handle on the right edge */}
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={t("sidebar.resize")}
+        aria-valuenow={sidebarWidth}
+        aria-valuemin={SIDEBAR_MIN_WIDTH}
+        aria-valuemax={SIDEBAR_MAX_WIDTH}
+        tabIndex={0}
+        title={t("sidebar.resize")}
+        onMouseDown={handleResizeStart}
+        onKeyDown={handleResizeKeyDown}
+        onDoubleClick={() => void updateSettings({ sidebarWidth: SIDEBAR_DEFAULT_WIDTH })}
+        className="group absolute inset-y-0 right-0 z-10 w-1.5 -mr-0.5 cursor-col-resize outline-none"
+      >
+        {/* Visible line, highlighted on hover/drag/focus */}
+        <div className="absolute inset-y-0 left-[2px] w-0.5 rounded-full bg-transparent transition-colors group-hover:bg-[var(--color-accent)] group-focus:bg-[var(--color-accent)] group-active:bg-[var(--color-accent)]" />
+        {/* Invisible hit target, biased outward into the gutter to avoid the content scrollbar */}
+        <div className="absolute inset-y-0 left-0 -right-2" />
+      </div>
+
       {/* Panel header */}
       <div className="flex h-11 shrink-0 items-center px-4">
         <span className="text-sm font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">

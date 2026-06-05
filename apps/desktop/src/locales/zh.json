@@ -15,6 +15,7 @@
     "ok": "确定"
   },
   "sidebar": {
+    "resize": "拖动以调整侧边栏宽度",
     "collections": "集合",
     "history": "历史记录",
     "environments": "环境",

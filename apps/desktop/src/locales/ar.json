@@ -15,6 +15,7 @@
     "ok": "موافق"
   },
   "sidebar": {
+    "resize": "اسحب لتغيير حجم الشريط الجانبي",
     "collections": "المجموعات",
     "history": "السجل",
     "environments": "البيئات",

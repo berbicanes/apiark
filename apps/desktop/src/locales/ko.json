@@ -15,6 +15,7 @@
     "ok": "확인"
   },
   "sidebar": {
+    "resize": "드래그하여 사이드바 크기 조절",
     "collections": "컬렉션",
     "history": "기록",
     "environments": "환경",

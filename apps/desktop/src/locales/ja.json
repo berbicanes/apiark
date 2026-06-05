@@ -15,6 +15,7 @@
     "ok": "OK"
   },
   "sidebar": {
+    "resize": "ドラッグしてサイドバーのサイズを変更",
     "collections": "コレクション",
     "history": "履歴",
     "environments": "環境",

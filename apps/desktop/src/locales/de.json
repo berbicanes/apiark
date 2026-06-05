@@ -15,6 +15,7 @@
     "ok": "OK"
   },
   "sidebar": {
+    "resize": "Ziehen, um die Seitenleiste anzupassen",
     "collections": "Sammlungen",
     "history": "Verlauf",
     "environments": "Umgebungen",

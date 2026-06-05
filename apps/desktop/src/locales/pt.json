@@ -15,6 +15,7 @@
     "ok": "OK"
   },
   "sidebar": {
+    "resize": "Arraste para redimensionar a barra lateral",
     "collections": "Coleções",
     "history": "Histórico",
     "environments": "Ambientes",
