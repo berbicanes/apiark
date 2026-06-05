@@ -29,6 +29,10 @@ interface TabState {
   tabs: Tab[];
   activeTabId: string | null;
   autoSaveError: string | null;
+  // True once restoreTabs has finished loading tabs and collections. Until
+  // then persistTabs is a no-op so an early debounced persist cannot overwrite
+  // persisted collections/tabs with empty values before they finish loading.
+  hydrated: boolean;
 
   // Tab management
   newTab: () => void;
@@ -471,6 +475,7 @@ export const useTabStore = create<TabState>((set, get) => ({
   tabs: [],
   activeTabId: null,
   autoSaveError: null,
+  hydrated: false,
 
   newTab: () => {
     const tab = createEmptyTab();
@@ -1018,6 +1023,10 @@ export const useTabStore = create<TabState>((set, get) => ({
   },
 
   persistTabs: () => {
+    // Don't persist until the initial restore has completed. Otherwise the
+    // debounced startup persist can run before collections finish loading and
+    // overwrite the saved collection list with an empty array.
+    if (!get().hydrated) return;
     const { tabs, activeTabId } = get();
     // Only persist file-backed tabs (exclude ephemeral WS/SSE tabs), deduplicated
     const seen = new Set<string>();
@@ -1067,6 +1076,23 @@ export const useTabStore = create<TabState>((set, get) => ({
   },
 
   restoreTabs: async () => {
+    // Re-open the persisted collections and WAIT for them to load before
+    // hydration completes, so the collection store is populated before the
+    // first persist can run (otherwise it would save collections: []).
+    const openCollections = async (paths: Set<string>) => {
+      if (paths.size === 0) return;
+      try {
+        const { useCollectionStore } = await import("@/stores/collection-store");
+        await Promise.all(
+          [...paths].map((path) =>
+            useCollectionStore.getState().openCollection(path).catch(() => {}),
+          ),
+        );
+      } catch {
+        // Collection store unavailable — nothing to restore in the sidebar.
+      }
+    };
+
     try {
       const persisted = await loadPersistedState();
 
@@ -1081,13 +1107,7 @@ export const useTabStore = create<TabState>((set, get) => ({
 
       if (persisted.tabs.length === 0) {
         // No tabs to restore, but still re-open collections
-        if (collectionPaths.size > 0) {
-          import("@/stores/collection-store").then(({ useCollectionStore }) => {
-            for (const path of collectionPaths) {
-              useCollectionStore.getState().openCollection(path).catch(() => {});
-            }
-          });
-        }
+        await openCollections(collectionPaths);
         return;
       }
       const seenPaths = new Set<string>();
@@ -1122,17 +1142,14 @@ export const useTabStore = create<TabState>((set, get) => ({
 
       // Re-open collections in the sidebar (persisted collections were
       // already added above; this also includes any from open tabs).
-      if (collectionPaths.size > 0) {
-        import("@/stores/collection-store").then(({ useCollectionStore }) => {
-          for (const path of collectionPaths) {
-            useCollectionStore.getState().openCollection(path).catch(() => {});
-          }
-        });
-      }
+      await openCollections(collectionPaths);
     } catch (err) {
       import("@/stores/toast-store").then(({ useToastStore }) =>
         useToastStore.getState().showWarning("Some tabs could not be restored from your last session.")
       );
+    } finally {
+      // Hydration complete — persistTabs is now allowed to write.
+      set({ hydrated: true });
     }
   },
 }));
