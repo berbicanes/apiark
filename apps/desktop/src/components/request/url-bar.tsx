@@ -5,6 +5,7 @@ import { useEnvironmentStore } from "@/stores/environment-store";
 import type { HttpMethod, EnvironmentData } from "@apiark/types";
 import { Loader2, Send, AlertCircle, Check } from "lucide-react";
 import * as Popover from "@radix-ui/react-popover";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { HintTooltip } from "@/components/ui/hint-tooltip";
 import { saveEnvironment } from "@/lib/tauri-api";
 
@@ -127,23 +128,54 @@ function VariableEditor({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger asChild>
-        <button
-          type="button"
-          className={`inline rounded px-0.5 font-mono transition-colors ${
-            isUnresolved
-              ? "text-[var(--color-warning)] bg-[var(--color-warning)]/10 hover:bg-[var(--color-warning)]/20"
-              : "text-[var(--color-accent)] bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/20"
-          }`}
-          title={
-            isUnresolved
-              ? `Click to set value for ${varName}`
-              : `${varName} = ${resolved} — click to edit`
-          }
-        >
-          {`{{${varName}}}`}
-        </button>
-      </Popover.Trigger>
+      {/* Hover tooltip previews the resolved value and its source without
+          opening the editor (Postman-style); clicking the chip still opens
+          the click-to-edit popover. */}
+      <Tooltip.Provider delayDuration={200}>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <Popover.Trigger asChild>
+              <button
+                type="button"
+                className={`inline rounded px-0.5 font-mono transition-colors ${
+                  isUnresolved
+                    ? "text-[var(--color-warning)] bg-[var(--color-warning)]/10 hover:bg-[var(--color-warning)]/20"
+                    : "text-[var(--color-accent)] bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/20"
+                }`}
+              >
+                {`{{${varName}}}`}
+              </button>
+            </Popover.Trigger>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              side="top"
+              align="start"
+              sideOffset={6}
+              className="z-50 max-w-xs rounded-lg border border-[var(--color-border)] bg-[var(--color-elevated)] px-2.5 py-2 text-xs shadow-xl"
+            >
+              <p className="font-mono text-[var(--color-accent)]">{`{{${varName}}}`}</p>
+              <p className="mt-1 break-all text-[var(--color-text-primary)]">
+                {isUnresolved ? (
+                  <span className="text-[var(--color-warning)]">Not set</span>
+                ) : resolved === "" ? (
+                  <span className="italic text-[var(--color-text-dimmed)]">
+                    (empty string)
+                  </span>
+                ) : (
+                  resolved
+                )}
+              </p>
+              <p className="mt-1 text-[10px] text-[var(--color-text-dimmed)]">
+                {activeEnvName
+                  ? `from ${activeEnvName} · click to edit`
+                  : "No environment selected · click to set"}
+              </p>
+              <Tooltip.Arrow className="fill-[var(--color-border)]" />
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
       <Popover.Portal>
         <Popover.Content
           className="z-50 w-72 rounded-xl border border-[var(--color-border)] bg-[var(--color-elevated)] p-3 shadow-xl"
