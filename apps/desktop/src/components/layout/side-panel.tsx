@@ -454,8 +454,11 @@ function CollectionHeader({
 
   return (
     <div>
-      <button
+      <div
         onClick={() => toggleExpand(collection.path)}
+        onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleExpand(collection.path); }}
+        role="button"
+        tabIndex={0}
         onContextMenu={onContextMenu}
         className="group flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-sm hover:bg-[var(--color-elevated)]"
       >
@@ -510,7 +513,7 @@ function CollectionHeader({
             </button>
           </span>
         )}
-      </button>
+      </div>
       {isExpanded && (
         <CollectionTree
           nodes={

@@ -178,6 +178,13 @@ export async function renameItem(
   return await invoke<string>("rename_item", { path, newName });
 }
 
+export async function duplicateItem(
+  path: string,
+  collectionName: string,
+): Promise<string> {
+  return await invoke<string>("duplicate_item", { path, collectionName });
+}
+
 // ── Collection Defaults ──
 
 export async function getCollectionDefaults(

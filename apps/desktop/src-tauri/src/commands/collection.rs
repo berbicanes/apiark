@@ -126,6 +126,14 @@ pub async fn rename_item(path: String, new_name: String) -> Result<String, Strin
 }
 
 #[tauri::command]
+pub async fn duplicate_item(path: String, collection_name: String) -> Result<String, String> {
+    let item_path = Path::new(&path);
+    tracing::info!(path = %path, "Duplicating item");
+    let new_path = collection::duplicate_item(item_path, &collection_name)?;
+    Ok(new_path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
 pub async fn create_sample_collection() -> Result<String, String> {
     let home = dirs::home_dir().ok_or("Could not determine home directory")?;
     let base = home.join("ApiArk").join("getting-started");

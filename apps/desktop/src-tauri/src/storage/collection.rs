@@ -232,6 +232,76 @@ fn copy_dir_all(src: &Path, dst: &Path) -> Result<(), String> {
     Ok(())
 }
 
+/// Duplicate a file or folder (copy with "(copy)" suffix).
+pub fn duplicate_item(path: &Path, collection_name: &str) -> Result<PathBuf, String> {
+    let parent = path.parent().ok_or("Cannot get parent directory")?;
+
+    // Generate a unique name with "(copy)" suffix
+    let base_name = if path.is_dir() {
+        path.file_name().and_then(|n| n.to_str()).unwrap_or("folder")
+    } else {
+        path.file_stem().and_then(|n| n.to_str()).unwrap_or("request")
+    };
+
+    let mut copy_name = format!("{} (copy)", base_name);
+    let mut new_path = if path.is_dir() {
+        parent.join(&copy_name)
+    } else {
+        let ext = path.extension().map(|e| e.to_string_lossy().to_string());
+        if let Some(ext) = ext {
+            parent.join(format!("{copy_name}.{ext}"))
+        } else {
+            parent.join(&copy_name)
+        }
+    };
+
+    // If name exists, add a number suffix
+    let mut counter = 2;
+    while new_path.exists() {
+        copy_name = format!("{} (copy {})", base_name, counter);
+        new_path = if path.is_dir() {
+            parent.join(&copy_name)
+        } else {
+            let ext = path.extension().map(|e| e.to_string_lossy().to_string());
+            if let Some(ext) = ext {
+                parent.join(format!("{copy_name}.{ext}"))
+            } else {
+                parent.join(&copy_name)
+            }
+        };
+        counter += 1;
+    }
+
+    if path.is_dir() {
+        copy_dir_all(path, &new_path)?;
+    } else {
+        fs::copy(path, &new_path).map_err(|e| format!("Failed to copy file: {e}"))?;
+
+        // If it's a request YAML, also update the name field inside
+        if let Ok(mut request) = read_request(&new_path) {
+            request.name = copy_name.clone();
+            let _ = write_request(&new_path, &request);
+        }
+    }
+
+    // If it's a collection directory, update the name in .apiark/apiark.yaml
+    if new_path.is_dir() {
+        let config_path = new_path.join(".apiark").join("apiark.yaml");
+        if config_path.exists() {
+            if let Ok(content) = fs::read_to_string(&config_path) {
+                if let Ok(mut config) = serde_yaml::from_str::<CollectionConfig>(&content) {
+                    config.name = copy_name;
+                    if let Ok(yaml) = serde_yaml::to_string(&config) {
+                        let _ = fs::write(&config_path, yaml);
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(new_path)
+}
+
 /// Rename a file or folder.
 pub fn rename_item(path: &Path, new_name: &str) -> Result<PathBuf, String> {
     let parent = path.parent().ok_or("Cannot get parent directory")?;
