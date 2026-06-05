@@ -4,6 +4,7 @@ import { Copy, Check } from "lucide-react";
 import { useActiveTab } from "@/stores/tab-store";
 import { useEnvironmentStore } from "@/stores/environment-store";
 import { generateCurl, generateJsFetch, generatePythonRequests } from "@/lib/code-generators";
+import { variableRegex } from "@/lib/variables";
 import type { Tab } from "@apiark/types";
 
 type Language = "curl" | "javascript" | "python";
@@ -16,7 +17,7 @@ const LANGUAGES: { value: Language; label: string }[] = [
 
 /** Replace all {{varName}} in a string with resolved values */
 function resolveVariables(str: string, vars: Record<string, string>): string {
-  return str.replace(/\{\{([\w$]+)\}\}/g, (_, name) => vars[name] ?? `{{${name}}}`);
+  return str.replace(variableRegex(), (_, name) => vars[name] ?? `{{${name}}}`);
 }
 
 /** Replace :paramName path variables in a URL with their values */
