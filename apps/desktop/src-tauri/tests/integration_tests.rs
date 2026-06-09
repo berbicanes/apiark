@@ -566,7 +566,28 @@ mod auth_handlers {
 
 mod interpolation {
     use apiark_lib::http::interpolation::interpolate;
+    use apiark_lib::models::request::{HttpMethod, KeyValuePair, SendRequestParams};
     use std::collections::HashMap;
+
+    fn get_params() -> SendRequestParams {
+        SendRequestParams {
+            method: HttpMethod::GET,
+            url: "https://httpbin.org/get".to_string(),
+            headers: vec![],
+            params: vec![],
+            body: None,
+            auth: None,
+            proxy: None,
+            timeout_ms: Some(15_000),
+            follow_redirects: true,
+            verify_ssl: true,
+            cookies: None,
+            ca_cert_path: None,
+            client_cert_path: None,
+            client_key_path: None,
+            client_cert_passphrase: None,
+        }
+    }
 
     #[test]
     fn test_basic_variable_substitution() {
@@ -622,8 +643,8 @@ mod interpolation {
     #[test]
     fn test_unresolved_preserved() {
         let vars = HashMap::new();
-        assert_eq!(interpolate("{{unknown}}", &vars), "{{unknown}}");
-        println!("  Unresolved variable: preserved as-is");
+        assert_eq!(interpolate("{{unknown}}", &vars), "");
+        println!("  Unresolved variable: returns empty string");
     }
 
     #[test]
@@ -632,8 +653,41 @@ mod interpolation {
         vars.insert("host".into(), "localhost".into());
         let result = interpolate("{{host}}/{{$uuid}}/{{missing}}", &vars);
         assert!(result.starts_with("localhost/"));
-        assert!(result.ends_with("/{{missing}}"));
+        assert!(result.ends_with("/"));
         println!("  Mixed vars: resolved + dynamic + unresolved OK");
+    }
+
+    #[test]
+    fn test_empty_header_filtered() {
+        let client = reqwest::Client::new();
+        let mut params = get_params();
+        params.headers.push(KeyValuePair::new(
+            "X-Missing".into(),
+            "".into(),
+            true,
+        ));
+        let builder = apiark_lib::http::request_builder::build_request(&client, &params)
+            .expect("build_request failed");
+        let request = builder.build().unwrap();
+        assert!(
+            request.headers().get("X-Missing").is_none(),
+            "Header with empty value should be filtered out"
+        );
+        // Also verify a non-empty header IS present
+        params.headers.push(KeyValuePair::new(
+            "X-Present".into(),
+            "value".into(),
+            true,
+        ));
+        let builder2 = apiark_lib::http::request_builder::build_request(&client, &params)
+            .expect("build_request failed");
+        let request2 = builder2.build().unwrap();
+        assert_eq!(
+            request2.headers().get("X-Present").and_then(|v| v.to_str().ok()),
+            Some("value"),
+            "Non-empty header should be present"
+        );
+        println!("  Empty-value header: correctly filtered out");
     }
 }
 

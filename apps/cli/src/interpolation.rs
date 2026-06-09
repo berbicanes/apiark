@@ -12,7 +12,7 @@ pub fn interpolate(input: &str, variables: &HashMap<String, String>) -> String {
         if let Some(value) = resolve_dynamic(var_name) {
             return value;
         }
-        caps[0].to_string()
+        String::new()
     })
     .to_string()
 }

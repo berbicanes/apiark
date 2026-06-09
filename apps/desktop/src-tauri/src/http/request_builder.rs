@@ -137,7 +137,7 @@ pub fn build_request(
     for header in params
         .headers
         .iter()
-        .filter(|h| h.enabled && !h.key.is_empty())
+        .filter(|h| h.enabled && !h.key.is_empty() && !h.value.is_empty())
     {
         builder = builder.header(&header.key, &header.value);
     }
@@ -215,7 +215,7 @@ fn apply_auth(
             let headers: Vec<(String, String)> = params
                 .headers
                 .iter()
-                .filter(|h| h.enabled && !h.key.is_empty())
+                .filter(|h| h.enabled && !h.key.is_empty() && !h.value.is_empty())
                 .map(|h| (h.key.clone(), h.value.clone()))
                 .collect();
             let body_str = params

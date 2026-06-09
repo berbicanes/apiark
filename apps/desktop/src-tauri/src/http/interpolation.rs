@@ -23,8 +23,8 @@ pub fn interpolate(input: &str, variables: &HashMap<String, String>) -> String {
         if let Some(value) = resolve_dynamic(var_name) {
             return value;
         }
-        // Leave unresolved variables as-is
-        caps[0].to_string()
+        // Return empty string for unresolved variables
+        String::new()
     })
     .to_string()
 }
@@ -105,9 +105,19 @@ mod tests {
     }
 
     #[test]
-    fn test_unresolved_left_as_is() {
+    fn test_unresolved_returns_empty() {
         let vars = HashMap::new();
-        assert_eq!(interpolate("{{unknown}}", &vars), "{{unknown}}");
+        assert_eq!(interpolate("{{unknown}}", &vars), "");
+    }
+
+    #[test]
+    fn test_mixed_known_and_unknown() {
+        let mut vars = HashMap::new();
+        vars.insert("known".to_string(), "hello".to_string());
+        assert_eq!(
+            interpolate("{{known}}-{{unknown}}-{{alsoUnknown}}", &vars),
+            "hello--"
+        );
     }
 
     #[test]

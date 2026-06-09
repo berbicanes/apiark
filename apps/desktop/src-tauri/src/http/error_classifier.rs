@@ -18,7 +18,17 @@ pub fn classify_reqwest_error(err: reqwest::Error, timeout_ms: u64) -> HttpEngin
     }
 
     if err.is_builder() {
-        return HttpEngineError::InvalidUrl(err.to_string());
+        // Walk the source chain so the message includes the actual cause
+        // (e.g. "invalid header value") rather than just "builder error".
+        let mut detail = err.to_string();
+        let mut src: Option<&dyn std::error::Error> = std::error::Error::source(&err);
+        while let Some(e) = src {
+            detail.push_str(": ");
+            detail.push_str(&e.to_string());
+            src = e.source();
+        }
+        tracing::error!(detail = %detail, "Request builder error");
+        return HttpEngineError::InvalidUrl(detail);
     }
 
     if err.is_decode() {
