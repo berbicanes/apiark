@@ -20,7 +20,7 @@ pub fn detect_import_format(file_path: &str) -> Result<String, String> {
                 if entry
                     .path()
                     .extension()
-                    .map(|e| e == "bru")
+                    .map(|e| e == "bru" || e == "yml" || e == "yaml")
                     .unwrap_or(false)
                 {
                     return Ok("bruno".to_string());
@@ -145,18 +145,32 @@ pub fn import_environment(file_path: &str, collection_path: &str) -> Result<Stri
         .unwrap_or("Imported Environment")
         .to_string();
 
-    let values = root
-        .get("values")
-        .and_then(|v| v.as_array())
-        .ok_or("Not a valid Postman environment file: missing 'values' array")?;
+    let values = root.get("values").and_then(|v| v.as_array());
+    let bruno_vars = root.get("variables").and_then(|v| v.as_array());
+
+    let vars_array = match (values, bruno_vars) {
+        (Some(v), _) => v,
+        (None, Some(v)) => v,
+        (None, None) => {
+            return Err(
+                "Not a valid environment file: missing 'values' (Postman) or 'variables' (Bruno) array."
+                    .to_string(),
+            );
+        }
+    };
 
     let mut variables = std::collections::HashMap::new();
-    for val in values {
+    for val in vars_array {
         let enabled = val.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
         if !enabled {
             continue;
         }
-        if let Some(key) = val.get("key").and_then(|k| k.as_str()) {
+        // Bruno uses "name", Postman uses "key"
+        if let Some(key) = val
+            .get("name")
+            .or_else(|| val.get("key"))
+            .and_then(|k| k.as_str())
+        {
             let value = val
                 .get("value")
                 .and_then(|v| v.as_str())

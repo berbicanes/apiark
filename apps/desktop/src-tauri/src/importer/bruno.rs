@@ -30,12 +30,49 @@ pub fn parse_bruno_dir(dir_path: &str) -> Result<ImportData, String> {
         if let Ok(entries) = fs::read_dir(&env_dir) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                if path.extension().map(|e| e == "bru").unwrap_or(false) {
-                    if let Ok(content) = fs::read_to_string(&path) {
-                        if let Some(env) = parse_bru_environment(&content) {
-                            environments.push(env);
+                let file_name = entry.file_name().to_string_lossy().to_string();
+                let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("");
+                match ext {
+                    "bru" => {
+                        if let Ok(content) = fs::read_to_string(&path) {
+                            if let Some(env) = parse_bru_environment(&content) {
+                                environments.push(env);
+                            }
                         }
                     }
+                    "yml" | "yaml" => {
+                        if let Ok(content) = fs::read_to_string(&path) {
+                            if let Some(env) = parse_yaml_environment(&content) {
+                                environments.push(env);
+                            } else {
+                                warnings.push(ImportWarning {
+                                    item_name: file_name,
+                                    message: "Could not parse YAML environment file — invalid format.".to_string(),
+                                });
+                            }
+                        }
+                    }
+                    "json" => {
+                        match fs::read_to_string(&path) {
+                            Ok(content) => {
+                                if let Some(env) = parse_json_environment(&content) {
+                                    environments.push(env);
+                                } else {
+                                    warnings.push(ImportWarning {
+                                        item_name: file_name,
+                                        message: "Could not parse JSON environment file — invalid format.".to_string(),
+                                    });
+                                }
+                            }
+                            Err(e) => {
+                                warnings.push(ImportWarning {
+                                    item_name: file_name,
+                                    message: format!("Could not read JSON environment file: {e}"),
+                                });
+                            }
+                        }
+                    }
+                    _ => {}
                 }
             }
         }
@@ -90,12 +127,15 @@ fn scan_bruno_dir(
         let path = entry.path();
         let file_name = entry.file_name().to_string_lossy().to_string();
 
-        // Skip hidden, environments dir, collection.bru, bruno.json
+        // Skip hidden, environments dir, collection.bru, bruno.json,
+        // opencollection.yml (collection metadata), and folder.yml (dir metadata)
         if file_name.starts_with('.')
             || file_name == "environments"
             || file_name == "collection.bru"
             || file_name == "bruno.json"
             || file_name == "node_modules"
+            || file_name == "opencollection.yml"
+            || file_name == "folder.yml"
         {
             continue;
         }
@@ -116,6 +156,24 @@ fn scan_bruno_dir(
                         warnings.push(ImportWarning {
                             item_name: file_name.clone(),
                             message: "Could not parse .bru file — skipped.".to_string(),
+                        });
+                    }
+                },
+                Err(e) => {
+                    warnings.push(ImportWarning {
+                        item_name: file_name.clone(),
+                        message: format!("Could not read file: {e}"),
+                    });
+                }
+            }
+        } else if file_name.ends_with(".yml") || file_name.ends_with(".yaml") {
+            match fs::read_to_string(&path) {
+                Ok(content) => match parse_bru_yaml_request(&content) {
+                    Some(item) => requests.push(item),
+                    None => {
+                        warnings.push(ImportWarning {
+                            item_name: file_name.clone(),
+                            message: "Could not parse Bruno YAML request — skipped.".to_string(),
                         });
                     }
                 },
@@ -284,6 +342,158 @@ fn parse_bru_environment(content: &str) -> Option<ImportEnvironment> {
 
     if variables.is_empty() {
         return None;
+    }
+
+    Some(ImportEnvironment { name, variables })
+}
+
+/// Parse a Bruno JSON environment file (`{ name, variables[] }`) into ImportEnvironment.
+fn parse_json_environment(content: &str) -> Option<ImportEnvironment> {
+    let root: serde_json::Value = serde_json::from_str(content).ok()?;
+
+    let name = root.get("name")?.as_str()?.to_string();
+    let variables_arr = root.get("variables")?.as_array()?;
+
+    let mut variables = HashMap::new();
+    for var in variables_arr {
+        let var_name = var.get("name")?.as_str()?;
+        let enabled = var
+            .get("enabled")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true);
+        if !enabled {
+            continue;
+        }
+        let value = var
+            .get("value")
+            .and_then(|v| v.as_str())
+            .unwrap_or("")
+            .to_string();
+        variables.insert(var_name.to_string(), value);
+    }
+
+    Some(ImportEnvironment { name, variables })
+}
+
+/// Parse a Bruno YAML export request file into ImportItem.
+/// Bruno export format uses structured YAML: info, http, body, auth, runtime, settings.
+fn parse_bru_yaml_request(content: &str) -> Option<ImportItem> {
+    let root: serde_yaml::Value = serde_yaml::from_str(content).ok()?;
+
+    let info = root.get("info")?;
+    let name = info.get("name")?.as_str()?.to_string();
+
+    let http = root.get("http")?;
+    let method = http.get("method")?.as_str()?.to_uppercase();
+    let url = http.get("url")?.as_str()?.to_string();
+
+    let mut headers = HashMap::new();
+    if let Some(headers_arr) = http.get("headers").and_then(|h| h.as_sequence()) {
+        for h in headers_arr {
+            if let (Some(n), Some(v)) = (h.get("name").and_then(|n| n.as_str()),
+                                          h.get("value").and_then(|v| v.as_str())) {
+                let disabled = h.get("disabled").and_then(|d| d.as_bool()).unwrap_or(false);
+                if !disabled {
+                    headers.insert(n.to_string(), v.to_string());
+                }
+            }
+        }
+    }
+
+    let mut params: Option<HashMap<String, String>> = None;
+    if let Some(params_arr) = http.get("params").and_then(|p| p.as_sequence()) {
+        let mut map = HashMap::new();
+        for p in params_arr {
+            if let (Some(n), Some(v)) = (p.get("name").and_then(|n| n.as_str()),
+                                          p.get("value").and_then(|v| v.as_str())) {
+                map.insert(n.to_string(), v.to_string());
+            }
+        }
+        if !map.is_empty() {
+            params = Some(map);
+        }
+    }
+
+    let body = http.get("body").and_then(|b| {
+        let body_type = b.get("type")?.as_str()?.to_string();
+        let data = b.get("data")?.as_str()?.to_string();
+        if data.trim().is_empty() { None }
+        else { Some(ImportBody { body_type, content: data }) }
+    });
+
+    let post_response_script = root.get("runtime")
+        .and_then(|r| r.get("scripts"))
+        .and_then(|s| s.as_sequence())
+        .and_then(|scripts| {
+            for script in scripts {
+                if script.get("type").and_then(|t| t.as_str()) == Some("after-response") {
+                    return script.get("code").and_then(|c| c.as_str()).map(|s| s.to_string());
+                }
+            }
+            None
+        });
+
+    let auth = parse_bru_yaml_auth(root.get("auth"));
+
+    Some(ImportItem::Request {
+        name,
+        method,
+        url,
+        headers,
+        params,
+        body: Box::new(body),
+        auth: Box::new(auth),
+        description: None,
+        pre_request_script: root.get("runtime")
+            .and_then(|r| r.get("scripts"))
+            .and_then(|s| s.as_sequence())
+            .and_then(|scripts| {
+                for script in scripts {
+                    if script.get("type").and_then(|t| t.as_str()) == Some("pre-request") {
+                        return script.get("code").and_then(|c| c.as_str()).map(|s| s.to_string());
+                    }
+                }
+                None
+            }),
+        post_response_script,
+        tests: None,
+    })
+}
+
+fn parse_bru_yaml_auth(auth: Option<&serde_yaml::Value>) -> Option<AuthConfig> {
+    let auth = auth?;
+    // "inherit" or "none" as a plain string → no auth
+    if let Some(_s) = auth.as_str() {
+        return None;
+    }
+    // Mapping: check for known auth types
+    if let Some(bearer) = auth.get("bearer") {
+        let token = bearer.get("token").and_then(|t| t.as_str()).unwrap_or("");
+        return Some(AuthConfig::Bearer { token: token.to_string() });
+    }
+    if let Some(basic) = auth.get("basic") {
+        let username = basic.get("username").and_then(|u| u.as_str()).unwrap_or("");
+        let password = basic.get("password").and_then(|p| p.as_str()).unwrap_or("");
+        return Some(AuthConfig::Basic {
+            username: username.to_string(),
+            password: password.to_string(),
+        });
+    }
+    None
+}
+
+/// Parse a Bruno YAML environment file (`name` + `variables[]`) into ImportEnvironment.
+fn parse_yaml_environment(content: &str) -> Option<ImportEnvironment> {
+    let root: serde_yaml::Value = serde_yaml::from_str(content).ok()?;
+
+    let name = root.get("name")?.as_str()?.to_string();
+    let variables_arr = root.get("variables")?.as_sequence()?;
+
+    let mut variables = HashMap::new();
+    for var in variables_arr {
+        let var_name = var.get("name")?.as_str()?;
+        let value = var.get("value").and_then(|v| v.as_str()).unwrap_or("");
+        variables.insert(var_name.to_string(), value.to_string());
     }
 
     Some(ImportEnvironment { name, variables })
