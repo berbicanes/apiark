@@ -18,7 +18,7 @@ import { AuditPanel } from "@/components/audit/audit-panel";
 
 interface SidePanelProps {
   activeView: ActivityView;
-  envSelectorRef?: React.RefObject<HTMLSelectElement | null>;
+  envSelectorRef?: React.RefObject<HTMLButtonElement | null>;
   onOpenMock?: () => void;
   onOpenMonitor?: () => void;
   onOpenDocs?: () => void;
@@ -659,7 +659,7 @@ function NewCollectionDialog({
 function EnvironmentsPanel({
   envSelectorRef,
 }: {
-  envSelectorRef?: React.RefObject<HTMLSelectElement | null>;
+  envSelectorRef?: React.RefObject<HTMLButtonElement | null>;
 }) {
   const { t } = useTranslation();
   const { environments, activeEnvironmentName, setActiveEnvironment, loadEnvironments } =
@@ -728,7 +728,8 @@ function EnvironmentsPanel({
 
   const handleCreateNew = async (name: string) => {
     if (!collectionPath) return;
-    const env: EnvironmentData = { name, variables: {}, secrets: [] };
+    const color = ["#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#f97316", "#eab308", "#06b6d4", "#14b8a6", "#a855f7", "#ef4444"][environments.length % 10];
+    const env: EnvironmentData = { name, variables: {}, secrets: [], color };
     try {
       await saveEnvironment(collectionPath, env);
       await loadEnvironments(collectionPath);
@@ -845,6 +846,12 @@ function EnvironmentsPanel({
               }`}
             >
               <div className="flex items-center gap-1.5 truncate">
+                {env.color && (
+                  <span
+                    className="h-2 w-2 shrink-0 rounded-full"
+                    style={{ backgroundColor: env.color }}
+                  />
+                )}
                 <span className="truncate">{env.name}</span>
                 {env.scope === "personal" && (
                   <span className="shrink-0 rounded bg-amber-500/15 px-1 py-0.5 text-[8px] font-bold text-amber-400">
@@ -890,13 +897,20 @@ function EnvironmentEditor({
   );
 
   const [scope, setScope] = useState<"shared" | "personal">(env.scope ?? "shared");
+  const [color, setColor] = useState(env.color ?? "");
 
   const handleSave = () => {
     const vars: Record<string, string> = {};
     for (const v of variables) {
       if (v.key.trim()) vars[v.key.trim()] = v.value;
     }
-    onSave({ ...env, name: name.trim() || env.name, variables: vars, scope });
+    onSave({
+      ...env,
+      name: name.trim() || env.name,
+      variables: vars,
+      scope,
+      color: color || undefined,
+    });
   };
 
   const updateVar = (index: number, field: "key" | "value", val: string) => {
@@ -961,6 +975,43 @@ function EnvironmentEditor({
         >
           Personal
         </button>
+      </div>
+
+      {/* Color picker */}
+      <div className="flex items-center gap-2 rounded bg-[var(--color-elevated)] px-2 py-1.5">
+        <span className="text-[10px] text-[var(--color-text-dimmed)]">Color:</span>
+        <div className="flex items-center gap-1">
+          {["#10b981","#3b82f6","#8b5cf6","#ec4899","#f97316","#eab308","#06b6d4","#14b8a6","#a855f7","#ef4444"].map((c) => (
+            <button
+              key={c}
+              onClick={() => setColor(color === c ? "" : c)}
+              className={`h-4 w-4 rounded-full transition-transform ${
+                color === c ? "scale-125 ring-1 ring-white" : ""
+              }`}
+              style={{ backgroundColor: c }}
+              title={c}
+            />
+          ))}
+          <label className="relative flex h-4 w-4 cursor-pointer items-center justify-center rounded-full border border-dashed border-[var(--color-border)] hover:border-[var(--color-text-muted)]">
+            <Plus className="h-3 w-3 text-[var(--color-text-dimmed)]" />
+            <input
+              type="color"
+              value={color || "#000000"}
+              onChange={(e) => setColor(e.target.value)}
+              className="absolute inset-0 cursor-pointer opacity-0"
+              title="Custom color"
+            />
+          </label>
+          {color && (
+            <button
+              onClick={() => setColor("")}
+              className="ml-1 text-[10px] text-[var(--color-text-dimmed)] hover:text-[var(--color-text-secondary)]"
+              title="Remove color"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Variables */}

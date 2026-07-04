@@ -20,6 +20,8 @@ export function StatusBar({ onToggleTerminal, terminalOpen }: StatusBarProps) {
   const [appVersion, setAppVersion] = useState("");
   useEffect(() => { getVersion().then(setAppVersion); }, []);
   const activeEnv = useEnvironmentStore((s) => s.activeEnvironmentName);
+  const environments = useEnvironmentStore((s) => s.environments);
+  const activeEnvData = environments.find((e) => e.name === activeEnv);
   const collections = useCollectionStore((s) => s.collections);
   const mockServers = useMockStore((s) => s.servers);
   const monitors = useMonitorStore((s) => s.monitors);
@@ -45,6 +47,12 @@ export function StatusBar({ onToggleTerminal, terminalOpen }: StatusBarProps) {
       <div className="flex items-center gap-3">
         {activeEnv && (
           <span className="flex items-center gap-1 text-[var(--color-text-muted)]">
+            {activeEnvData?.color && (
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: activeEnvData.color }}
+              />
+            )}
             <Globe className="h-4 w-4" />
             {activeEnv}
           </span>

@@ -73,7 +73,7 @@ function App() {
   const [zenMode, setZenMode] = useState(false);
   const [terminalOpen, setTerminalOpen] = useState(false);
   const urlBarRef = useRef<HTMLInputElement>(null);
-  const envSelectorRef = useRef<HTMLSelectElement>(null);
+  const envSelectorRef = useRef<HTMLButtonElement>(null);
   const { isCompact } = useResponsive();
 
   useTheme();

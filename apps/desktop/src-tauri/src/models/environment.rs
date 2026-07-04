@@ -13,6 +13,9 @@ pub struct EnvironmentFile {
     /// Determined by which directory the file is in.
     #[serde(default)]
     pub scope: EnvironmentScope,
+    /// Optional hex colour (e.g. "#10b981") for visual identification.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub color: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
