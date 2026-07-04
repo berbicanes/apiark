@@ -680,8 +680,13 @@ function EnvironmentsPanel({
 
   const handleSave = async (env: EnvironmentData) => {
     if (!collectionPath) return;
+    const oldName = editingEnv?.name;
+    const nameChanged = oldName && oldName !== env.name;
     try {
-      await saveEnvironment(collectionPath, env);
+      await saveEnvironment(collectionPath, env, undefined, oldName);
+      if (nameChanged && activeEnvironmentName === oldName) {
+        setActiveEnvironment(env.name);
+      }
       await loadEnvironments(collectionPath);
       setEditingEnv(null);
     } catch (err) {

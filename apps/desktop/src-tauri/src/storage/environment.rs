@@ -127,7 +127,28 @@ pub fn get_resolved_variables(
 }
 
 /// Save an environment file to disk. Saves to shared or personal directory based on scope.
-pub fn save_environment(collection_path: &Path, env: &EnvironmentFile) -> Result<(), String> {
+/// If `old_name` is provided and differs from the new name, the old file is removed from
+/// both shared and personal directories, handling renames and scope changes correctly.
+pub fn save_environment(
+    collection_path: &Path,
+    env: &EnvironmentFile,
+    old_name: Option<&str>,
+) -> Result<(), String> {
+    // If the name changed, remove the old file from whichever scope directory it may live in
+    if let Some(old) = old_name {
+        if old != env.name {
+            for subdir in ["environments", "environments.local"] {
+                let dir = collection_path.join(".apiark").join(subdir);
+                if let Ok(path) = find_environment_file(&dir, old) {
+                    fs::remove_file(&path).map_err(|e| {
+                        format!("Failed to remove old environment file: {e}")
+                    })?;
+                    break;
+                }
+            }
+        }
+    }
+
     let subdir = match env.scope {
         EnvironmentScope::Personal => "environments.local",
         EnvironmentScope::Shared => "environments",

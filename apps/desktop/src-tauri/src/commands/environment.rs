@@ -23,6 +23,7 @@ pub async fn save_environment(
     collection_path: String,
     env: EnvironmentFile,
     scope: Option<String>,
+    old_name: Option<String>,
 ) -> Result<(), String> {
     let path = Path::new(&collection_path);
     let mut env = env;
@@ -33,7 +34,7 @@ pub async fn save_environment(
         };
     }
     tracing::debug!(path = %collection_path, name = %env.name, "Saving environment");
-    environment::save_environment(path, &env)
+    environment::save_environment(path, &env, old_name.as_deref())
 }
 
 /// Resolve all variables for a given environment, merging:

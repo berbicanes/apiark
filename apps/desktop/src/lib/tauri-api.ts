@@ -246,8 +246,14 @@ export async function saveEnvironment(
   collectionPath: string,
   env: EnvironmentData,
   scope?: "shared" | "personal",
+  oldName?: string,
 ): Promise<void> {
-  await invoke<void>("save_environment", { collectionPath, env, scope: scope ?? env.scope ?? null });
+  await invoke<void>("save_environment", {
+    collectionPath,
+    env,
+    scope: scope ?? env.scope ?? null,
+    oldName: oldName ?? null,
+  });
 }
 
 // ── History ──
