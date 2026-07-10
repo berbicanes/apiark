@@ -58,6 +58,12 @@ pub fn parse_curl(input: &str) -> Result<ParsedCurlRequest, String> {
                     ));
                 }
             }
+            "-b" | "--cookie" => {
+                i += 1;
+                if let Some(cookie_val) = tokens.get(i) {
+                    headers.insert("Cookie".to_string(), cookie_val.clone());
+                }
+            }
             "-k" | "--insecure" => {
                 verify_ssl = false;
             }
@@ -236,5 +242,29 @@ mod tests {
     fn test_insecure_flag() {
         let result = parse_curl("curl -k https://example.com").unwrap();
         assert!(!result.verify_ssl);
+    }
+
+    #[test]
+    fn test_cookie_flag() {
+        // short flag -b
+        let result =
+            parse_curl("curl 'https://example.com/api/data' -b 'session=abc123; token=xyz' -H 'accept: application/json'")
+                .unwrap();
+        assert_eq!(
+            result.headers.get("Cookie").map(String::as_str),
+            Some("session=abc123; token=xyz")
+        );
+        assert_eq!(
+            result.headers.get("accept").map(String::as_str),
+            Some("application/json")
+        );
+
+        // long flag --cookie
+        let result =
+            parse_curl("curl https://example.com --cookie 'auth=tok1'").unwrap();
+        assert_eq!(
+            result.headers.get("Cookie").map(String::as_str),
+            Some("auth=tok1")
+        );
     }
 }
