@@ -1,0 +1,13 @@
+[Desktop Entry]
+Name=Apiark
+GenericName=Rest API client
+Comment=Apiark is a lightweight rest api client
+Exec=apiark
+Icon=dev.apiark.app
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+Keywords=restfulapi;apiark;restapi;api;lightweightapi;rest
+StartupNotify=true
+StartupWMClass=apiark
+DBusActivatable=false

@@ -1,0 +1,90 @@
+id: dev.apiark.app
+runtime: org.gnome.Platform
+runtime-version: "50"
+sdk: org.gnome.Sdk
+
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+  - org.freedesktop.Sdk.Extension.node24
+
+command: apiark
+
+finish-args:
+  # ApiArk is an API client - it must be able to reach arbitrary HTTP/WS/gRPC hosts.
+  - --share=network
+  # Collections and Git-synced workspaces live in the user's home directory.
+  - --filesystem=home
+  - --share=ipc
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+
+modules:
+  - name: apiark
+    buildsystem: simple
+
+    build-options:
+      # CI builds fetch pnpm/npm/crates from the network. For a Flathub submission,
+      # remove --share=network and ship vendored sources instead:
+      #   Cargo: python3 flatpak-builder-tools/cargo/flatpak-cargo-generator.py \
+      #              apps/desktop/src-tauri/Cargo.lock -o flatpak/cargo-sources.json
+      #   pnpm:  generate flatpak/generated-sources.json from pnpm-lock.yaml
+      #          (see https://github.com/flatpak/flatpak-builder-tools/tree/master/node)
+      # Then list those files in the sources section below, and regenerate them on
+      # every lockfile bump.
+      build-args:
+        - --share=network
+      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node24/bin:/run/build/apiark/bin
+      env:
+        HOME: /run/build/apiark
+        CARGO_HOME: /run/build/apiark/cargo
+        npm_config_cache: /run/build/apiark/npm-cache
+        npm_config_store_dir: /run/build/apiark/pnpm-store
+        PNPM_HOME: /run/build/apiark/pnpm
+
+    build-commands:
+      # The node24 SDK extension ships npm but not pnpm. Install it into the
+      # writable build dir (the SDK mount itself is read-only) so that
+      # /run/build/apiark/bin ends up on PATH via append-path above.
+      - npm install --global --prefix=/run/build/apiark pnpm@10
+      - pnpm --version
+
+      # This is a pnpm workspace; there is no package-lock.json.
+      - pnpm install --frozen-lockfile
+
+      # Builds the frontend (tauri's beforeBuildCommand) plus the Rust binary.
+      # Updater artifacts are disabled: Flatpak updates are handled by the runtime.
+      - pnpm --filter @apiark/desktop exec tauri build --no-bundle --config '{"bundle":{"createUpdaterArtifacts":false}}'
+
+      # --- Install artifacts ---
+      - install -Dm755 apps/desktop/src-tauri/target/release/apiark /app/bin/apiark
+
+      - install -Dm644 flatpak/dev.apiark.app.desktop
+        /app/share/applications/dev.apiark.app.desktop
+
+      - install -Dm644 flatpak/dev.apiark.app.metainfo.xml
+        /app/share/metainfo/dev.apiark.app.metainfo.xml
+
+      - install -Dm644 apps/desktop/src-tauri/icons/32x32.png
+        /app/share/icons/hicolor/32x32/apps/dev.apiark.app.png
+      - install -Dm644 apps/desktop/src-tauri/icons/64x64.png
+        /app/share/icons/hicolor/64x64/apps/dev.apiark.app.png
+      - install -Dm644 apps/desktop/src-tauri/icons/128x128.png
+        /app/share/icons/hicolor/128x128/apps/dev.apiark.app.png
+      - install -Dm644 apps/desktop/src-tauri/icons/128x128@2x.png
+        /app/share/icons/hicolor/256x256/apps/dev.apiark.app.png
+
+    sources:
+      - type: dir
+        path: ../
+      # For a Flathub submission, replace the `type: dir` source above with a git
+      # source pinned to the release tag, and add the vendored sources below:
+      #
+      # - type: git
+      #   url: https://github.com/berbicanes/apiark.git
+      #   tag: v0.4.6
+      #   commit: <full-commit-hash>
+      # - cargo-sources.json
+      # - generated-sources.json
+      #
+      # Bare filenames are interpreted by flatpak-builder as lists of sources.

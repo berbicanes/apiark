@@ -1,0 +1,54 @@
+name: flatpak
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  packages: write
+  actions: write
+
+jobs:
+  build-flatpak:
+    name: Flatpak (x86_64)
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+
+    steps:
+      - uses: actions/checkout@main
+        with:
+          submodules: recursive
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@401fe28a8384095fc1531b9d320b292f0ee45adb # v6.7
+        with:
+          bundle: apiark_x86_64.flatpak
+          manifest-path: flatpak/dev.apiark.app.yml
+          branch: stable
+          cache-key: apiark-flatpak-${{ github.sha }}
+          arch: x86_64
+          verbose: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+
+      - name: Upload flatpak bundle
+        uses: actions/upload-artifact@main
+        with:
+          name: flatpak-x86_64
+          path: apiark_x86_64.flatpak
+
+      - name: Attach flatpak to release
+        uses: softprops/action-gh-release@master
+        with:
+          tag_name: ${{ github.ref_name }}
+          draft: true
+          make_latest: true
+          files: apiark_x86_64.flatpak
+          fail_on_unmatched_files: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}

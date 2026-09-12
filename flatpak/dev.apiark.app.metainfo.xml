@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>dev.apiark.app</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Apiark</name>
+  <summary>Offline first REST API client</summary>
+  <description>
+    <p>The API platform that respects your privacy, your RAM, and your Git workflow.</p>
+    <p>Features:</p>
+    <ul>
+      <li>Offline first API client</li>
+      <li>Sync collections with Git</li>
+      <li>REST, GraphQL, WebSocket, SSE, gRPC and MQTT support</li>
+      <li>Lightweight and low on memory</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">dev.apiark.app.desktop</launchable>
+  <provides>
+    <id>dev.apiark.app.desktop</id>
+  </provides>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Sending a REST request</caption>
+      <image type="source" width="1918" height="1080">https://raw.githubusercontent.com/berbicanes/apiark/main/docs/screenshots/rest-get.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>WebSocket and SSE support</caption>
+      <image type="source" width="1912" height="1080">https://raw.githubusercontent.com/berbicanes/apiark/main/docs/screenshots/sse.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>GraphQL support</caption>
+      <image type="source" width="1918" height="1080">https://raw.githubusercontent.com/berbicanes/apiark/main/docs/screenshots/graphql.png</image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://apiark.dev/</url>
+  <url type="bugtracker">https://github.com/berbicanes/apiark/issues</url>
+  <url type="help">https://apiark.dev/docs</url>
+  <developer id="dev.apiark">
+    <name>Berbicanes</name>
+    <email>berbicanes6@gmail.com</email>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.4.6" date="2026-03-25">
+      <url>https://github.com/berbicanes/apiark/releases</url>
+    </release>
+  </releases>
+  <keywords>
+    <keyword>REST</keyword>
+    <keyword>HTTP</keyword>
+    <keyword>GraphQL</keyword>
+    <keyword>MQTT</keyword>
+    <keyword>WebSocket</keyword>
+    <keyword>offline</keyword>
+    <keyword>lightweight</keyword>
+  </keywords>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+</component>
