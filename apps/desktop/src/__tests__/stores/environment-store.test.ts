@@ -52,4 +52,31 @@ describe("Environment Store", () => {
     const overrides = useEnvironmentStore.getState().runtimeOverrides;
     expect(overrides.newVar).toBe("newValue");
   });
+
+  it("clears environments and active states", async () => {
+    await useEnvironmentStore.getState().loadEnvironments("/test/collection");
+    expect(useEnvironmentStore.getState().environments).toHaveLength(2);
+
+    useEnvironmentStore.getState().clear();
+    const state = useEnvironmentStore.getState();
+    expect(state.environments).toHaveLength(0);
+    expect(state.activeEnvironmentName).toBeNull();
+    expect(state.activeCollectionPath).toBeNull();
+    expect(state.runtimeOverrides).toEqual({});
+  });
+
+  it("remembers last used environment per collection", async () => {
+    // 1. Load collection A and set to production
+    await useEnvironmentStore.getState().loadEnvironments("/test/collection-a");
+    useEnvironmentStore.getState().setActiveEnvironment("production");
+    expect(useEnvironmentStore.getState().activeEnvironmentName).toBe("production");
+
+    // 2. Load collection B (defaults to development)
+    await useEnvironmentStore.getState().loadEnvironments("/test/collection-b");
+    expect(useEnvironmentStore.getState().activeEnvironmentName).toBe("development");
+
+    // 3. Switch back to collection A (restores production)
+    await useEnvironmentStore.getState().loadEnvironments("/test/collection-a");
+    expect(useEnvironmentStore.getState().activeEnvironmentName).toBe("production");
+  });
 });

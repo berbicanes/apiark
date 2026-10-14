@@ -23,6 +23,8 @@ pub async fn save_environment(
     collection_path: String,
     env: EnvironmentFile,
     scope: Option<String>,
+    original_name: Option<String>,
+    original_scope: Option<String>,
 ) -> Result<(), String> {
     let path = Path::new(&collection_path);
     let mut env = env;
@@ -32,8 +34,17 @@ pub async fn save_environment(
             _ => EnvironmentScope::Shared,
         };
     }
+    let orig_scope_enum = original_scope.as_deref().map(|s| match s {
+        "personal" => EnvironmentScope::Personal,
+        _ => EnvironmentScope::Shared,
+    });
     tracing::debug!(path = %collection_path, name = %env.name, "Saving environment");
-    environment::save_environment(path, &env)
+    environment::save_environment(
+        path,
+        &env,
+        original_name.as_deref(),
+        orig_scope_enum.as_ref(),
+    )
 }
 
 /// Resolve all variables for a given environment, merging:

@@ -329,3 +329,16 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-dimmed);
 }
+
+/* Native select & option dropdown readability in all themes */
+select {
+  color-scheme: dark;
+}
+[data-theme="light"] select {
+  color-scheme: light;
+}
+select option {
+  background-color: var(--color-elevated);
+  color: var(--color-text-primary);
+}
+

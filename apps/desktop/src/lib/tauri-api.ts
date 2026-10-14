@@ -246,18 +246,42 @@ export async function saveEnvironment(
   collectionPath: string,
   env: EnvironmentData,
   scope?: "shared" | "personal",
+  originalName?: string,
+  originalScope?: "shared" | "personal",
 ): Promise<void> {
-  await invoke<void>("save_environment", { collectionPath, env, scope: scope ?? env.scope ?? null });
+  await invoke<void>("save_environment", {
+    collectionPath,
+    env,
+    scope: scope ?? env.scope ?? null,
+    originalName: originalName ?? null,
+    originalScope: originalScope ?? null,
+  });
 }
 
 // ── History ──
 
-export async function getHistory(): Promise<HistoryEntry[]> {
-  return await invoke<HistoryEntry[]>("get_history", {});
+export async function getHistory(
+  limit?: number,
+  offset?: number,
+  collectionPath?: string | null,
+): Promise<HistoryEntry[]> {
+  return await invoke<HistoryEntry[]>("get_history", {
+    limit: limit ?? null,
+    offset: offset ?? null,
+    collectionPath: collectionPath ?? null,
+  });
 }
 
-export async function searchHistory(query: string): Promise<HistoryEntry[]> {
-  return await invoke<HistoryEntry[]>("search_history", { query });
+export async function searchHistory(
+  query: string,
+  limit?: number,
+  collectionPath?: string | null,
+): Promise<HistoryEntry[]> {
+  return await invoke<HistoryEntry[]>("search_history", {
+    query,
+    limit: limit ?? null,
+    collectionPath: collectionPath ?? null,
+  });
 }
 
 export async function clearHistory(): Promise<void> {

@@ -9,21 +9,29 @@ import {
 interface HistoryState {
   entries: HistoryEntry[];
   loading: boolean;
+  filterCollectionPath: string | null;
 
-  loadHistory: () => Promise<void>;
-  searchHistory: (query: string) => Promise<void>;
+  setFilterCollectionPath: (path: string | null) => void;
+  loadHistory: (collectionPath?: string | null) => Promise<void>;
+  searchHistory: (query: string, collectionPath?: string | null) => Promise<void>;
   clearHistory: () => Promise<void>;
 }
 
-export const useHistoryStore = create<HistoryState>((set) => ({
+export const useHistoryStore = create<HistoryState>((set, get) => ({
   entries: [],
   loading: false,
+  filterCollectionPath: null,
 
-  loadHistory: async () => {
+  setFilterCollectionPath: (path) => {
+    set({ filterCollectionPath: path });
+  },
+
+  loadHistory: async (collectionPath) => {
     set({ loading: true });
+    const targetPath = collectionPath !== undefined ? collectionPath : get().filterCollectionPath;
     try {
-      const entries = await getHistoryApi();
-      set({ entries, loading: false });
+      const entries = await getHistoryApi(undefined, undefined, targetPath);
+      set({ entries, loading: false, filterCollectionPath: targetPath });
     } catch (err) {
       import("@/stores/toast-store").then(({ useToastStore }) =>
         useToastStore.getState().showWarning("Could not load request history"),
@@ -32,10 +40,11 @@ export const useHistoryStore = create<HistoryState>((set) => ({
     }
   },
 
-  searchHistory: async (query) => {
+  searchHistory: async (query, collectionPath) => {
     set({ loading: true });
+    const targetPath = collectionPath !== undefined ? collectionPath : get().filterCollectionPath;
     try {
-      const entries = await searchHistoryApi(query);
+      const entries = await searchHistoryApi(query, undefined, targetPath);
       set({ entries, loading: false });
     } catch (err) {
       import("@/stores/toast-store").then(({ useToastStore }) =>

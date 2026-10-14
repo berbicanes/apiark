@@ -16,8 +16,23 @@ pub fn load_environments(collection_path: &Path) -> Result<Vec<EnvironmentFile>,
     let personal_dir = collection_path.join(".apiark").join("environments.local");
     load_envs_from_dir(&personal_dir, EnvironmentScope::Personal, &mut envs)?;
 
-    envs.sort_by(|a, b| a.name.cmp(&b.name));
-    Ok(envs)
+    // Deduplicate by name (case-insensitive). Personal scope takes priority over shared scope.
+    let mut deduped: Vec<EnvironmentFile> = Vec::new();
+    for env in envs {
+        if let Some(existing) = deduped
+            .iter_mut()
+            .find(|e| e.name.eq_ignore_ascii_case(&env.name))
+        {
+            if matches!(env.scope, EnvironmentScope::Personal) {
+                *existing = env;
+            }
+        } else {
+            deduped.push(env);
+        }
+    }
+
+    deduped.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(deduped)
 }
 
 fn load_envs_from_dir(
@@ -127,7 +142,13 @@ pub fn get_resolved_variables(
 }
 
 /// Save an environment file to disk. Saves to shared or personal directory based on scope.
-pub fn save_environment(collection_path: &Path, env: &EnvironmentFile) -> Result<(), String> {
+/// If `original_name` or `original_scope` are provided and differ, deletes the old file.
+pub fn save_environment(
+    collection_path: &Path,
+    env: &EnvironmentFile,
+    original_name: Option<&str>,
+    original_scope: Option<&EnvironmentScope>,
+) -> Result<(), String> {
     let subdir = match env.scope {
         EnvironmentScope::Personal => "environments.local",
         EnvironmentScope::Shared => "environments",
@@ -146,6 +167,16 @@ pub fn save_environment(collection_path: &Path, env: &EnvironmentFile) -> Result
     let filename = env.name.to_lowercase().replace(' ', "-");
     let file_path = env_dir.join(format!("{filename}.yaml"));
 
+    // Check if an old file exists and needs deletion (e.g. rename or scope change)
+    let old_name = original_name.unwrap_or(&env.name);
+    let old_scope = original_scope.unwrap_or(&env.scope);
+    let old_subdir = match old_scope {
+        EnvironmentScope::Personal => "environments.local",
+        EnvironmentScope::Shared => "environments",
+    };
+    let old_dir = collection_path.join(".apiark").join(old_subdir);
+    let old_file_path = find_env_file(&old_dir, old_name);
+
     let yaml =
         serde_yaml::to_string(env).map_err(|e| format!("Failed to serialize environment: {e}"))?;
 
@@ -155,5 +186,115 @@ pub fn save_environment(collection_path: &Path, env: &EnvironmentFile) -> Result
     fs::rename(&tmp_path, &file_path).map_err(|e| {
         let _ = fs::remove_file(&tmp_path);
         format!("Failed to rename temp file: {e}")
-    })
+    })?;
+
+    // If old file existed and is different from the newly written file path, delete it
+    if let Some(old_path) = old_file_path {
+        let same_file = match (fs::canonicalize(&old_path), fs::canonicalize(&file_path)) {
+            (Ok(a), Ok(b)) => a == b,
+            _ => old_path == file_path,
+        };
+        if !same_file && old_path.exists() {
+            let _ = fs::remove_file(&old_path);
+        }
+    }
+
+    Ok(())
+}
+
+fn find_env_file(dir: &Path, name: &str) -> Option<std::path::PathBuf> {
+    if !dir.exists() {
+        return None;
+    }
+    let target_stem = name.to_lowercase().replace(' ', "-");
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let p = entry.path();
+            if p.extension().is_some_and(|e| e == "yaml" || e == "yml") {
+                if let Some(stem) = p.file_stem().and_then(|s| s.to_str()) {
+                    let stem_clean = stem.to_lowercase().replace(' ', "-");
+                    if stem_clean == target_stem || stem.eq_ignore_ascii_case(name) {
+                        return Some(p);
+                    }
+                }
+            }
+        }
+    }
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_save_and_rename_environment() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let collection_path = temp_dir.path();
+
+        let mut env = EnvironmentFile {
+            name: "Dev".to_string(),
+            variables: HashMap::from([("k".to_string(), "v".to_string())]),
+            secrets: Vec::new(),
+            scope: EnvironmentScope::Shared,
+        };
+
+        // 1. Initial save
+        save_environment(collection_path, &env, None, None).unwrap();
+        let envs = load_environments(collection_path).unwrap();
+        assert_eq!(envs.len(), 1);
+        assert_eq!(envs[0].name, "Dev");
+
+        // 2. Rename Dev -> Development
+        env.name = "Development".to_string();
+        save_environment(
+            collection_path,
+            &env,
+            Some("Dev"),
+            Some(&EnvironmentScope::Shared),
+        )
+        .unwrap();
+
+        let envs = load_environments(collection_path).unwrap();
+        assert_eq!(envs.len(), 1, "Old dev.yaml must be deleted so only 1 env remains");
+        assert_eq!(envs[0].name, "Development");
+
+        // 3. Change scope: Shared -> Personal
+        env.scope = EnvironmentScope::Personal;
+        save_environment(
+            collection_path,
+            &env,
+            Some("Development"),
+            Some(&EnvironmentScope::Shared),
+        )
+        .unwrap();
+
+        let envs = load_environments(collection_path).unwrap();
+        assert_eq!(envs.len(), 1, "Only personal development.yaml should exist");
+        assert!(matches!(envs[0].scope, EnvironmentScope::Personal));
+    }
+
+    #[test]
+    fn test_load_environments_deduplication() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let collection_path = temp_dir.path();
+        let env_dir = collection_path.join(".apiark").join("environments");
+        fs::create_dir_all(&env_dir).unwrap();
+
+        // Write two files on disk with same environment name (e.g. from sanitization clash)
+        fs::write(
+            env_dir.join("dev-baru-(proper)-(copy).yaml"),
+            "name: Dev Baru\nvariables:\n  a: '1'\n",
+        )
+        .unwrap();
+        fs::write(
+            env_dir.join("dev-baru-_proper_-_copy.yaml"),
+            "name: Dev Baru\nvariables:\n  a: '2'\n",
+        )
+        .unwrap();
+
+        let envs = load_environments(collection_path).unwrap();
+        assert_eq!(envs.len(), 1, "Must deduplicate environments with same name");
+        assert_eq!(envs[0].name, "Dev Baru");
+    }
 }

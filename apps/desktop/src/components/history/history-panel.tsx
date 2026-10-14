@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { HttpMethod } from "@apiark/types";
 import { useHistoryStore } from "@/stores/history-store";
+import { useCollectionStore } from "@/stores/collection-store";
 import { useTabStore } from "@/stores/tab-store";
-import { Search, Trash2 } from "lucide-react";
+import { Search, Trash2, Filter } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { HistorySkeleton } from "@/components/ui/skeleton";
 import { EmptyState, ClockEmptyIcon } from "@/components/ui/empty-state";
@@ -42,19 +43,31 @@ export function HistoryPanel() {
   const { t } = useTranslation();
   const { entries, loading, loadHistory, searchHistory, clearHistory } =
     useHistoryStore();
+  const { collections } = useCollectionStore();
+  const activeTab = useTabStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
+  const activeCollectionPath =
+    activeTab?.collectionPath ?? collections.find((c) => c.type === "collection")?.path ?? null;
+
   const [searchQuery, setSearchQuery] = useState("");
+  const [filterMode, setFilterMode] = useState<"current" | "all" | string>("current");
   const parentRef = useRef<HTMLDivElement>(null);
 
+  const effectivePath = useMemo(() => {
+    if (filterMode === "all") return null;
+    if (filterMode === "current") return activeCollectionPath;
+    return filterMode;
+  }, [filterMode, activeCollectionPath]);
+
   useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+    loadHistory(effectivePath);
+  }, [effectivePath, loadHistory]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     if (query.trim()) {
-      searchHistory(query);
+      searchHistory(query, effectivePath);
     } else {
-      loadHistory();
+      loadHistory(effectivePath);
     }
   };
 
@@ -74,58 +87,102 @@ export function HistoryPanel() {
     overscan: 10,
   });
 
+  const activeCollectionName = useMemo(() => {
+    if (!activeCollectionPath) return null;
+    return collections.find((c) => c.path === activeCollectionPath)?.name ?? null;
+  }, [collections, activeCollectionPath]);
+
   return (
-    <div className="px-2">
-      {/* Search + clear */}
-      <div className="mb-1 flex items-center gap-1">
-        <div className="flex flex-1 items-center rounded bg-[var(--color-elevated)] px-2">
-          <Search className="h-3 w-3 text-[var(--color-text-dimmed)]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder={t("history.search")}
-            className="w-full bg-transparent px-1.5 py-1 text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none"
-          />
-        </div>
-        {entries.length > 0 && (
-          <button
-            onClick={clearHistory}
-            className="rounded p-1 text-[var(--color-text-dimmed)] hover:bg-[var(--color-border)] hover:text-red-400"
-            title={t("history.clear")}
-          >
-            <Trash2 className="h-3 w-3" />
-          </button>
+    <div className="flex h-full min-h-0 flex-1 flex-col px-2 pb-2">
+      {/* Top controls */}
+      <div className="shrink-0 space-y-1.5 pb-2">
+        {/* Collection filter */}
+        {collections.length > 0 && (
+          <div className="flex items-center gap-1.5 rounded bg-[var(--color-elevated)] px-2 py-1">
+            <Filter className="h-3 w-3 shrink-0 text-[var(--color-text-dimmed)]" />
+            <select
+              value={filterMode}
+              onChange={(e) => setFilterMode(e.target.value)}
+              className="w-full cursor-pointer bg-transparent text-[11px] font-medium text-[var(--color-text-primary)] outline-none"
+            >
+              {activeCollectionPath && (
+                <option value="current" className="bg-[var(--color-elevated)] text-[var(--color-text-primary)]">
+                  {activeCollectionName ? `Current: ${activeCollectionName}` : "Current Collection"}
+                </option>
+              )}
+              <option value="all" className="bg-[var(--color-elevated)] text-[var(--color-text-primary)]">
+                All Collections
+              </option>
+              {collections.map((c) => (
+                <option
+                  key={c.path}
+                  value={c.path}
+                  className="bg-[var(--color-elevated)] text-[var(--color-text-primary)]"
+                >
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
+
+        {/* Search + clear */}
+        <div className="flex items-center gap-1">
+          <div className="flex flex-1 items-center rounded bg-[var(--color-elevated)] px-2">
+            <Search className="h-3 w-3 text-[var(--color-text-dimmed)]" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder={t("history.search")}
+              className="w-full bg-transparent px-1.5 py-1 text-xs text-[var(--color-text-primary)] placeholder-[var(--color-text-dimmed)] outline-none"
+            />
+          </div>
+          {entries.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="rounded p-1 text-[var(--color-text-dimmed)] hover:bg-[var(--color-border)] hover:text-red-400"
+              title={t("history.clear")}
+            >
+              <Trash2 className="h-3 w-3" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Entries */}
-      {loading ? (
-        <HistorySkeleton />
-      ) : entries.length === 0 ? (
-        searchQuery ? (
-          <p className="py-2 text-center text-xs text-[var(--color-text-dimmed)]">{t("history.noResults")}</p>
+      <div className="flex-1 min-h-0">
+        {loading ? (
+          <HistorySkeleton />
+        ) : entries.length === 0 ? (
+          searchQuery ? (
+            <p className="py-2 text-center text-xs text-[var(--color-text-dimmed)]">{t("history.noResults")}</p>
+          ) : (
+            <EmptyState
+              icon={<ClockEmptyIcon size={32} />}
+              title={t("history.noHistory")}
+              description={t("history.noHistory")}
+            />
+          )
         ) : (
-          <EmptyState
-            icon={<ClockEmptyIcon size={32} />}
-            title={t("history.noHistory")}
-            description={t("history.noHistory")}
-          />
-        )
-      ) : (
-        <div
-          ref={parentRef}
-          className="max-h-[300px] overflow-y-auto"
-        >
           <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              width: "100%",
-              position: "relative",
-            }}
+            ref={parentRef}
+            className="h-full overflow-y-auto"
           >
-            {virtualizer.getVirtualItems().map((virtualRow) => {
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              {virtualizer.getVirtualItems().map((virtualRow) => {
               const entry = entries[virtualRow.index];
+              const collectionLabel = entry.collectionPath
+                ? collections.find((c) => c.path === entry.collectionPath)?.name ??
+                  entry.collectionPath.split(/[/\\]/).filter(Boolean).pop()
+                : null;
+
               return (
                 <button
                   key={entry.id}
@@ -145,8 +202,19 @@ export function HistoryPanel() {
                   >
                     {entry.method}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-xs text-[var(--color-text-secondary)]">
-                    {entry.url}
+                  {(filterMode === "all" || filterMode === "current") && collectionLabel && (
+                    <span
+                      className="max-w-[70px] shrink-0 truncate rounded bg-[var(--color-border)] px-1 py-0.5 text-[9px] font-medium text-[var(--color-text-dimmed)]"
+                      title={entry.collectionPath}
+                    >
+                      {collectionLabel}
+                    </span>
+                  )}
+                  <span
+                    className="min-w-0 flex-1 truncate text-xs text-[var(--color-text-secondary)]"
+                    title={entry.url}
+                  >
+                    {entry.requestName ? `${entry.requestName} (${entry.url})` : entry.url}
                   </span>
                   <span className={`shrink-0 text-[10px] ${statusColor(entry.status ?? undefined)}`}>
                     {entry.status ?? "—"}
@@ -160,6 +228,7 @@ export function HistoryPanel() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

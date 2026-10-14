@@ -9,6 +9,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { createCollection, saveEnvironment } from "@/lib/tauri-api";
 import { useEnvironmentStore } from "@/stores/environment-store";
 import { useSettingsStore } from "@/stores/settings-store";
+import { useTabStore } from "@/stores/tab-store";
 import type { EnvironmentData, CollectionNode } from "@apiark/types";
 import * as Dialog from "@radix-ui/react-dialog";
 import type { ActivityView } from "./activity-bar";
@@ -61,15 +62,55 @@ export function SidePanel({
       </div>
 
       {/* Panel content */}
-      <div className="flex-1 overflow-y-auto">
-        {activeView === "collections" && <CollectionsPanel onOpenImport={onOpenImport} />}
-        {activeView === "environments" && <EnvironmentsPanel envSelectorRef={envSelectorRef} />}
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden">
+        {activeView === "collections" && (
+          <div className="flex-1 overflow-y-auto">
+            <CollectionsPanel onOpenImport={onOpenImport} />
+          </div>
+        )}
+        {activeView === "environments" && (
+          <div className="flex-1 overflow-y-auto">
+            <EnvironmentsPanel envSelectorRef={envSelectorRef} />
+          </div>
+        )}
         {activeView === "history" && <HistoryPanel />}
-        {activeView === "mock" && <ToolPanel description={t("mock.createDesc")} actionLabel={t("mock.newMockServer")} onAction={onOpenMock} />}
-        {activeView === "monitor" && <ToolPanel description={t("monitor.createDesc")} actionLabel={t("monitor.newMonitor")} onAction={onOpenMonitor} />}
-        {activeView === "docs" && <ToolPanel description={t("docs.generateDesc")} actionLabel={t("docs.generateDocs")} onAction={onOpenDocs} />}
-        {activeView === "proxy" && <ProxySidePanelView />}
-        {activeView === "git" && <GitPanelView />}
+        {activeView === "mock" && (
+          <div className="flex-1 overflow-y-auto">
+            <ToolPanel
+              description={t("mock.createDesc")}
+              actionLabel={t("mock.newMockServer")}
+              onAction={onOpenMock}
+            />
+          </div>
+        )}
+        {activeView === "monitor" && (
+          <div className="flex-1 overflow-y-auto">
+            <ToolPanel
+              description={t("monitor.createDesc")}
+              actionLabel={t("monitor.newMonitor")}
+              onAction={onOpenMonitor}
+            />
+          </div>
+        )}
+        {activeView === "docs" && (
+          <div className="flex-1 overflow-y-auto">
+            <ToolPanel
+              description={t("docs.generateDesc")}
+              actionLabel={t("docs.generateDocs")}
+              onAction={onOpenDocs}
+            />
+          </div>
+        )}
+        {activeView === "proxy" && (
+          <div className="flex-1 overflow-y-auto">
+            <ProxySidePanelView />
+          </div>
+        )}
+        {activeView === "git" && (
+          <div className="flex-1 overflow-y-auto">
+            <GitPanelView />
+          </div>
+        )}
         {activeView === "audit" && <AuditPanel />}
       </div>
     </div>
@@ -662,26 +703,34 @@ function EnvironmentsPanel({
   envSelectorRef?: React.RefObject<HTMLSelectElement | null>;
 }) {
   const { t } = useTranslation();
-  const { environments, activeEnvironmentName, setActiveEnvironment, loadEnvironments } =
+  const { environments, activeEnvironmentName, setActiveEnvironment, loadEnvironments, activeCollectionPath } =
     useEnvironmentStore();
   const { collections } = useCollectionStore();
+  const activeTab = useTabStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
   const [editingEnv, setEditingEnv] = useState<EnvironmentData | null>(null);
   const [newEnvOpen, setNewEnvOpen] = useState(false);
 
   const collectionPath =
-    collections.find((c) => c.type === "collection")?.path ?? null;
+    activeTab?.collectionPath ??
+    activeCollectionPath ??
+    collections.find((c) => c.type === "collection")?.path ??
+    null;
 
-  // Load environments when panel mounts with a collection
+  // Load environments when panel mounts or collection changes
   useEffect(() => {
     if (collectionPath) {
       loadEnvironments(collectionPath);
     }
   }, [collectionPath, loadEnvironments]);
 
-  const handleSave = async (env: EnvironmentData) => {
+  const handleSave = async (
+    env: EnvironmentData,
+    originalName?: string,
+    originalScope?: "shared" | "personal",
+  ) => {
     if (!collectionPath) return;
     try {
-      await saveEnvironment(collectionPath, env);
+      await saveEnvironment(collectionPath, env, env.scope, originalName, originalScope);
       await loadEnvironments(collectionPath);
       setEditingEnv(null);
     } catch (err) {
@@ -876,11 +925,17 @@ function EnvironmentEditor({
   onBack,
 }: {
   env: EnvironmentData;
-  onSave: (env: EnvironmentData) => void;
+  onSave: (
+    env: EnvironmentData,
+    originalName?: string,
+    originalScope?: "shared" | "personal",
+  ) => void;
   onBack: () => void;
 }) {
   const { t } = useTranslation();
   const [name, setName] = useState(env.name);
+  const originalName = env.name;
+  const originalScope = env.scope ?? "shared";
   const [variables, setVariables] = useState<{ key: string; value: string }[]>(
     () => {
       const entries = Object.entries(env.variables).map(([key, value]) => ({ key, value }));
@@ -896,7 +951,11 @@ function EnvironmentEditor({
     for (const v of variables) {
       if (v.key.trim()) vars[v.key.trim()] = v.value;
     }
-    onSave({ ...env, name: name.trim() || env.name, variables: vars, scope });
+    onSave(
+      { ...env, name: name.trim() || env.name, variables: vars, scope },
+      originalName,
+      originalScope,
+    );
   };
 
   const updateVar = (index: number, field: "key" | "value", val: string) => {

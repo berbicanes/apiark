@@ -119,71 +119,106 @@ impl HistoryDb {
     }
 
     /// List recent history entries (most recent first).
-    pub fn list(&self, limit: i64, offset: i64) -> Result<Vec<HistoryEntry>, String> {
+    pub fn list(
+        &self,
+        limit: i64,
+        offset: i64,
+        collection_path: Option<&str>,
+    ) -> Result<Vec<HistoryEntry>, String> {
         let conn = self.conn.lock().map_err(|e| format!("Lock error: {e}"))?;
-        let mut stmt = conn
-            .prepare(
-                "SELECT id, method, url, status, status_text, time_ms, size_bytes, timestamp, collection_path, request_name, request_json
-                 FROM history ORDER BY timestamp DESC LIMIT ?1 OFFSET ?2",
-            )
-            .map_err(|e| format!("Query prepare failed: {e}"))?;
 
-        let entries = stmt
-            .query_map(params![limit, offset], |row| {
-                Ok(HistoryEntry {
-                    id: row.get(0)?,
-                    method: row.get(1)?,
-                    url: row.get(2)?,
-                    status: row.get(3)?,
-                    status_text: row.get(4)?,
-                    time_ms: row.get(5)?,
-                    size_bytes: row.get(6)?,
-                    timestamp: row.get(7)?,
-                    collection_path: row.get(8)?,
-                    request_name: row.get(9)?,
-                    request_json: row.get(10)?,
-                })
-            })
-            .map_err(|e| format!("Query failed: {e}"))?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| format!("Row mapping failed: {e}"))?;
+        if let Some(cp) = collection_path {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT id, method, url, status, status_text, time_ms, size_bytes, timestamp, collection_path, request_name, request_json
+                     FROM history WHERE collection_path = ?1 ORDER BY timestamp DESC LIMIT ?2 OFFSET ?3",
+                )
+                .map_err(|e| format!("Query prepare failed: {e}"))?;
 
-        Ok(entries)
+            let entries = stmt
+                .query_map(params![cp, limit, offset], Self::map_row)
+                .map_err(|e| format!("Query failed: {e}"))?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Row mapping failed: {e}"))?;
+
+            Ok(entries)
+        } else {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT id, method, url, status, status_text, time_ms, size_bytes, timestamp, collection_path, request_name, request_json
+                     FROM history ORDER BY timestamp DESC LIMIT ?1 OFFSET ?2",
+                )
+                .map_err(|e| format!("Query prepare failed: {e}"))?;
+
+            let entries = stmt
+                .query_map(params![limit, offset], Self::map_row)
+                .map_err(|e| format!("Query failed: {e}"))?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Row mapping failed: {e}"))?;
+
+            Ok(entries)
+        }
     }
 
     /// Search history by URL substring.
-    pub fn search(&self, query: &str, limit: i64) -> Result<Vec<HistoryEntry>, String> {
+    pub fn search(
+        &self,
+        query: &str,
+        limit: i64,
+        collection_path: Option<&str>,
+    ) -> Result<Vec<HistoryEntry>, String> {
         let conn = self.conn.lock().map_err(|e| format!("Lock error: {e}"))?;
         let pattern = format!("%{query}%");
-        let mut stmt = conn
-            .prepare(
-                "SELECT id, method, url, status, status_text, time_ms, size_bytes, timestamp, collection_path, request_name, request_json
-                 FROM history WHERE url LIKE ?1 OR method LIKE ?1 OR request_name LIKE ?1
-                 ORDER BY timestamp DESC LIMIT ?2",
-            )
-            .map_err(|e| format!("Query prepare failed: {e}"))?;
 
-        let entries = stmt
-            .query_map(params![pattern, limit], |row| {
-                Ok(HistoryEntry {
-                    id: row.get(0)?,
-                    method: row.get(1)?,
-                    url: row.get(2)?,
-                    status: row.get(3)?,
-                    status_text: row.get(4)?,
-                    time_ms: row.get(5)?,
-                    size_bytes: row.get(6)?,
-                    timestamp: row.get(7)?,
-                    collection_path: row.get(8)?,
-                    request_name: row.get(9)?,
-                    request_json: row.get(10)?,
-                })
-            })
-            .map_err(|e| format!("Query failed: {e}"))?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| format!("Row mapping failed: {e}"))?;
+        if let Some(cp) = collection_path {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT id, method, url, status, status_text, time_ms, size_bytes, timestamp, collection_path, request_name, request_json
+                     FROM history WHERE (url LIKE ?1 OR method LIKE ?1 OR request_name LIKE ?1) AND collection_path = ?2
+                     ORDER BY timestamp DESC LIMIT ?3",
+                )
+                .map_err(|e| format!("Query prepare failed: {e}"))?;
 
-        Ok(entries)
+            let entries = stmt
+                .query_map(params![pattern, cp, limit], Self::map_row)
+                .map_err(|e| format!("Query failed: {e}"))?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Row mapping failed: {e}"))?;
+
+            Ok(entries)
+        } else {
+            let mut stmt = conn
+                .prepare(
+                    "SELECT id, method, url, status, status_text, time_ms, size_bytes, timestamp, collection_path, request_name, request_json
+                     FROM history WHERE url LIKE ?1 OR method LIKE ?1 OR request_name LIKE ?1
+                     ORDER BY timestamp DESC LIMIT ?2",
+                )
+                .map_err(|e| format!("Query prepare failed: {e}"))?;
+
+            let entries = stmt
+                .query_map(params![pattern, limit], Self::map_row)
+                .map_err(|e| format!("Query failed: {e}"))?
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| format!("Row mapping failed: {e}"))?;
+
+            Ok(entries)
+        }
+    }
+
+    fn map_row(row: &rusqlite::Row) -> rusqlite::Result<HistoryEntry> {
+        Ok(HistoryEntry {
+            id: row.get(0)?,
+            method: row.get(1)?,
+            url: row.get(2)?,
+            status: row.get(3)?,
+            status_text: row.get(4)?,
+            time_ms: row.get(5)?,
+            size_bytes: row.get(6)?,
+            timestamp: row.get(7)?,
+            collection_path: row.get(8)?,
+            request_name: row.get(9)?,
+            request_json: row.get(10)?,
+        })
     }
 
     /// Get a single history entry by ID.

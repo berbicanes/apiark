@@ -158,11 +158,24 @@ export const useCollectionStore = create<CollectionState>((set, get) => ({
 
   closeCollection: (path) => {
     unwatchCollection(path).catch(() => {});
-    set((state) => ({
-      collections: state.collections.filter(
+    set((state) => {
+      const remaining = state.collections.filter(
         (c) => !(c.type === "collection" && c.path === path),
-      ),
-    }));
+      );
+      // Synchronize environment store
+      import("@/stores/environment-store").then(({ useEnvironmentStore }) => {
+        const envStore = useEnvironmentStore.getState();
+        if (envStore.activeCollectionPath === path) {
+          const nextCollection = remaining.find((c) => c.type === "collection");
+          if (nextCollection) {
+            envStore.loadEnvironments(nextCollection.path);
+          } else {
+            envStore.clear();
+          }
+        }
+      });
+      return { collections: remaining };
+    });
   },
 
   refreshCollection: async (path) => {

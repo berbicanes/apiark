@@ -10,6 +10,8 @@ interface EnvironmentState {
   environments: EnvironmentData[];
   activeEnvironmentName: string | null;
   activeCollectionPath: string | null;
+  /** Remember last selected environment per collection */
+  lastUsedEnvByCollection: Record<string, string | null>;
   /** Runtime variable overrides from scripts (not persisted to disk) */
   runtimeOverrides: Record<string, string>;
 
@@ -18,25 +20,48 @@ interface EnvironmentState {
   setActiveCollectionPath: (path: string | null) => void;
   getResolvedVariables: () => Promise<Record<string, string>>;
   applyMutations: (mutations: Record<string, string | null>) => void;
+  clear: () => void;
 }
 
 export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
   environments: [],
   activeEnvironmentName: null,
   activeCollectionPath: null,
+  lastUsedEnvByCollection: {},
   runtimeOverrides: {},
+
+  clear: () => {
+    set({
+      environments: [],
+      activeEnvironmentName: null,
+      activeCollectionPath: null,
+      runtimeOverrides: {},
+    });
+  },
 
   loadEnvironments: async (collectionPath) => {
     try {
       const envs = await loadEnvironmentsApi(collectionPath);
-      set({
+      const isDifferentCollection = get().activeCollectionPath !== collectionPath;
+
+      // Check last used environment for this specific collection
+      const lastUsed = get().lastUsedEnvByCollection[collectionPath];
+      const hasLastUsed = lastUsed && envs.some((e) => e.name === lastUsed);
+
+      const nextActiveName = hasLastUsed
+        ? lastUsed
+        : (envs.length > 0 ? envs[0].name : null);
+
+      set((state) => ({
         environments: envs,
         activeCollectionPath: collectionPath,
-        // Auto-select first environment if none selected
-        activeEnvironmentName:
-          get().activeEnvironmentName ??
-          (envs.length > 0 ? envs[0].name : null),
-      });
+        activeEnvironmentName: nextActiveName,
+        lastUsedEnvByCollection: {
+          ...state.lastUsedEnvByCollection,
+          [collectionPath]: nextActiveName,
+        },
+        runtimeOverrides: isDifferentCollection ? {} : state.runtimeOverrides,
+      }));
     } catch (err) {
       import("@/stores/toast-store").then(({ useToastStore }) =>
         useToastStore.getState().showError(`Failed to load environments: ${err}`),
@@ -45,7 +70,13 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
   },
 
   setActiveEnvironment: (name) => {
-    set({ activeEnvironmentName: name });
+    const { activeCollectionPath } = get();
+    set((state) => ({
+      activeEnvironmentName: name,
+      lastUsedEnvByCollection: activeCollectionPath
+        ? { ...state.lastUsedEnvByCollection, [activeCollectionPath]: name }
+        : state.lastUsedEnvByCollection,
+    }));
   },
 
   setActiveCollectionPath: (path) => {
@@ -53,11 +84,17 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
   },
 
   getResolvedVariables: async () => {
-    const { activeCollectionPath, activeEnvironmentName, runtimeOverrides } = get();
+    const { activeCollectionPath, activeEnvironmentName, runtimeOverrides, environments } = get();
     if (!activeCollectionPath) {
       return { ...runtimeOverrides };
     }
-    if (!activeEnvironmentName) {
+
+    // Guard: verify activeEnvironmentName actually belongs to current collection environments
+    const validEnvName = environments.some((e) => e.name === activeEnvironmentName)
+      ? activeEnvironmentName
+      : null;
+
+    if (!validEnvName) {
       // No environment selected — still load root .env variables
       try {
         const rootVars = await loadRootDotenv(activeCollectionPath);
@@ -72,7 +109,7 @@ export const useEnvironmentStore = create<EnvironmentState>((set, get) => ({
     try {
       const resolved = await getResolvedVariablesApi(
         activeCollectionPath,
-        activeEnvironmentName,
+        validEnvName,
       );
       return { ...resolved, ...runtimeOverrides };
     } catch (err) {

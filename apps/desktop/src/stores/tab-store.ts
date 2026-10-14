@@ -551,6 +551,9 @@ export const useTabStore = create<TabState>((set, get) => ({
     const existing = get().tabs.find((t) => t.filePath === filePath);
     if (existing) {
       set({ activeTabId: existing.id });
+      if (existing.collectionPath && useEnvironmentStore.getState().activeCollectionPath !== existing.collectionPath) {
+        useEnvironmentStore.getState().loadEnvironments(existing.collectionPath);
+      }
       return;
     }
 
@@ -561,6 +564,9 @@ export const useTabStore = create<TabState>((set, get) => ({
         tabs: [...state.tabs, tab],
         activeTabId: tab.id,
       }));
+      if (collectionPath && useEnvironmentStore.getState().activeCollectionPath !== collectionPath) {
+        useEnvironmentStore.getState().loadEnvironments(collectionPath);
+      }
     } catch (err) {
       const errStr = String((err as { message?: string })?.message ?? err);
       if (errStr.includes("MERGE_CONFLICT:")) {
@@ -596,15 +602,27 @@ export const useTabStore = create<TabState>((set, get) => ({
           newActive = newTabs[idx].id;
         }
       }
+      if (newActive) {
+        const nextTab = newTabs.find((t) => t.id === newActive);
+        if (nextTab?.collectionPath && useEnvironmentStore.getState().activeCollectionPath !== nextTab.collectionPath) {
+          useEnvironmentStore.getState().loadEnvironments(nextTab.collectionPath);
+        }
+      }
       return { tabs: newTabs, activeTabId: newActive };
     });
   },
 
   closeOtherTabs: (id) => {
-    set((state) => ({
-      tabs: state.tabs.filter((t) => t.id === id),
-      activeTabId: id,
-    }));
+    set((state) => {
+      const tab = state.tabs.find((t) => t.id === id);
+      if (tab?.collectionPath && useEnvironmentStore.getState().activeCollectionPath !== tab.collectionPath) {
+        useEnvironmentStore.getState().loadEnvironments(tab.collectionPath);
+      }
+      return {
+        tabs: state.tabs.filter((t) => t.id === id),
+        activeTabId: id,
+      };
+    });
   },
 
   closeAllTabs: () => {
@@ -613,6 +631,10 @@ export const useTabStore = create<TabState>((set, get) => ({
 
   setActiveTab: (id) => {
     set({ activeTabId: id });
+    const tab = get().tabs.find((t) => t.id === id);
+    if (tab?.collectionPath && useEnvironmentStore.getState().activeCollectionPath !== tab.collectionPath) {
+      useEnvironmentStore.getState().loadEnvironments(tab.collectionPath);
+    }
   },
 
   reorderTabs: (fromIndex, toIndex) => {

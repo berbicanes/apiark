@@ -6,7 +6,7 @@ import type { AuthConfig, BodyType, RequestBody, KeyValuePair, OAuth2GrantType, 
 import { oauthStartFlow, oauthGetTokenStatus, oauthClearToken } from "@/lib/tauri-api";
 import { HintTooltip } from "@/components/ui/hint-tooltip";
 import { CodeEditor } from "@/components/ui/code-editor";
-import { Plus, Trash2, FileUp } from "lucide-react";
+import { Plus, Trash2, FileUp, Sparkles } from "lucide-react";
 
 /** Extract :paramName path variables from a URL */
 function extractPathVariables(url: string): string[] {
@@ -403,7 +403,7 @@ function ScriptsEditor({
           value={preRequestScript ?? ""}
           onChange={(v) => onPreRequestChange(v || null)}
           language="javascript"
-          height="150px"
+          height="220px"
           placeholder="// ark.env.set('token', 'abc123');"
         />
       </div>
@@ -419,7 +419,7 @@ function ScriptsEditor({
           value={postResponseScript ?? ""}
           onChange={(v) => onPostResponseChange(v || null)}
           language="javascript"
-          height="150px"
+          height="220px"
           placeholder="// const body = ark.response.json();"
         />
       </div>
@@ -452,7 +452,7 @@ function TestsEditor({
           value={assertions ?? ""}
           onChange={(v) => onAssertionsChange(v || null)}
           language="yaml"
-          height="130px"
+          height="180px"
           placeholder="status: 200"
         />
       </div>
@@ -468,12 +468,42 @@ function TestsEditor({
           value={testScript ?? ""}
           onChange={(v) => onTestScriptChange(v || null)}
           language="javascript"
-          height="150px"
+          height="220px"
           placeholder='ark.test("status is 200", function() { ... });'
         />
       </div>
     </div>
   );
+}
+
+function formatXml(xml: string): string {
+  let formatted = "";
+  let indent = 0;
+  const tab = "  ";
+  const reg = /(>)(<)(\/*)/g;
+  const w = xml.replace(reg, "$1\r\n$2$3");
+  const lines = w.split("\r\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith("</")) {
+      indent = Math.max(0, indent - 1);
+    }
+    formatted += tab.repeat(indent) + trimmed + "\n";
+    if (
+      trimmed.startsWith("<") &&
+      !trimmed.startsWith("</") &&
+      !trimmed.endsWith("/>") &&
+      !trimmed.startsWith("<?") &&
+      !trimmed.startsWith("<!")
+    ) {
+      const hasCloseTag = /<\/[^>]+>$/.test(trimmed);
+      if (!hasCloseTag) {
+        indent++;
+      }
+    }
+  }
+  return formatted.trim();
 }
 
 function BodyEditor({
@@ -484,34 +514,73 @@ function BodyEditor({
   onChange: (body: RequestBody) => void;
 }) {
   const { t } = useTranslation();
+
+  const canBeautify =
+    (body.type === "json" || body.type === "xml") && body.content.trim().length > 0;
+
+  const handleBeautify = () => {
+    if (body.type === "json") {
+      try {
+        const parsed = JSON.parse(body.content);
+        onChange({ ...body, content: JSON.stringify(parsed, null, 2) });
+      } catch (err) {
+        import("@/stores/toast-store").then(({ useToastStore }) =>
+          useToastStore.getState().showWarning(`Could not format JSON: ${err}`),
+        );
+      }
+    } else if (body.type === "xml") {
+      try {
+        const formatted = formatXml(body.content);
+        onChange({ ...body, content: formatted });
+      } catch {
+        // Keep as-is if unparseable
+      }
+    }
+  };
+
   return (
-    <div className="space-y-3">
-      {/* Body type selector */}
-      <div className="flex gap-2">
-        {BODY_TYPE_IDS.map((btId) => (
+    <div className="flex flex-col space-y-3">
+      {/* Body type selector and beautifier */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          {BODY_TYPE_IDS.map((btId) => (
+            <button
+              key={btId}
+              onClick={() => onChange({ ...body, type: btId })}
+              className={`rounded px-3 py-1 text-xs transition-colors ${
+                body.type === btId
+                  ? "bg-blue-600 text-white"
+                  : "bg-[var(--color-elevated)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              }`}
+            >
+              {t(BODY_TYPE_LABEL_KEYS[btId])}
+            </button>
+          ))}
+        </div>
+
+        {canBeautify && (
           <button
-            key={btId}
-            onClick={() => onChange({ ...body, type: btId })}
-            className={`rounded px-3 py-1 text-xs transition-colors ${
-              body.type === btId
-                ? "bg-blue-600 text-white"
-                : "bg-[var(--color-elevated)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-            }`}
+            onClick={handleBeautify}
+            className="flex items-center gap-1.5 rounded bg-[var(--color-elevated)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-border)] hover:text-[var(--color-text-primary)] active:scale-[0.98]"
+            title="Beautify / Format (JSON / XML)"
           >
-            {t(BODY_TYPE_LABEL_KEYS[btId])}
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            <span>Format</span>
           </button>
-        ))}
+        )}
       </div>
 
       {/* Body content */}
       {body.type !== "none" && body.type !== "form-data" && body.type !== "urlencoded" && (
-        <CodeEditor
-          value={body.content}
-          onChange={(v) => onChange({ ...body, content: v })}
-          language={body.type === "json" ? "json" : body.type === "xml" ? "xml" : "plaintext"}
-          height="220px"
-          placeholder={body.type === "json" ? '{\n  "key": "value"\n}' : ""}
-        />
+        <div className="h-[calc(100vh-340px)] min-h-[380px]">
+          <CodeEditor
+            value={body.content}
+            onChange={(v) => onChange({ ...body, content: v })}
+            language={body.type === "json" ? "json" : body.type === "xml" ? "xml" : "plaintext"}
+            height="100%"
+            placeholder={body.type === "json" ? '{\n  "key": "value"\n}' : ""}
+          />
+        </div>
       )}
 
       {body.type === "urlencoded" && (
