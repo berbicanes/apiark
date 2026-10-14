@@ -46,12 +46,18 @@ pub fn detect_import_format(file_path: &str) -> Result<String, String> {
         }
     }
 
-    // Check for Insomnia
-    if content.contains("\"_type\"") && content.contains("\"resources\"") {
+    // Check for Insomnia v4 (JSON / YAML)
+    if (content.contains("\"_type\"") && content.contains("\"resources\""))
+        || (content.contains("_type:") && content.contains("resources:"))
+    {
         return Ok("insomnia".to_string());
     }
-    // Insomnia YAML
-    if content.contains("_type:") && content.contains("resources:") {
+    // Check for Insomnia v5 (YAML / JSON)
+    if content.contains("collection.insomnia.rest")
+        || content.contains("insomnia.rest/5")
+        || (content.contains("schema_version:") && content.contains("collection:"))
+        || (content.contains("\"schema_version\"") && content.contains("\"collection\""))
+    {
         return Ok("insomnia".to_string());
     }
 
@@ -124,7 +130,8 @@ pub fn export_collection(collection_path: &str, format: &str) -> Result<String, 
         "openapi" => crate::exporter::openapi::export_to_openapi(path),
         "apiark" => crate::exporter::apiark::export_to_apiark_zip(path),
         "bruno" => crate::exporter::bruno::export_to_bruno(path),
-        "insomnia" => crate::exporter::insomnia::export_to_insomnia(path),
+        "insomnia" => crate::exporter::insomnia::export_to_insomnia_v5(path),
+        "insomnia-v4" => crate::exporter::insomnia::export_to_insomnia_v4(path),
         _ => Err(format!("Unsupported export format: {format}")),
     }
 }

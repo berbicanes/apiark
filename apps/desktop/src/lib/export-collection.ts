@@ -6,7 +6,8 @@ const FORMAT_INFO: Record<ExportFormat, { ext: string; filterName: string; filte
   openapi: { ext: "openapi.json", filterName: "JSON", filterExt: ["json"] },
   apiark: { ext: "apiark.zip", filterName: "ZIP Archive", filterExt: ["zip"] },
   bruno: { ext: "bruno", filterName: "Directory", filterExt: ["*"] },
-  insomnia: { ext: "insomnia.json", filterName: "JSON", filterExt: ["json"] },
+  insomnia: { ext: "insomnia.yaml", filterName: "YAML", filterExt: ["yaml", "yml"] },
+  "insomnia-v4": { ext: "insomnia.json", filterName: "JSON", filterExt: ["json"] },
 };
 
 /**

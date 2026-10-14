@@ -72,7 +72,7 @@ enum Commands {
         /// Path to the collection directory
         collection: String,
 
-        /// Export format: postman, openapi
+        /// Export format: postman, insomnia, insomnia-v4, openapi
         #[arg(short, long)]
         format: String,
 

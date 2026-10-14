@@ -19,7 +19,7 @@ type Step = "select" | "preview" | "importing";
 
 const FORMAT_LABELS: Record<ImportFormat, string> = {
   postman: "Postman v2.1",
-  insomnia: "Insomnia v4",
+  insomnia: "Insomnia (v4 / v5)",
   bruno: "Bruno",
   openapi: "OpenAPI 3.x",
   hoppscotch: "Hoppscotch",

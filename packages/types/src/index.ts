@@ -440,7 +440,7 @@ export interface ImportWarning {
 }
 
 export type ImportFormat = "postman" | "insomnia" | "bruno" | "openapi" | "hoppscotch" | "har";
-export type ExportFormat = "postman" | "openapi" | "apiark" | "bruno" | "insomnia";
+export type ExportFormat = "postman" | "openapi" | "apiark" | "bruno" | "insomnia" | "insomnia-v4";
 
 // ── gRPC ──
 

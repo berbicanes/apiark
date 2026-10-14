@@ -277,6 +277,8 @@ export function CommandPalette({
 
       // Export commands per collection
       const exportFormats: { format: ExportFormat; label: string }[] = [
+        { format: "insomnia", label: "Insomnia v5 (YAML)" },
+        { format: "insomnia-v4", label: "Insomnia v4 (JSON)" },
         { format: "postman", label: "Postman" },
         { format: "openapi", label: "OpenAPI" },
       ];
